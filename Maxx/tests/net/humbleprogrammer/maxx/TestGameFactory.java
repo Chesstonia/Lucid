@@ -30,51 +30,24 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx.parsers;
+package net.humbleprogrammer.maxx;
 
-import net.humbleprogrammer.maxx.TestBase;
-import org.junit.BeforeClass;
+import net.humbleprogrammer.TestBase;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class TestParser extends TestBase
+public class TestGameFactory extends TestBase
     {
 
     //  -----------------------------------------------------------------------
     //	UNIT TESTS
     //	-----------------------------------------------------------------------
-
     @Test
-    public void t_getLanguage()
+    public void t_createFromPGN_fail()
         {
-        assertEquals( "en-US", Parser.getLanguage() );
+        assertNull( GameFactory.createFromPGN( null ) );
+        assertNull( GameFactory.createFromPGN( "" ) );
+        assertNull( GameFactory.createFromPGN( "  \n\r\t" ) );
         }
-
-    @Test
-    public void t_matchFEN()
-        {
-        for ( String strFEN : s_listFEN )
-            assertNotNull( strFEN, Parser.matchFEN( strFEN ) );
-        }
-
-    @Test
-    public void t_matchFEN_fail()
-        {
-        assertNull( Parser.matchFEN( null ) );
-        assertNull( Parser.matchFEN( "" ) );
-        }
-
-    //  -----------------------------------------------------------------------
-    //	PUBLIC METHODS
-    //	-----------------------------------------------------------------------
-
-    @BeforeClass
-    public static void setup()
-        {
-        String strLang = Parser.getLanguage();
-
-        assertNotNull( strLang );
-        assertTrue( strLang.equalsIgnoreCase( "en-US" ) );
-        }
-    }   /* end of class TestParser */
+    }

@@ -30,18 +30,16 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx;
+package net.humbleprogrammer;
 
+import net.humbleprogrammer.maxx.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-
-import net.humbleprogrammer.maxx.parsers.*;
+import java.nio.file.*;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /** The {@link TestBase} class contains all of the test configuration information. */
 public abstract class TestBase
@@ -65,7 +63,6 @@ public abstract class TestBase
     //	PUBLIC DECLARATIONS
     //	-----------------------------------------------------------------------
 
-    @SuppressWarnings( "unused" )
     public enum Duration
         {
             QUICK,
@@ -76,10 +73,14 @@ public abstract class TestBase
         }
 
     /** Test duration. */
-    protected static final Duration     DURATION  = Duration.NORMAL;
+    protected static final Duration DURATION = Duration.NORMAL;
+
+    /** Maximum test duration, in nanoseconds. */
+    protected static final long s_lMaxNanosecs;
     /** Array of FEN strings. */
     protected static final List<String> s_listFEN = new ArrayList<String>();
-
+    /** Array of PGN files. */
+    protected static final List<Path>   s_listPGN = new ArrayList<Path>();
     //  -----------------------------------------------------------------------
     //	DECLARATIONS
     //	-----------------------------------------------------------------------
@@ -109,7 +110,7 @@ public abstract class TestBase
     //	  +---+---+---+---+---+---+---+---+
     //	    a   b   c   d   e   f   g   h
     //
-    /** Test position expressed as an EPD string, after 17. f4 . */
+    /** Test position expressed as an EPD string, after 17. f4 */
     protected static final String EPD_TEST = "r3k2r/ppq1b3/2p1pn2/2Pp1p1p/3P1Pp1/3BP2P/PP1NQ1P1/R4RK1 b kq f3";
     /** Test position expressed as an FEN string, after 17. f4 . */
     protected static final String FEN_TEST = EPD_TEST + " 0 17";
@@ -121,18 +122,33 @@ public abstract class TestBase
 
     static
         {
-        int[] iLimits = new int[]{ 5000, 25000, 100000, 250000 };
-
-        int iLimit = (DURATION != Duration.UNLIMITED)
-                     ? iLimits[ DURATION.ordinal() ]
-                     : Integer.MAX_VALUE;
-
+        switch (DURATION)
+            {
+            case QUICK:
+                s_lMaxNanosecs = TimeUnit.SECONDS.toNanos( 15 );
+                break;
+            case NORMAL:
+                s_lMaxNanosecs = TimeUnit.MINUTES.toNanos( 2 );
+                break;
+            case SLOW:
+                s_lMaxNanosecs = TimeUnit.MINUTES.toNanos( 15 );
+                break;
+            case EPIC:
+                s_lMaxNanosecs = TimeUnit.HOURS.toNanos( 2 );
+                break;
+            default:
+                s_lMaxNanosecs = Long.MAX_VALUE;
+                break;
+            }
+        //
+        //  Build a list of FEN positions.
+        //
         try
             {
             BufferedReader reader = openTestFile( FEN_TEST_FILE );
             String strFEN;
 
-            while ( (strFEN = reader.readLine()) != null && s_listFEN.size() < iLimit)
+            while ( (strFEN = reader.readLine()) != null )
                 if (Parser.matchFEN( strFEN ) != null)
                     s_listFEN.add( strFEN );
 
@@ -144,6 +160,31 @@ public abstract class TestBase
                         FEN_TEST_FILE,
                         ex.getMessage() );
             }
+
+        s_log.debug( "Found {} FEN samples.", s_listFEN.size() );
+        Collections.sort( s_listFEN );
+        //
+        //  Build a list of *.pgn files
+        //
+        Path pathPgnRoot = Paths.get( "P:\\Chess\\PGN\\TWIC" );
+
+        try
+            {
+            DirectoryStream<Path> stream = Files.newDirectoryStream( pathPgnRoot, "*.pgn" );
+
+            for ( Path path : stream )
+                s_listPGN.add( path );
+
+            stream.close();
+            }
+        catch (IOException ex)
+            {
+            s_log.warn( "Failed to find PGN files: {}",
+                        ex.getMessage() );
+            }
+
+        s_log.debug( "Found {} PGN files.", s_listPGN.size() );
+        Collections.sort( s_listPGN );
         }
 
     //  -----------------------------------------------------------------------
@@ -158,6 +199,7 @@ public abstract class TestBase
      *
      * @return Reader object if file found, <code>null</code> otherwise.
      */
+
     protected static BufferedReader openTestFile( final String strFilename )
         {
         BufferedReader reader = null;

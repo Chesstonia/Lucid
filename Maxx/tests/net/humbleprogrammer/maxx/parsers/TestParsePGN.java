@@ -32,24 +32,27 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx.parsers;
 
+import net.humbleprogrammer.TestBase;
+import net.humbleprogrammer.maxx.*;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
-public class TestParsePGN extends net.humbleprogrammer.maxx.TestBase
+public class TestParsePGN extends TestBase
     {
 
     //  -----------------------------------------------------------------------
     //	UNIT TESTS
     //	-----------------------------------------------------------------------
 
-    @Test
-    public void t_fromString_fail_blank()
+    @Test( expected = IllegalArgumentException.class )
+    public void t_exportTags_fail_param1()
         {
-        assertNull( ParsePGN.fromString( null ) );
-        assertNull( ParsePGN.fromString( "" ) );
-        assertNull( ParsePGN.fromString( "  " ) );
-        assertNull( ParsePGN.fromString( Parser.STR_CRLF ) );
+        ParsePGN.exportTags( null, new StringBuilder() );
+        }
+
+    @Test( expected = IllegalArgumentException.class )
+    public void t_exportTags_fail_param2()
+        {
+        ParsePGN.exportTags( GameFactory.createBlank(), null );
         }
 
     }   /* end of class TestParsePGN */

@@ -32,6 +32,7 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
+import net.humbleprogrammer.TestBase;
 import org.junit.Test;
 
 import static net.humbleprogrammer.maxx.Constants.INVALID;

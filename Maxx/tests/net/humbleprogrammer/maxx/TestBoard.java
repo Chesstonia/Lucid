@@ -32,6 +32,7 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
+import net.humbleprogrammer.TestBase;
 import org.junit.Test;
 
 import static net.humbleprogrammer.maxx.Constants.*;
@@ -105,8 +106,4 @@ public class TestBoard extends TestBase
         assertNotNull( bd );
         assertTrue( bd.isValid() );
         }
-    //  -----------------------------------------------------------------------
-    //	METHODS
-    //	-----------------------------------------------------------------------
-
     }   /* end of class TestBoard */
