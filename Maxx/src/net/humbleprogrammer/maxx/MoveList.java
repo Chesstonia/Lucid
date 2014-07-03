@@ -149,7 +149,7 @@ public class MoveList implements Iterable<Move>
      */
     private void addMove( int iSqFrom, int iSqTo, int iType )
         {
-        boolean bLegal = true;
+        boolean bLegal;
         //
         //  If the King is moving, discard the "To" square if it is attacked by the opponent.
         //  Test all others in case the King is moving into his own "shadow", i.e., into a
@@ -160,40 +160,35 @@ public class MoveList implements Iterable<Move>
         //  against the moving player's King, but the "From" and "To" squares are not seen by
         //  the King.
         //
-        if (iSqFrom == _iSqKing || iType == Move.Type.EN_PASSANT)
+        if (iType == Move.Type.EN_PASSANT || iSqFrom == _iSqKing)
             bLegal = testMove( iSqFrom, iSqTo, iType );
         //
         //  If the King is NOT in check, and the moving piece is not pinned, then the move is
         //  considered safe.  Otherwise, the move has to be tested.
         //
         else if (_bbCheckers == 0L)
-            {
-            long bbFromMask = 1L << iSqFrom;
-            if (_bbPinned != 0L && (_bbPinned & bbFromMask) != 0L)
-                bLegal = testMove( iSqFrom, iSqTo, iType );
-            }
+            bLegal = (_bbPinned & (1L << iSqFrom)) == 0L || testMove( iSqFrom, iSqTo, iType );
         //
         //  The King is in check, so the move must either capture an attacker, or end on an
         //  interposing square.  If it does not, it can be discarded.
         //
         else
-            {
-            long bbToMask = 1L << iSqTo;
-            bLegal = (_bbToSq & bbToMask) != 0L &&
-                     testMove( iSqFrom, iSqTo, iType );
-            }
+            bLegal = (_bbToSq & (1L << iSqTo)) != 0L && testMove( iSqFrom, iSqTo, iType );
         //
         //  If the move is legal, add it to the list, expanding promotions if necessary.
         //
         if (bLegal)
             {
-            _moves[ _iCount++ ] = packMove( iSqFrom, iSqTo, iType );
-
-            if (iType == Move.Type.PROMOTION)
+            if (iType != Move.Type.PROMOTION)
+                _moves[ _iCount++ ] = Move.pack( iSqFrom, iSqTo, iType );
+            else
                 {
-                _moves[ _iCount++ ] = packMove( iSqFrom, iSqTo, Move.Type.PROMOTE_KNIGHT );
-                _moves[ _iCount++ ] = packMove( iSqFrom, iSqTo, Move.Type.PROMOTE_BISHOP );
-                _moves[ _iCount++ ] = packMove( iSqFrom, iSqTo, Move.Type.PROMOTE_ROOK );
+                int iPacked = Move.pack( iSqFrom, iSqTo );
+
+                _moves[ _iCount++ ] = iPacked | Move.Type.PROMOTION;
+                _moves[ _iCount++ ] = iPacked | Move.Type.PROMOTE_KNIGHT;
+                _moves[ _iCount++ ] = iPacked | Move.Type.PROMOTE_BISHOP;
+                _moves[ _iCount++ ] = iPacked | Move.Type.PROMOTE_ROOK;
                 }
             }
         }
@@ -496,8 +491,8 @@ public class MoveList implements Iterable<Move>
             bbPieces = _state.map[ MAP_W_BISHOP + _opponent ] |
                        _state.map[ MAP_W_QUEEN + _opponent ];
 
-            if ((bbPlayer & Bitboards.bishop[_iSqKing]) != 0L &&
-                (bbPieces & Bitboards.bishop[_iSqKing]) != 0L)
+            if ((bbPlayer & Bitboards.bishop[ _iSqKing ]) != 0L &&
+                (bbPieces & Bitboards.bishop[ _iSqKing ]) != 0L)
                 {
                 bbPinners |= bbPieces & Bitboards.getBishopAttacks( _iSqKing, _bbOpponent );
                 }
@@ -505,8 +500,8 @@ public class MoveList implements Iterable<Move>
             bbPieces = _state.map[ MAP_W_ROOK + _opponent ] |
                        _state.map[ MAP_W_QUEEN + _opponent ];
 
-            if ((bbPlayer & Bitboards.rook[_iSqKing]) != 0L &&
-                (bbPieces & Bitboards.rook[_iSqKing]) != 0L)
+            if ((bbPlayer & Bitboards.rook[ _iSqKing ]) != 0L &&
+                (bbPieces & Bitboards.rook[ _iSqKing ]) != 0L)
                 {
                 bbPinners |= bbPieces & Bitboards.getRookAttacks( _iSqKing, _bbOpponent );
                 }
@@ -556,21 +551,6 @@ public class MoveList implements Iterable<Move>
 
         return bbFromSq;
         }
-
-    /**
-     * Packs the "From" square, "To" square, and move type into a 32-bit integer.
-     *
-     * @param iSqFrom
-     *     "From" square in 8x8 format.
-     * @param iSqTo
-     *     "To" square in 8x8 format.
-     * @param iMoveType
-     *     Move type.
-     *
-     * @return packed move.
-     */
-    private static int packMove( int iSqFrom, int iSqTo, int iMoveType )
-        { return (iSqTo << 16) | (iSqFrom << 8) | (iMoveType & 0xFF); }
 
 
     /**
@@ -680,13 +660,7 @@ public class MoveList implements Iterable<Move>
             /*
             **  CODE
             */
-            final int iPacked = _moves[ _iNext++ ];
-
-            return new Move( ((iPacked >>> 8) & 0x3F),
-                             ((iPacked >>> 16) & 0x3F),
-                             (iPacked & 0xFF),
-                             _state );
-
+            return new Move( _moves[ _iNext++ ], _state );
             }
 
         @Override

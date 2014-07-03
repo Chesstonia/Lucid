@@ -50,7 +50,7 @@ public class Move
     /** Board state prior to the move being made. */
     final Board.State state;
     /** Zobrist hash AFTER move was made. */
-    long               hashAfter = HASH_INVALID;
+    long hashAfter = HASH_INVALID;
 
     //  -----------------------------------------------------------------------
     //	CTOR
@@ -59,28 +59,56 @@ public class Move
     /**
      * Default CTOR.
      *
-     * @param iSqFrom
-     *     "From" square in 8x8 format.
-     * @param iSqTo
-     *     "To" square in 8x8 format.
-     * @param iType
-     *     Move type.
+     * @param iPacked
+     *     Packed move.
      * @param state
      *     Board state prior to the move being made.
      */
-    Move( final int iSqFrom, final int iSqTo, final int iType, final Board.State state )
+    Move( final int iPacked, final Board.State state )
         {
-        assert ((iSqFrom | iSqTo) & ~0x3F) == 0;
-        assert (iType & ~0x07) == 0;
         assert state != null;
         /*
         **  CODE
         */
-        this.iSqFrom = iSqFrom;
-        this.iSqTo = iSqTo;
-        this.iType = iType;
+        iSqFrom = (iPacked >>> 8) & 0x3F;
+        iSqTo = (iPacked >>> 16) & 0x3F;
+        iType = iPacked & 0xFF;
+
         this.state = state;
         }
+
+    //  -----------------------------------------------------------------------
+    //	IMPLEMENTATION
+    //	-----------------------------------------------------------------------
+
+    /**
+     * Packs the "From" square, "To" square, and move type into a 32-bit integer.
+     *
+     * @param iSqFrom
+     *     "From" square in 8x8 format.
+     * @param iSqTo
+     *     "To" square in 8x8 format.
+     *
+     * @return packed move.
+     */
+    static int pack( int iSqFrom, int iSqTo )
+        { return (iSqTo << 16) | (iSqFrom << 8); }
+
+    /**
+     * Packs the "From" square, "To" square, and move type into a 32-bit integer.
+     *
+     * @param iSqFrom
+     *     "From" square in 8x8 format.
+     * @param iSqTo
+     *     "To" square in 8x8 format.
+     * @param iMoveType
+     *     Move type.
+     *
+     * @return packed move.
+     */
+    static int pack( int iSqFrom, int iSqTo, int iMoveType )
+        { return (iSqTo << 16) | (iSqFrom << 8) | (iMoveType & 0xFF); }
+
     //  -----------------------------------------------------------------------
     //	OVERRIDES
     //	-----------------------------------------------------------------------

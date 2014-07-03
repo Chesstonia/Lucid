@@ -557,7 +557,18 @@ public class TestMoveList extends TestBase
             // castling prevented
             new TestPosition( "r3k2r/8/5Q2/8/8/3q4/8/R3K2R w KQkq -",
                               new long[]{ 44L, 1494L, 50509L, 1720476L, 58773923L, 2010267707L } ),
+            //
+            //  http://www.chess.com/forum/view/more-puzzles/mate-in-292-movesblathys-monster
+            //
+            new TestPosition( "q5nn/1p2p3/p1k1P1p1/6Pp/PKp1p1pP/8/2P1P1PP/3Q4 w - -",
+                              new long[]{ 23L, 351L, 7416L, 130826L, 2610361L, 49832214L, 956434803L } ),
+            //
+            //  Assorted positions from my own testing
+            //
 
+            // 3 pinned pieces
+            new TestPosition( "rQ3rk1/p2pq1pp/6Q1/bbpnp3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ -",
+                              new long[]{ 35L, 1892L, 64973L, 3321449L, 120745830L, 5966580991L, 225409779045L } ),
             new TestPosition( "r4rk1/pp1nq1p1/3bp2p/3p1pP1/2pP1P1P/2P1PN2/PPQ1B3/R3K2R w KQ f6",
                               new long[]{ 39L, 1484L, 55740L, 2070681L, 76647022L, 2803944626L, 102930720732L } ),
             // Really open position, with lots of depth 0 moves
