@@ -64,8 +64,6 @@ public class MoveList implements Iterable<Move>
     private final long        _bbAll;
     /** Bitboard of opposing pieces. */
     private final long        _bbOpponent;
-    /** Bitboard of all moving player's pieces. */
-    private final long        _bbPlayer;
     /** Current position. */
     private final Board.State _state;
     /** Array of packed moves. */
@@ -81,8 +79,6 @@ public class MoveList implements Iterable<Move>
     private long _bbPinned;
     /** Bitboard of potential "To" squares. */
     private long _bbToSq;
-    /** Bitboard of squares that the moving player's King can "see". */
-    private long _bbXRays;
 
     //  -----------------------------------------------------------------------
     //	CTOR
@@ -110,13 +106,12 @@ public class MoveList implements Iterable<Move>
 
         _bbAll = _state.map[ MAP_W_ALL ] | _state.map[ MAP_B_ALL ];
         _bbOpponent = _state.map[ _opponent ];
-        _bbPlayer = _state.map[ _player ];
 
         _iSqKing = (_player == WHITE) ? _state.iSqKingW : _state.iSqKingB;
-        _bbToSq = ~_bbPlayer;
+        _bbToSq = ~_state.map[ _player ];
 
         if (Square.isValid( _iSqKing ))
-            generateAllMoves( initBitboards() );
+            generateAllMoves( initBitboards( _state.map[ _player ] ) );
         }
 
     //  -----------------------------------------------------------------------
@@ -184,7 +179,7 @@ public class MoveList implements Iterable<Move>
         else
             {
             long bbToMask = 1L << iSqTo;
-            bLegal = ((_bbCheckers | _bbXRays) & bbToMask) != 0L &&
+            bLegal = (_bbToSq & bbToMask) != 0L &&
                      testMove( iSqFrom, iSqTo, iType );
             }
         //
@@ -473,15 +468,17 @@ public class MoveList implements Iterable<Move>
     /**
      * Initializes the internal bitboards.
      *
+     * @param bbFromSq
+     *     Bitboard of candidate pieces.
+     *
      * @return Bitboard of candidate pieces.
      */
-    private long initBitboards()
+    private long initBitboards( long bbFromSq )
         {
-        long bbFromSq = _bbPlayer;
+        long bbPieces;
 
         _bbCheckers = Bitboards.getAttackedBy( _state.map, _iSqKing, _opponent );
         _bbPinned = 0L;
-        _bbXRays = 0L;
         //
         //  The moving player is NOT in check.
         //
@@ -493,25 +490,31 @@ public class MoveList implements Iterable<Move>
             //  one (and only one) moving piece that lies on the path between a threatening
             //  piece and the King, then it is pinned.
             //
-            long bbPieces;
             long bbPinners = 0L;
+            long bbPlayer = _state.map[ MAP_W_ALL + _player ];
 
             bbPieces = _state.map[ MAP_W_BISHOP + _opponent ] |
                        _state.map[ MAP_W_QUEEN + _opponent ];
 
-            if (bbPieces != 0L)
+            if ((bbPlayer & Bitboards.bishop[_iSqKing]) != 0L &&
+                (bbPieces & Bitboards.bishop[_iSqKing]) != 0L)
+                {
                 bbPinners |= bbPieces & Bitboards.getBishopAttacks( _iSqKing, _bbOpponent );
+                }
 
             bbPieces = _state.map[ MAP_W_ROOK + _opponent ] |
                        _state.map[ MAP_W_QUEEN + _opponent ];
 
-            if (bbPieces != 0L)
+            if ((bbPlayer & Bitboards.rook[_iSqKing]) != 0L &&
+                (bbPieces & Bitboards.rook[_iSqKing]) != 0L)
+                {
                 bbPinners |= bbPieces & Bitboards.getRookAttacks( _iSqKing, _bbOpponent );
+                }
 
             while ( bbPinners != 0L )
                 {
                 int iSqPinner = BitUtil.first( bbPinners );
-                long bbBetween = _bbPlayer & Bitboards.getSquaresBetween( _iSqKing, iSqPinner );
+                long bbBetween = bbPlayer & Bitboards.getSquaresBetween( _iSqKing, iSqPinner );
 
                 bbPinners ^= 1L << iSqPinner;
 
@@ -528,19 +531,18 @@ public class MoveList implements Iterable<Move>
         else if (BitUtil.singleton( _bbCheckers ))
             {
             int iSqChecker = BitUtil.first( _bbCheckers );
-
-            _bbXRays = Bitboards.getQueenAttacks( iSqChecker, _bbAll ) &
-                       Bitboards.getQueenAttacks( _iSqKing, _bbAll );
+            long bbXRays = Bitboards.getQueenAttacks( iSqChecker, _bbAll ) &
+                           Bitboards.getQueenAttacks( _iSqKing, _bbAll );
 
             //
             //  If the King is being checked by a Knight or Pawn--or the attacker is adjacent
             //  to the King--so the only possible "From" squares are the King's square, plus
             //  any of the moving player's pieces that are able to reach the checking piece.
             //
-            if (_bbXRays == 0L)
+            if (bbXRays == 0L)
                 bbFromSq &= ((1L << _iSqKing) | Bitboards.all[ iSqChecker ]);
 
-            _bbToSq &= (_bbCheckers | _bbXRays | Bitboards.king[ _iSqKing ]);
+            _bbToSq &= (_bbCheckers | bbXRays | Bitboards.king[ _iSqKing ]);
             }
         //
         //  The King is being threatened by multiple attackers (double check).  The only

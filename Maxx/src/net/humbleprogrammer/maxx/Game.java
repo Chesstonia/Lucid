@@ -57,8 +57,10 @@ public class Game
 
     /** Current position. */
     private final Board _board;
+    /** Initial position, or <code>null</code> for normal starting position. */
+    private       Board.State         _stateInitial = null;
     /** Map of PGN tags. */
-    private final Map<String, String> _tags = new HashMap<String, String>();
+    private final Map<String, String> _tags         = new HashMap<String, String>();
     /** Verdict, or <code>null</code> if not set. */
     private Verdict _verdict;
 
@@ -66,7 +68,7 @@ public class Game
     //	CTOR
     //	-----------------------------------------------------------------------
 
-    public Game()
+    Game()
         {
         _board = BoardFactory.createInitial();
         }
@@ -94,7 +96,6 @@ public class Game
      */
     public Verdict getVerdict()
         { return _verdict; }
-
 
     /**
      * Gets a PGN tag.
@@ -129,16 +130,41 @@ public class Game
         _tags.put( strName, strValue );
 
         if (strName.equalsIgnoreCase( "FEN" ))
-            {
-            Board bd = BoardFactory.createFromFEN( strValue );
+            setStartingPosition( strValue );
+        }
 
-            if (bd != null)
-                _board.setState( bd.getState() );
-            }
+    /**
+     * Sets the starting position for the game.
+     *
+     * @param strFEN
+     *     Starting position expressed as a FEN string.
+     *
+     * @return <code>.T.</code> if successful; <code>.F.</code> otherwise.
+     */
+    public boolean setStartingPosition( String strFEN )
+        {
+        Board bd = BoardFactory.createFromFEN( strFEN );
+
+        if (bd == null)
+            return false;
+
+        _stateInitial = bd.getState();
+        _board.setState( _stateInitial );
+
+        return true;
         }
 
     //  -----------------------------------------------------------------------
-    //	METHODS
+    //	PUBLIC OVERRIDES
     //	-----------------------------------------------------------------------
+
+    /**
+     * Creates a Portable Game Notation (PGN) string for the game.
+     *
+     * @return PGN string.
+     */
+    @Override
+    public String toString()
+        { return GameFactory.toString( this ); }
 
     }   /* end of class Game */

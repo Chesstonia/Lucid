@@ -34,7 +34,7 @@ package net.humbleprogrammer.maxx.io;
 
 import net.humbleprogrammer.humble.DBC;
 import net.humbleprogrammer.humble.StrUtil;
-import net.humbleprogrammer.maxx.parsers.Parser;
+import net.humbleprogrammer.maxx.Parser;
 
 import java.io.*;
 

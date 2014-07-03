@@ -32,8 +32,6 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import net.humbleprogrammer.maxx.parsers.Parser;
-
 import static net.humbleprogrammer.maxx.Constants.*;
 
 public class Move

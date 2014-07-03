@@ -34,11 +34,10 @@ package net.humbleprogrammer.maxx;
 
 import net.humbleprogrammer.humble.DBC;
 import net.humbleprogrammer.humble.StrUtil;
-import net.humbleprogrammer.maxx.parsers.Parser;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
-public class BoardFactory
+public class BoardFactory extends Parser
     {
 
     //  -----------------------------------------------------------------------
@@ -87,11 +86,9 @@ public class BoardFactory
      */
     public static Board createCopy( final Board src )
         {
-        DBC.requireNotNull( src, "Board" );
-        /*
-        **  CODE
-        */
-        return new Board( src );
+        return (src != null)
+                ? new Board( src )
+                : null;
         }
 
     /**
@@ -221,7 +218,7 @@ public class BoardFactory
         */
         int iFlags = Board.CastlingFlags.NONE;
 
-        if (!strFlags.equals( Parser.STR_DASH ))
+        if (!strFlags.equals( STR_DASH ))
             {
             int iFlag;
             Piece piece;
@@ -230,7 +227,7 @@ public class BoardFactory
                 {
                 int ch = strFlags.codePointAt( idx );
 
-                if ((piece = Parser.pieceFromGlyph( ch )) == null)
+                if ((piece = pieceFromGlyph( ch )) == null)
                     return false;
 
                 if (Character.isSupplementaryCodePoint( ch ))
@@ -288,7 +285,7 @@ public class BoardFactory
         */
         int iSqEP;
 
-        if (strEP.equals( Parser.STR_DASH ))
+        if (strEP.equals( STR_DASH ))
             iSqEP = INVALID;
         else
             {
@@ -365,7 +362,7 @@ public class BoardFactory
         if (StrUtil.isBlank( strPlayer ) || strPlayer.length() != 1)
             return false;
 
-        int player = Parser.playerFromGlyph( strPlayer.codePointAt( 0 ) );
+        int player = playerFromGlyph( strPlayer.codePointAt( 0 ) );
         if (!(player == WHITE || player == BLACK))
             return false;
 
@@ -413,7 +410,7 @@ public class BoardFactory
                 iFile = 0;
                 iRank--;
                 }
-            else if ((piece = Parser.pieceFromGlyph( ch )) != null)
+            else if ((piece = pieceFromGlyph( ch )) != null)
                 {
                 int iSq = Square.toIndex( iRank, iFile++ );
 
@@ -461,7 +458,7 @@ public class BoardFactory
                         iSkip = 0;
                         }
 
-                    sb.append( Parser.pieceToGlyph( piece ) );
+                    sb.append( pieceToGlyph( piece ) );
                     }
                 }
 
@@ -477,7 +474,7 @@ public class BoardFactory
         //	to White.
         //
         sb.append( ' ' );
-        sb.append( Parser.playerToGlyph( bd.getMovingPlayer() ) );
+        sb.append( playerToGlyph( bd.getMovingPlayer() ) );
         //
         //	Export the castling flags
         //
@@ -485,17 +482,17 @@ public class BoardFactory
 
         sb.append( ' ' );
         if (castling == Board.CastlingFlags.NONE)
-            sb.append( Parser.STR_DASH );
+            sb.append( STR_DASH );
         else
             {
             if ((castling & Board.CastlingFlags.WHITE_SHORT) != 0)
-                sb.append( Parser.pieceToGlyph( Piece.W_KING ) );
+                sb.append( pieceToGlyph( Piece.W_KING ) );
             if ((castling & Board.CastlingFlags.WHITE_LONG) != 0)
-                sb.append( Parser.pieceToGlyph( Piece.W_QUEEN ) );
+                sb.append( pieceToGlyph( Piece.W_QUEEN ) );
             if ((castling & Board.CastlingFlags.BLACK_SHORT) != 0)
-                sb.append( Parser.pieceToGlyph( Piece.B_KING ) );
+                sb.append( pieceToGlyph( Piece.B_KING ) );
             if ((castling & Board.CastlingFlags.BLACK_LONG) != 0)
-                sb.append( Parser.pieceToGlyph( Piece.B_QUEEN ) );
+                sb.append( pieceToGlyph( Piece.B_QUEEN ) );
             }
         //
         //	Export the e.p. square.
@@ -506,7 +503,7 @@ public class BoardFactory
         if (Square.isValid( iSqEP ))
             sb.append( Square.toString( iSqEP ) );
         else
-            sb.append( Parser.STR_DASH );
+            sb.append( STR_DASH );
         //
         //	Export the Half Move clock
         //

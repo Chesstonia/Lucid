@@ -30,7 +30,7 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx.parsers;
+package net.humbleprogrammer.maxx;
 
 import net.humbleprogrammer.humble.StrUtil;
 import org.slf4j.Logger;
@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.humbleprogrammer.maxx.*;
 import static net.humbleprogrammer.maxx.Constants.*;
 
 public class Parser
@@ -55,9 +54,9 @@ public class Parser
     public static final String STR_DASH = "-";
 
     /** Regular expresion for whitespace or end of string. */
-    protected static final String RX_EOS = "(?:\\z|\\s+)";
+    static final String RX_EOS = "(?:\\z|\\s+)";
     /** Regular expresion for an EPD string. */
-    protected static final String RX_EPD =
+    static final String RX_EPD =
         // group[1] -- position
         "([BbKkNnQqRr1-8]{1,8}(?:/[BbKkNnPpQqRr1-8]{1,8}){6}/[BbKkNnQqRr1-8]{1,8})" +
         // group[2] -- player
@@ -90,9 +89,9 @@ public class Parser
 
 
     /** Logger. */
-    protected static final Logger s_log = LoggerFactory.getLogger( "MAXX" );
+    static final Logger s_log = LoggerFactory.getLogger( "MAXX" );
     /** Last error encountered. */
-    protected static String s_strError;
+    static String s_strError;
 
     //  -----------------------------------------------------------------------
     //	PUBLIC METHODS

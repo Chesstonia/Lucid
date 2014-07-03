@@ -32,8 +32,8 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx.parsers;
 
-import net.humbleprogrammer.humble.StrUtil;
-import net.humbleprogrammer.maxx.Game;
+import net.humbleprogrammer.humble.DBC;
+import net.humbleprogrammer.maxx.*;
 
 import java.text.ParseException;
 
@@ -54,17 +54,17 @@ public class ParsePGN extends Parser
     //	DECLARATIONS
     //	-----------------------------------------------------------------------
 
-    /** Current offset into input string. */
-    private int _indexNext = 0;
+    /** Game being populated. */
+    private final Game          _gm;
+    /** Input string. */
+    private final String        _strPGN;
+    /** Used for building strings. */
+    private final StringBuilder _sb;
+
     /** Previous offset into input string. */
     private int _index     = 0;
-
-    /** Game being populated. */
-    private final Game _gm = new Game();
-    /** Input string. */
-    private final String _strPGN;
-    /** Used for building strings. */
-    private final StringBuilder _sb = new StringBuilder();
+    /** Current offset into input string. */
+    private int _indexNext = 0;
     //  -----------------------------------------------------------------------
     //	CTOR
     //	-----------------------------------------------------------------------
@@ -75,8 +75,14 @@ public class ParsePGN extends Parser
      * @param strPGN
      *     Input string.
      */
-    private ParsePGN( String strPGN )
+    public ParsePGN( String strPGN )
         {
+        DBC.requireNotNull( strPGN, "PGN String" );
+        /*
+        **  CODE
+        */
+        _gm = GameFactory.createBlank();
+        _sb = new StringBuilder();
         _strPGN = strPGN;
         }
 
@@ -84,69 +90,75 @@ public class ParsePGN extends Parser
     //	PUBLIC METHODS
     //	-----------------------------------------------------------------------
 
-    /**
-     * Converts a PGN string to a Game.
-     *
-     * <PGN-game> ::= <tag-section> <movetext-section>
-     *
-     * @param strPGN
-     *     String to parse.
-     *
-     * @return {@link Game} object if parsed, <c>null</c> otherwise.
-     */
-    public static Game fromString( final String strPGN )
+    public static void exportMoves( Game gm, StringBuilder sb )
         {
-        if (StrUtil.isBlank( strPGN ))
-            return null;
+        DBC.requireNotNull( gm, "Game" );
+        DBC.requireNotNull( sb, "StringBuilder" );
         /*
         **  CODE
         */
-        s_strError = null;
 
-        try
+
+        }
+
+    public static void exportTags( Game gm, StringBuilder sb )
+        {
+        DBC.requireNotNull( gm, "Game" );
+        DBC.requireNotNull( sb, "StringBuilder" );
+        /*
+        **  CODE
+        */
+
+        for ( String strName : s_strTags )
             {
-            ParsePGN parser = new ParsePGN( strPGN );
+            String strValue = gm.getTag( strName );
 
-            // Import tags section
-            int iTags = 0;
+            if (strValue == null)
+                strValue = "";
 
-            while ( parser.importTagPair() )
-                iTags++;
-
-            if (iTags <= 0)
-                return null;    // didn't find any valid tags?
-
+            sb.append( String.format( "[%s \"%s\"]" + STR_CRLF,
+                                      strName,
+                                      strValue ) );
             }
-        catch (ParseException ex)
-            {
-            s_strError = ex.getMessage();
-            s_log.debug( s_strError, ex );
-            }
-
-        return null;
+        //
+        //  TODO: export optional tags.
+        //
+        sb.append( STR_CRLF );  // empty line after tag section
         }
 
     /**
-     * Exports a game as a PGN string.
-     *
-     * @param gm
-     *     Game to export.
-     *
-     * @return PGN string.
+     * Imports the moves section.
      */
-    public static String toString( Game gm )
+    public void importMoves() throws ParseException
         {
-        if (gm == null)
-            return null;
-        /*
-        **  CODE
-        */
-        StringBuilder sb = new StringBuilder();
 
-        exportTags( gm, sb );
-        exportMoves( gm, sb );
+        }
 
-        return sb.toString();
+    /**
+     * Imports the tags section.
+     *
+     * <tag-section> ::=    <tag-pair> <tag-section> <empty> <tag-pair> ::= [ <tag-name> <tag-value>
+     * ]
+     *
+     * @return <code>.T.</code> if at least one tag pair imported, <code>.F.</code> otherwise.
+     */
+    public boolean importTags() throws ParseException
+        {
+        int ch;
+        int iTags;
+
+        for ( iTags = 0; (ch = readNextChar()) == '['; ++iTags )
+            {
+            _gm.setTag( importTagName(), importTagValue() );
+
+            if (readNextChar() != ']')
+                throw new ParseException( "Tag close marker (']') not found.", _index );
+            }
+
+        if (ch != 0)
+            undoRead();
+
+        return (iTags > 0);
         }
 
     //  -----------------------------------------------------------------------
@@ -207,106 +219,30 @@ public class ParsePGN extends Parser
     //	METHODS
     //	-----------------------------------------------------------------------
 
-    private static void exportMoves( Game gm, StringBuilder sb )
-        {
-        assert gm != null;
-        assert sb != null;
-        /*
-        **  CODE
-        */
-
-
-        }
-
-    private static void exportTags( Game gm, StringBuilder sb )
-        {
-        assert gm != null;
-        assert sb != null;
-        /*
-        **  CODE
-        */
-
-        for ( String strName : s_strTags )
-            {
-            String strValue = gm.getTag( strName );
-
-            if (strValue == null)
-                strValue = "";
-
-            sb.append( String.format( "[%s \"%s\"]" + STR_CRLF,
-                                      strName,
-                                      strValue ) );
-            }
-        //
-        //  TODO: export optional tags.
-        //
-        sb.append( STR_CRLF );  // empty line after tag section
-        }
-
     /**
+     * Imports a single tag name.
+     *
      * <tag-name> ::= <identifier>
+     *
+     * @return Tag name.
      */
     private String importTagName() throws ParseException
         {
-        int ch = getNextNonWhiteChar();
+        int iStart = _index;
+        int ch = readNextChar();
 
-        if (!(Character.isLetter( ch ) && Character.isDigit( ch )))
+        if (Character.isLetter( ch ) && Character.isDigit( ch ))
             {
-            throw new ParseException( String.format( "Unexpected '%c'.",
-                                                     (char) ch ),
-                                      _index
-            );
+            for ( _sb.setLength( 0 ); ch > ' '; ch = readChar() )
+                _sb.appendCodePoint( ch );
+
+            if (!isValidTagName( _sb.toString() ))
+                throw new ParseException( "Invalid tag name.", iStart );
             }
+        else
+            throw new ParseException( "Tag name must start with a capital letter.", iStart );
 
-        _sb.setLength( 0 );
-
-        do
-            {
-            _sb.append( (char) ch );
-            }
-        while ( (ch = getNextChar()) != 0 && !Character.isWhitespace( ch ) );
-
-        String strName = _sb.toString();
-        if (!isValidTagName( strName ))
-            {
-            throw new ParseException( String.format( "Invalid tag name: '%s'.",
-                                                     strName ),
-                                      _index
-            );
-            }
-
-        return strName;
-        }
-
-    /**
-     * <tag-pair> ::= [ <tag-name> <tag-value> ]
-     *
-     * @return <code>.T.</code> if tag pair imported, <code>.F.</code> otherwise.
-     */
-    private boolean importTagPair() throws ParseException
-        {
-        int ch = getNextNonWhiteChar();
-
-        if (ch != '[')
-            {
-            ungetChar();
-            return false;
-            }
-
-        String strName = importTagName();
-        String strValue = importTagValue();
-
-        if ((ch = getNextNonWhiteChar()) != ']')
-            {
-            throw new ParseException( String.format( "Unexpected '%c'.",
-                                                     (char) ch ),
-                                      _index
-            );
-            }
-
-        _gm.setTag( strName, strValue );
-
-        return true;
+        return _sb.toString();
         }
 
     /**
@@ -316,52 +252,29 @@ public class ParsePGN extends Parser
      */
     private String importTagValue() throws ParseException
         {
-        int ch = getNextNonWhiteChar();
+        int iStart = _index;
+        int ch = readNextChar();
 
         if (ch != '"')
-            {
-            throw new ParseException( String.format( "Unexpected '%c'.",
-                                                     (char) ch ),
-                                      _index
-            );
-            }
-        //
-        //  Capture the value, which is everything between the '"' marks.
-        //
-        _sb.setLength( 0 );
+            throw new ParseException( "Expected quote at start of tag value.", iStart );
 
-        while ( (ch = getNextChar()) != 0 && ch != '"' )
+        //  Capture the value, which is everything between the '"' marks.
+        for ( _sb.setLength( 0 ); (ch = readChar()) != '"'; _sb.appendCodePoint( ch ) )
             {
             if (ch == '\\')
-                ch = getNextChar();
+                ch = readChar();
 
-            if (ch == 0 || ch == '\r' || ch == '\n')
-                {
-                throw new ParseException( "Unexpected EOL.",
-                                          _index );
-                }
+            if (ch < ' ')
+                throw new ParseException( "Invalid tag character.", _index );
+            }
 
-            _sb.append( (char) ch );
-            }
-        //
-        //  Validate the value.
-        //
-        if (_sb.length() > 255)
-            {
-            s_log.warn( "Truncating tag value '{}'.", _sb );
-            _sb.setLength( 255 );
-            }
+        if (!isValidTagValue( _sb.toString() ))
+            throw new ParseException( "Invalid tag value.", iStart );
 
         return _sb.toString();
         }
-
-    /**
-     * Pushes the current character back into the stream.
-     */
-    private void ungetChar()
-        { _indexNext = _index; }
     //  -----------------------------------------------------------------------
-    //	GETTERS & SETTERS
+    //	IMPLEMENTATION
     //	-----------------------------------------------------------------------
 
     /**
@@ -369,7 +282,7 @@ public class ParsePGN extends Parser
      *
      * @return Input character, or zero if no more characters.
      */
-    private int getNextChar()
+    private int readChar()
         {
         int ch = 0;
 
@@ -390,14 +303,20 @@ public class ParsePGN extends Parser
      *
      * @return Next non-whitespace character.
      */
-    private int getNextNonWhiteChar()
+    private int readNextChar()
         {
         int ch;
 
-        while ( (ch = getNextChar()) != 0 )
+        while ( (ch = readChar()) != 0 )
             if (!Character.isWhitespace( ch ))
                 return ch;
 
         return 0;
         }
+
+    /**
+     * Pushes the current character back into the stream.
+     */
+    private void undoRead()
+        { _indexNext = _index; }
     }   /* end of nested class ParsePGN */
