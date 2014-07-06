@@ -50,4 +50,10 @@ public class TestGameFactory extends TestBase
         assertNull( GameFactory.createFromPGN( "" ) );
         assertNull( GameFactory.createFromPGN( "  \n\r\t" ) );
         }
+
+    @Test
+    public void t_createFromPGN_fail_FEN()
+        {
+        assertNull( GameFactory.createFromPGN( "[FEN \"\"]" ) );
+        }
     }

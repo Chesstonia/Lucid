@@ -30,7 +30,7 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx.io;
+package net.humbleprogrammer.maxx.pgn;
 
 import net.humbleprogrammer.TestBase;
 import net.humbleprogrammer.humble.Stopwatch;
@@ -38,58 +38,65 @@ import net.humbleprogrammer.humble.TimeUtil;
 import org.junit.*;
 
 import java.io.FileReader;
-import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class TestPgnReader extends TestBase
+import static org.junit.Assert.fail;
+
+public class TestPgnStream extends TestBase
     {
     //  -----------------------------------------------------------------------
     //	STATIC DECLARATIONS
     //	-----------------------------------------------------------------------
 
-    /** Total number of games read in. */
-    protected static int        s_iNetGames    = 0;
     /** Total number of nanoseconds spent generating moves. */
-    protected static long       s_lNetNanosecs = 0L;
-    /** List of PGN files.. */
-    protected static List<Path> s_listFiles    = new ArrayList<Path>();
+    protected static long s_lNetNanosecs = 0L;
+    /** Total number of tokens read in. */
+    protected static long s_lNetTokens   = 0;
 
     //  -----------------------------------------------------------------------
     //	UNIT TESTS
     //	-----------------------------------------------------------------------
 
-    @Test(expected = IllegalArgumentException.class)
-    public void t_ctor_fail_null()
-        {
-        new PgnReader( null );
-        }
-
     @Test
     public void t_comprehensive()
         {
+        String strFile = "";
+        String strPgn = "";
         Stopwatch swatch = new Stopwatch();
 
         try
             {
-            for ( Path path : s_listFiles )
+            for ( Path path : s_listPGN )
                 {
+                strFile = path.toString();
+
                 PgnReader pgn = new PgnReader( new FileReader( path.toFile() ) );
 
-                swatch.start();
-                while ( pgn.readGame() != null )
-                    s_iNetGames++;
-                swatch.stop();
+                while ( (strPgn = pgn.readGame()) != null )
+                    {
+                    PgnStream stream = new PgnStream( strPgn );
+                    PgnStream.PgnToken token;
 
-                if ((s_lNetNanosecs += swatch.getElapsed()) >= s_lMaxNanosecs)
-                    break;
+                    swatch.start();
+
+                    while ( (token = stream.nextToken()) != null )
+                        {
+                        s_lNetTokens++;
+                        if (token == PgnStream.PgnToken.Result)
+                            break;
+                        }
+
+                    swatch.stop();
+                    if ((s_lNetNanosecs += swatch.getElapsed()) >= s_lMaxNanosecs)
+                        return;
+                    }
                 }
             }
-        catch (IOException ex)
+        catch (Exception ex)
             {
-
+            fail( String.format( "%s:\n%s\n%s",
+                                 strFile, strPgn, ex.getMessage() ) );
             }
         }
 
@@ -102,21 +109,21 @@ public class TestPgnReader extends TestBase
         {
         final long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
 
-        if (lMillisecs > 0L && s_iNetGames > 0)
+        if (lMillisecs > 0L && s_lNetTokens > 0)
             {
-            s_log.info( String.format( "%s: PgnReader read %,d games in %s (%,d/sec)",
+            s_log.info( String.format( "%s: PgnStream parsed %,d tokens in %s (%,d/sec)",
                                        DURATION.toString(),
-                                       s_iNetGames,
+                                       s_lNetTokens,
                                        TimeUtil.formatMillisecs( lMillisecs, true ),
-                                       (s_iNetGames * 1000L) / lMillisecs ) );
+                                       (s_lNetTokens * 1000L) / lMillisecs ) );
             }
         }
 
     @BeforeClass
     public static void setup()
         {
-        s_iNetGames = 0;
+        s_lNetTokens = 0;
         s_lNetNanosecs = 0L;
         }
 
-    }   /* end of class TestPgnReader */
+    }   /* end of class TestPgnStream */

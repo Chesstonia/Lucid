@@ -192,9 +192,10 @@ public class TestMoveList extends TestBase
     @AfterClass
     public static void displayResults()
         {
-        final long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
+        long lMillisecs;
 
-        if (lMillisecs > 0L && s_lNetMoves > 0L)
+        if (s_lNetMoves > 0L &&
+            (lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs )) > 0)
             {
             s_log.info( String.format( "%s: MoveList generated %,d moves in %s (%,d mps)",
                                        DURATION.toString(),
@@ -235,13 +236,15 @@ public class TestMoveList extends TestBase
             /*
             **  CODE
             */
-            long lCount = 0L;
+            long lCount;
             final MoveList moves = new MoveList( bd );
 
             if (iDepth-- <= 0)
                 lCount = moves.size();
             else
                 {
+                lCount = 0L;
+
                 for ( Move mv : moves )
                     {
                     bd.makeMove( mv );

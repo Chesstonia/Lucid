@@ -491,20 +491,16 @@ public class MoveList implements Iterable<Move>
             bbPieces = _state.map[ MAP_W_BISHOP + _opponent ] |
                        _state.map[ MAP_W_QUEEN + _opponent ];
 
-            if ((bbPlayer & Bitboards.bishop[ _iSqKing ]) != 0L &&
-                (bbPieces & Bitboards.bishop[ _iSqKing ]) != 0L)
-                {
+            if ((bbPieces & Bitboards.bishop[ _iSqKing ]) != 0L)
                 bbPinners |= bbPieces & Bitboards.getBishopAttacks( _iSqKing, _bbOpponent );
-                }
 
             bbPieces = _state.map[ MAP_W_ROOK + _opponent ] |
                        _state.map[ MAP_W_QUEEN + _opponent ];
 
-            if ((bbPlayer & Bitboards.rook[ _iSqKing ]) != 0L &&
-                (bbPieces & Bitboards.rook[ _iSqKing ]) != 0L)
-                {
+            if ((bbPieces & Bitboards.rook[ _iSqKing ]) != 0L)
                 bbPinners |= bbPieces & Bitboards.getRookAttacks( _iSqKing, _bbOpponent );
-                }
+
+            bbPinners &= ~Bitboards.king[ _iSqKing ];   // can't be adjacent
 
             while ( bbPinners != 0L )
                 {

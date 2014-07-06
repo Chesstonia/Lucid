@@ -30,7 +30,7 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx.io;
+package net.humbleprogrammer.maxx.pgn;
 
 import net.humbleprogrammer.humble.DBC;
 import net.humbleprogrammer.humble.StrUtil;
@@ -153,11 +153,11 @@ public class PgnReader
                     break;
                     }
                 }
+
+            StrUtil.trim( _sb );
             }
         catch (IOException ex)
             { _bAtEOF = true; }
-
-        StrUtil.trim( _sb );
 
         return _sb.toString();
         }

@@ -30,29 +30,17 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx.parsers;
+package net.humbleprogrammer.maxx.pgn;
 
-import net.humbleprogrammer.TestBase;
-import net.humbleprogrammer.maxx.*;
-import org.junit.Test;
+import java.text.ParseException;
 
-public class TestParsePGN extends TestBase
+public class PgnException extends ParseException
     {
-
-    //  -----------------------------------------------------------------------
-    //	UNIT TESTS
-    //	-----------------------------------------------------------------------
-
-    @Test( expected = IllegalArgumentException.class )
-    public void t_exportTags_fail_param1()
+    public PgnException( int iOffset, String strMessage )
         {
-        ParsePGN.exportTags( null, new StringBuilder() );
+        super( strMessage, iOffset );
+        /*
+        **  EMPTY CTOR
+        */
         }
-
-    @Test( expected = IllegalArgumentException.class )
-    public void t_exportTags_fail_param2()
-        {
-        ParsePGN.exportTags( GameFactory.createBlank(), null );
-        }
-
-    }   /* end of class TestParsePGN */
+    }   /* end of class PgnException */

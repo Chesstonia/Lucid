@@ -30,101 +30,91 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx.parsers;
+package net.humbleprogrammer.maxx.pgn;
 
-import net.humbleprogrammer.humble.StrUtil;
-import net.humbleprogrammer.maxx.*;
+import net.humbleprogrammer.TestBase;
+import net.humbleprogrammer.humble.Stopwatch;
+import net.humbleprogrammer.humble.TimeUtil;
+import org.junit.*;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
-class ParseSAN extends Parser
+import static org.junit.Assert.fail;
+
+public class TestPgnReader extends TestBase
     {
-
     //  -----------------------------------------------------------------------
-    //	DECLARATIONS
+    //	STATIC DECLARATIONS
     //	-----------------------------------------------------------------------
 
-    /** SAN string pattern. */
-    private static final Pattern s_rxSAN = Pattern.compile
-        (
-            // Castling
-            "([Oo0](?:-[Oo0]){1,2}|" +
-            // Pawn move
-            "([a-h]x)?([a-h][1-8])([:=]([NBRQ]))?|" +
-            // Piece move
-            "([NBRQK][a-h]?[1-8]?)x?([a-h][1-8]))" +
-            // Annotation
-            "([\\+\\#]?(\\![\\!\\?]?|\\?[\\!\\?]?)?)"
-        );
+    /** Total number of games read in. */
+    protected static int  s_iNetGames    = 0;
+    /** Total number of nanoseconds spent generating moves. */
+    protected static long s_lNetNanosecs = 0L;
 
     //  -----------------------------------------------------------------------
-    //	PUBLIC METHODS
+    //	UNIT TESTS
     //	-----------------------------------------------------------------------
 
-    /**
-     * Converts a SAN move string to a move.
-     *
-     * @param strSAN
-     *     String to parse.
-     * @param bd
-     *     Board to use to generate legal moves.
-     *
-     * @return {@link net.humbleprogrammer.maxx.Move} object if parsed, <c>null</c> otherwise.
-     */
-    public static Move fromString( final Board bd, final String strSAN )
+    @Test(expected = IllegalArgumentException.class)
+    public void t_ctor_fail_null()
         {
-        if (bd == null || StrUtil.isBlank( strSAN ))
-            return null;
-        /*
-        **  CODE
-        */
-
-        return null;
+        new PgnReader( null );
         }
 
-    /**
-     * Searches a string for a valid SAN string.
-     *
-     * @param strSAN
-     *     String to search.
-     *
-     * @return {@link java.util.regex.Matcher} if found; null otherwise.
-     */
-    public static Matcher matchSAN( final String strSAN )
+    @Test
+    public void t_comprehensive()
         {
-        if (StrUtil.isBlank( strSAN ))
-            return null;
-        /*
-        **  CODE
-        */
-        Matcher match = s_rxSAN.matcher( strSAN );
+        Stopwatch swatch = new Stopwatch();
 
-        return match.lookingAt() ? match : null;
-        }
+        try
+            {
+            for ( Path path : s_listPGN )
+                {
+                PgnReader pgn = new PgnReader( new FileReader( path.toFile() ) );
 
-    /**
-     * Creates a SAN string for a move.
-     *
-     * @param bd
-     *     Board to move was made on.
-     * @param move
-     *     Move to export.
-     *
-     * @return SAN string.
-     */
-    public static String toString( Board bd, Move move )
-        {
-        if (bd == null || move == null)
-            return null;
-        /*
-        **  CODE
-        */
-        return "";
+                swatch.start();
+                while ( pgn.readGame() != null )
+                    s_iNetGames++;
+                swatch.stop();
+
+                if ((s_lNetNanosecs += swatch.getElapsed()) >= s_lMaxNanosecs)
+                    break;
+                }
+            }
+        catch (IOException ex)
+            {
+            fail( ex.getMessage() );
+            }
         }
 
     //  -----------------------------------------------------------------------
     //	METHODS
     //	-----------------------------------------------------------------------
 
-    }   /* end of class ParseSAN */
+    @AfterClass
+    public static void displayResults()
+        {
+        final long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
+
+        if (lMillisecs > 0L && s_iNetGames > 0)
+            {
+            s_log.info( String.format( "%s: PgnReader read %,d games in %s (%,d/sec)",
+                                       DURATION.toString(),
+                                       s_iNetGames,
+                                       TimeUtil.formatMillisecs( lMillisecs, true ),
+                                       (s_iNetGames * 1000L) / lMillisecs ) );
+            }
+        }
+
+    @BeforeClass
+    public static void setup()
+        {
+        s_iNetGames = 0;
+        s_lNetNanosecs = 0L;
+        }
+
+    }   /* end of class TestPgnReader */

@@ -32,6 +32,8 @@
  ******************************************************************************/
 package net.humbleprogrammer.humble;
 
+import java.util.Arrays;
+
 /**
  * The {@link StrUtil} class implements string-related utiltiy methods.
  */
@@ -41,6 +43,56 @@ public class StrUtil
     //  -----------------------------------------------------------------------
     //	PUBLIC METHODS
     //	-----------------------------------------------------------------------
+
+    /**
+     * Create a string that contains a repeated character
+     *
+     * @param ch
+     *     Character to fill with.
+     * @param iCount
+     *     Count.
+     *
+     * @return String containing <c>iCount</c> characters.
+     */
+    public static String create( char ch, int iCount )
+        {
+        if (ch == 0 || iCount <= 0)
+            return "";
+
+        assert iCount < (1024 * 1024); // 1MB sanity check
+        /*
+        **  CODE
+        */
+        char[] array = new char[ iCount ];
+
+        Arrays.fill( array, ch );
+
+        return new String( array );
+        }
+
+    /**
+     * Searchs a string array for a given value.
+     *
+     * @param array
+     *     Array to search
+     * @param strKey
+     *     Desired value.
+     *
+     * @return <c>true</c> if found; <c>false</c> otherwise.
+     */
+    public static boolean contains( final String[] array, final String strKey )
+        {
+        if (array == null || strKey == null)
+            return false;
+        /*
+        **  CODE
+        */
+        for ( final String str : array )
+            if (strKey.equals( str ))
+                return true;
+
+        return false;
+        }
 
     /**
      * Tests a string to see if it is blank, empty, or null.
@@ -97,6 +149,6 @@ public class StrUtil
                 break;
             }
 
-        sb.setLength( Math.max( 0, index ) );
+        sb.setLength( index + 1 );
         }
     }   /* end of class StrUtil */

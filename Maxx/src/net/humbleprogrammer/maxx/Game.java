@@ -32,10 +32,9 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import net.humbleprogrammer.maxx.parsers.ParsePGN;
+import net.humbleprogrammer.maxx.pgn.PgnStream;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Game
     {
@@ -122,7 +121,7 @@ public class Game
      */
     public void setTag( String strName, String strValue )
         {
-        if (!ParsePGN.isValidTagName( strName ))
+        if (!PgnStream.isValidTagName( strName ))
             return;
         /*
         **  CODE
@@ -132,6 +131,14 @@ public class Game
         if (strName.equalsIgnoreCase( "FEN" ))
             setStartingPosition( strValue );
         }
+
+    /**
+     * Gets all the tag names.
+     *
+     * @return Set of tag names.
+     */
+    public Set<String> getTagNames()
+        { return Collections.unmodifiableSet( _tags.keySet() ); }
 
     /**
      * Sets the starting position for the game.

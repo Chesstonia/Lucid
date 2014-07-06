@@ -98,6 +98,56 @@ public class Parser
     //	-----------------------------------------------------------------------
 
     /**
+     * Tests a PGN Tag Name for validity.
+     *
+     * Tag names must start with a capital letter, and contain only letters, digits, or the
+     * underscore ('_').  They cannot exceed 255 characters in length.
+     *
+     * @param strName
+     *     Name to test.
+     *
+     * @return <c>true</c> if valid; <c>false</c> otherwise.
+     */
+    public static boolean isValidTagName( String strName )
+        {
+        if (strName == null || strName.isEmpty() || strName.length() > 255)
+            return false;
+        /*
+        **  CODE
+        */
+        int ch = strName.codePointAt( 0 );
+
+        if (!(Character.isLetter( ch ) && Character.isUpperCase( ch )))
+            return false;
+
+        for ( int index = 1; index < strName.length(); ++index )
+            {
+            if (Character.isSupplementaryCodePoint( ch ))
+                index++;
+
+            ch = strName.codePointAt( index );
+            if (!(ch == '_' || Character.isLetter( ch ) || Character.isDigit( ch )))
+                return false;
+            }
+
+        return true;
+        }
+
+
+    /**
+     * Tests a PGN Tag Value for validity.
+     *
+     * Tag values cannot exceed 255 characters in length.
+     *
+     * @param strValue
+     *     Value to test.
+     *
+     * @return <c>true</c> if valid; <c>false</c> otherwise.
+     */
+    public static boolean isValidTagValue( String strValue )
+        { return (strValue != null && strValue.length() < 256); }
+
+    /**
      * Searches a string for a valid FEN string.
      *
      * @param strFEN

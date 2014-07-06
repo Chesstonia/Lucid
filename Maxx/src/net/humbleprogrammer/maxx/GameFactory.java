@@ -34,12 +34,20 @@ package net.humbleprogrammer.maxx;
 
 import net.humbleprogrammer.humble.DBC;
 import net.humbleprogrammer.humble.StrUtil;
-import net.humbleprogrammer.maxx.parsers.ParsePGN;
-
-import java.text.ParseException;
+import net.humbleprogrammer.maxx.pgn.*;
 
 public class GameFactory extends Parser
     {
+
+    //  -----------------------------------------------------------------------
+    //	STATIC DECLARATIONS
+    //	-----------------------------------------------------------------------
+
+    /** The mandatory "Seven Tag Roster". */
+    private static final String[] s_strTags = new String[]
+        {
+            "Event", "Site", "Date", "Round", "White", "Black", "Result"
+        };
 
     //  -----------------------------------------------------------------------
     //	PUBLIC METHODS
@@ -91,13 +99,12 @@ public class GameFactory extends Parser
 
         try
             {
-            ParsePGN parser = new ParsePGN( strPGN );
+            PgnStream stream = new PgnStream(strPGN);
 
-            if (parser.importTags())
-                parser.importMoves();
-
+            while (stream.nextToken() != null)
+                { /* EMPTY BLOCK */ }
             }
-        catch (ParseException ex)
+        catch (PgnException ex)
             {
             s_strError = ex.getMessage();
             s_log.debug( s_strError, ex );
@@ -114,16 +121,37 @@ public class GameFactory extends Parser
      *
      * @return PGN string.
      */
-    static String toString( Game gm )
+    public static String toString( Game gm )
         {
         DBC.requireNotNull( gm, "Game" );
         /*
         **  CODE
         */
+        String strValue;
         StringBuilder sb = new StringBuilder();
 
-        ParsePGN.exportTags( gm, sb );
-        ParsePGN.exportMoves( gm, sb );
+        for ( String strName : s_strTags )
+            {
+            if ((strValue = gm.getTag( strName )) == null)
+                strValue = "";
+
+            sb.append( String.format( "[%s \"%s\"]" + STR_CRLF,
+                                      strName,
+                                      strValue ) );
+            }
+        //
+        //  Export optional tags.
+        //
+        for ( String strName : gm.getTagNames() )
+            if (!StrUtil.contains( s_strTags, strName ) &&
+                (strValue = gm.getTag( strName )) != null)
+                {
+                sb.append( String.format( "[%s \"%s\"]" + STR_CRLF,
+                                          strName,
+                                          strValue ) );
+                }
+
+        sb.append( STR_CRLF );  // empty line after tag section
 
         return sb.toString();
         }
