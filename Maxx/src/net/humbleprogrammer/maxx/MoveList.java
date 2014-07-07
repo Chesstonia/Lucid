@@ -225,6 +225,10 @@ public class MoveList implements Iterable<Move>
      */
     private void generateAllMoves( long bbPieces )
         {
+        final long bbEP = Square.isValid( _state.iSqEP )
+                          ? (1L << _state.iSqEP)
+                          : 0L;
+
         while ( bbPieces != 0L )
             {
             int iSq = BitUtil.first( bbPieces );
@@ -235,10 +239,14 @@ public class MoveList implements Iterable<Move>
                 {
                 case W_PAWN:
                     generatePawnMovesWhite( iSq );
+                    if ((bbEP & Bitboards.pawnUpwards[ iSq ]) != 0L)
+                        addMove( iSq, _state.iSqEP, Move.Type.EN_PASSANT );
                     break;
 
                 case B_PAWN:
                     generatePawnMovesBlack( iSq );
+                    if ((bbEP & Bitboards.pawnDownwards[ iSq ]) != 0L)
+                        addMove( iSq, _state.iSqEP, Move.Type.EN_PASSANT );
                     break;
 
                 case W_KNIGHT:
@@ -279,38 +287,6 @@ public class MoveList implements Iterable<Move>
                 default:
                     throw new RuntimeException( "Invalid piece type." );
                 }
-            }
-
-        generateEnPassantCaptures( _state.iSqEP );
-        }
-
-    /**
-     * Generate all possible en passant captures.
-     *
-     * This ignores the {@link #_bbToSq} restriction, because if the moving player's King is being
-     * checked by a pawn that can be captured via e.p., the "From" and "To" square of the opposing
-     * pawn are not visible by the King.
-     *
-     * @param iSqEP
-     *     En passant square in 8x8 format.
-     */
-    private void generateEnPassantCaptures( int iSqEP )
-        {
-        if (!Square.isValid( iSqEP ))
-            return;
-        /*
-        **  CODE
-        */
-        long bbEP = (_player == WHITE)
-                    ? (_state.map[ MAP_W_PAWN ] & Bitboards.pawnDownwards[ iSqEP ])
-                    : (_state.map[ MAP_B_PAWN ] & Bitboards.pawnUpwards[ iSqEP ]);
-
-
-        while ( bbEP != 0L )
-            {
-            int iSqFrom = BitUtil.first( bbEP );
-            bbEP ^= 1L << iSqFrom;
-            addMove( iSqFrom, iSqEP, Move.Type.EN_PASSANT );
             }
         }
 
@@ -488,19 +464,19 @@ public class MoveList implements Iterable<Move>
             long bbPinners = 0L;
             long bbPlayer = _state.map[ MAP_W_ALL + _player ];
 
-            bbPieces = _state.map[ MAP_W_BISHOP + _opponent ] |
-                       _state.map[ MAP_W_QUEEN + _opponent ];
+            bbPieces = ~Bitboards.king[ _iSqKing ] &
+                       (_state.map[ MAP_W_BISHOP + _opponent ] |
+                        _state.map[ MAP_W_QUEEN + _opponent ]);
 
             if ((bbPieces & Bitboards.bishop[ _iSqKing ]) != 0L)
                 bbPinners |= bbPieces & Bitboards.getBishopAttacks( _iSqKing, _bbOpponent );
 
-            bbPieces = _state.map[ MAP_W_ROOK + _opponent ] |
-                       _state.map[ MAP_W_QUEEN + _opponent ];
+            bbPieces = ~Bitboards.king[ _iSqKing ] &
+                       (_state.map[ MAP_W_ROOK + _opponent ] |
+                        _state.map[ MAP_W_QUEEN + _opponent ]);
 
             if ((bbPieces & Bitboards.rook[ _iSqKing ]) != 0L)
                 bbPinners |= bbPieces & Bitboards.getRookAttacks( _iSqKing, _bbOpponent );
-
-            bbPinners &= ~Bitboards.king[ _iSqKing ];   // can't be adjacent
 
             while ( bbPinners != 0L )
                 {
