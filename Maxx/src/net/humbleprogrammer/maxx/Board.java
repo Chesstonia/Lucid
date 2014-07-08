@@ -90,10 +90,6 @@ public class Board
     private int _iHalfMoves;
     /** En passant square in 8x8 format, or <c>INVALID</c> if e.p. not possible. */
     private int  _iSqEP      = INVALID;
-    /** Current square index in 8x8 format of the Black King. */
-    private int  _iSqKingB   = INVALID;
-    /** Current square index in 8x8 format of the White King. */
-    private int  _iSqKingW   = INVALID;
     /** Zobrist hash of pieces, castling privileges, e.p. square, and moving player. */
     private long _hashFull   = HASH_BLANK;
     /** Zobrist hash of piece/square combinations. */
@@ -223,8 +219,8 @@ public class Board
 
         // Test 7 -- moving player's king can't be in check.
         return (_player == WHITE)
-               ? !Bitboards.isAttackedBy( _map, _iSqKingW, BLACK )
-               : !Bitboards.isAttackedBy( _map, _iSqKingB, WHITE );
+               ? !Bitboards.isAttackedBy( _map, getKingSquare( WHITE ), BLACK )
+               : !Bitboards.isAttackedBy( _map, getKingSquare( BLACK ), WHITE );
         }
 
     /**
@@ -245,14 +241,17 @@ public class Board
         final int iSqFrom = move.iSqFrom;
         final int iSqTo = move.iSqTo;
 
-        boolean bPawnMoveOrCapture = true;
-
         _iSqEP = INVALID;
 
         if (_sq[ iSqTo ] != null)
+            {
+            _iHalfMoves = 0;
             removePiece( iSqTo );
-        else if (_sq[ iSqFrom ].index != PAWN)
-            bPawnMoveOrCapture = false;
+            }
+        else if (_sq[ iSqFrom ].index == PAWN)
+            _iHalfMoves = 0;
+        else
+            _iHalfMoves++;
 
         switch (move.iType)
             {
@@ -274,8 +273,8 @@ public class Board
                 break;
 
             case Move.Type.PAWN_PUSH:
-                _iSqEP = (iSqFrom + iSqTo) >>> 1;
                 movePiece( iSqFrom, iSqTo );
+                _iSqEP = (iSqFrom + iSqTo) >>> 1;
                 break;
 
             case Move.Type.PROMOTION:
@@ -302,15 +301,10 @@ public class Board
                 throw new RuntimeException( "Unrecognized move type." );
             }
         //
-        //  Update the castling flags, clocks, and flip the player.
+        //  Update the castling flags, move number, and flip the player.
         //
         if (_castling != CastlingFlags.NONE)
             _castling &= s_castling[ iSqFrom ] & s_castling[ iSqTo ];
-
-        if (bPawnMoveOrCapture)
-            _iHalfMoves = 0;
-        else
-            _iHalfMoves++;
 
         if ((_player ^= 1) == WHITE)
             _iFullMoves++;
@@ -512,7 +506,9 @@ public class Board
      * @return King square in 8x8 format, or INVALID if no king on the board.
      */
     public int getKingSquare( final int iPlayer )
-        { return (iPlayer == WHITE) ? _iSqKingW : _iSqKingB; }
+        {
+        return BitUtil.first( _map[ MAP_W_KING + (iPlayer & 0x01) ] );
+        }
 
     /**
      * Gets all legal moves for the current position.
@@ -603,8 +599,6 @@ public class Board
         _iFullMoves = state.iFullMoves;
         _iHalfMoves = state.iHalfMoves;
         _iSqEP = state.iSqEP;
-        _iSqKingB = state.iSqKingB;
-        _iSqKingW = state.iSqKingW;
         _hashFull = state.hashFull;
         _hashPieces = state.hashPieces;
         _player = state.player;
@@ -635,8 +629,8 @@ public class Board
         /*
         **  CODE
         */
-        long bbSqMask = (1L << iSqFrom) | (1L << iSqTo);
-        Piece piece = _sq[ iSqFrom ];
+        final long bbSqMask = (1L << iSqFrom) | (1L << iSqTo);
+        final Piece piece = _sq[ iSqFrom ];
 
         _map[ piece.color ] ^= bbSqMask;
         _map[ piece.index ] ^= bbSqMask;
@@ -645,11 +639,6 @@ public class Board
         _sq[ iSqTo ] = piece;
 
         _hashPieces ^= ZobristHash.getPieceHash( iSqFrom, iSqTo, piece );
-
-        if (piece == Piece.W_KING)
-            _iSqKingW = iSqTo;
-        else if (piece == Piece.B_KING)
-            _iSqKingB = iSqTo;
         }
 
     /**
@@ -660,25 +649,20 @@ public class Board
      * @param piece
      *     Piece to place.
      */
-    void placePiece( int iSq, Piece piece )
+    void placePiece( int iSq, final Piece piece )
         {
         assert Square.isValid( iSq );
         assert piece != null;
         /*
         **  CODE
         */
-        long bbMask = 1L << iSq;
+        final long bbMask = 1L << iSq;
 
         _map[ piece.color ] |= bbMask;
         _map[ piece.index ] |= bbMask;
 
         _sq[ iSq ] = piece;
         _hashPieces ^= ZobristHash.getPieceHash( iSq, piece );
-
-        if (piece == Piece.W_KING)
-            _iSqKingW = iSq;
-        else if (piece == Piece.B_KING)
-            _iSqKingB = iSq;
         }
 
     /**
@@ -701,11 +685,6 @@ public class Board
 
         _sq[ iSq ] = null;
         _hashPieces ^= ZobristHash.getPieceHash( iSq, piece );
-
-        if (piece == Piece.W_KING)
-            _iSqKingW = INVALID;
-        else if (piece == Piece.B_KING)
-            _iSqKingB = INVALID;
         }
 
     //  -----------------------------------------------------------------------
@@ -747,35 +726,32 @@ public class Board
 
     static class State
         {
-        final int  castling;
-        final int  iFullMoves;
-        final int  iHalfMoves;
-        final int  iSqEP;
-        final int  iSqKingB;
-        final int  iSqKingW;
-        final int  player;
-        final long hashFull;
-        final long hashPieces;
-
-        final long[]  map = new long[ MAP_LENGTH ];
-        final Piece[] sq  = new Piece[ 64 ];
+        final int     castling;
+        final int     iFullMoves;
+        final int     iHalfMoves;
+        final int     iSqEP;
+        final int     player;
+        final long    hashFull;
+        final long    hashPieces;
+        final long[]  map;
+        final Piece[] sq;
 
         State( Board bd )
             {
             assert bd != null;
-
+            /*
+            **  CODE
+            */
             castling = bd._castling;
             iFullMoves = bd._iFullMoves;
             iHalfMoves = bd._iHalfMoves;
             iSqEP = bd._iSqEP;
-            iSqKingB = bd._iSqKingB;
-            iSqKingW = bd._iSqKingW;
             hashFull = bd._hashFull;
             hashPieces = bd._hashPieces;
             player = bd._player;
 
-            System.arraycopy( bd._map, 0, map, 0, MAP_LENGTH );
-            System.arraycopy( bd._sq, 0, sq, 0, 64 );
+            map = bd._map.clone();
+            sq = bd._sq.clone();
             }
         }
     }   /* end of class Board */

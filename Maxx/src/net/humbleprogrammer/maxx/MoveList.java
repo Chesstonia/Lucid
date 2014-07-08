@@ -60,10 +60,6 @@ public class MoveList implements Iterable<Move>
     private final int         _player;
     /** Square occupied by the moving player's King. */
     private final int         _iSqKing;
-    /** Bitboard of all pieces. */
-    private final long        _bbAll;
-    /** Bitboard of opposing pieces. */
-    private final long        _bbOpponent;
     /** Current position. */
     private final Board.State _state;
     /** Array of packed moves. */
@@ -73,8 +69,12 @@ public class MoveList implements Iterable<Move>
 
     /** Number of moves in {@link #_moves}. */
     private int  _iCount;
+    /** Bitboard of all pieces. */
+    private long _bbAll;
     /** Bitboard of pieces threatening the moving player's King. */
     private long _bbCheckers;
+    /** Bitboard of opposing pieces. */
+    private long _bbOpponent;
     /** Bitboard of all pinned pieces. */
     private long _bbPinned;
     /** Bitboard of potential "To" squares. */
@@ -103,15 +103,9 @@ public class MoveList implements Iterable<Move>
 
         _player = _state.player;
         _opponent = _player ^ 1;
+        _iSqKing = bd.getKingSquare( _player );
 
-        _bbAll = _state.map[ MAP_W_ALL ] | _state.map[ MAP_B_ALL ];
-        _bbOpponent = _state.map[ _opponent ];
-
-        _iSqKing = (_player == WHITE) ? _state.iSqKingW : _state.iSqKingB;
-        _bbToSq = ~_state.map[ _player ];
-
-        if (Square.isValid( _iSqKing ))
-            generateAllMoves( initBitboards( _state.map[ _player ] ) );
+        generateAllMoves( initBitboards( _state.map[ _player ] ) );
         }
 
     //  -----------------------------------------------------------------------
@@ -446,10 +440,18 @@ public class MoveList implements Iterable<Move>
      */
     private long initBitboards( long bbFromSq )
         {
+        if ((_iSqKing & ~0x3F) != 0)
+            return 0L;
+        /*
+        **  CODE
+        */
         long bbPieces;
 
+        _bbAll = _state.map[ MAP_W_ALL ] | _state.map[ MAP_B_ALL ];
         _bbCheckers = Bitboards.getAttackedBy( _state.map, _iSqKing, _opponent );
+        _bbOpponent = _state.map[ _opponent ];
         _bbPinned = 0L;
+        _bbToSq = ~_state.map[ _player ];
         //
         //  The moving player is NOT in check.
         //
@@ -464,19 +466,17 @@ public class MoveList implements Iterable<Move>
             long bbPinners = 0L;
             long bbPlayer = _state.map[ MAP_W_ALL + _player ];
 
-            bbPieces = ~Bitboards.king[ _iSqKing ] &
-                       (_state.map[ MAP_W_BISHOP + _opponent ] |
-                        _state.map[ MAP_W_QUEEN + _opponent ]);
-
+            bbPieces = _state.map[ MAP_W_BISHOP + _opponent ] |
+                       _state.map[ MAP_W_QUEEN + _opponent ];
             if ((bbPieces & Bitboards.bishop[ _iSqKing ]) != 0L)
                 bbPinners |= bbPieces & Bitboards.getBishopAttacks( _iSqKing, _bbOpponent );
 
-            bbPieces = ~Bitboards.king[ _iSqKing ] &
-                       (_state.map[ MAP_W_ROOK + _opponent ] |
-                        _state.map[ MAP_W_QUEEN + _opponent ]);
-
+            bbPieces = _state.map[ MAP_W_ROOK + _opponent ] |
+                       _state.map[ MAP_W_QUEEN + _opponent ];
             if ((bbPieces & Bitboards.rook[ _iSqKing ]) != 0L)
                 bbPinners |= bbPieces & Bitboards.getRookAttacks( _iSqKing, _bbOpponent );
+
+            bbPinners &= ~Bitboards.king[ _iSqKing ];
 
             while ( bbPinners != 0L )
                 {
