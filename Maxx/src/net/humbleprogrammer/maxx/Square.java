@@ -222,7 +222,7 @@ public class Square
         int iFile = Character.toLowerCase( strIn.charAt( iOffset ) ) - 'a';
         int iRank = strIn.charAt( iOffset + 1 ) - '1';
 
-        return (iRank << 3) + iFile;
+        return toIndex( iRank, iFile );
         }
 
     /**
