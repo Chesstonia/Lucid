@@ -72,7 +72,7 @@ public class Move
         */
         iSqFrom = (iPacked >>> 8) & 0x3F;
         iSqTo = (iPacked >>> 16) & 0x3F;
-        iType = iPacked & 0xFF;
+        iType = iPacked & Type.MASK;
 
         this.state = state;
         }
@@ -107,7 +107,7 @@ public class Move
      * @return packed move.
      */
     static int pack( int iSqFrom, int iSqTo, int iMoveType )
-        { return (iSqTo << 16) | (iSqFrom << 8) | (iMoveType & 0xFF); }
+        { return (iSqTo << 16) | (iSqFrom << 8) | (iMoveType & Type.MASK); }
 
     //  -----------------------------------------------------------------------
     //	OVERRIDES
@@ -157,6 +157,9 @@ public class Move
         public static final int PROMOTE_BISHOP = 6;
         /** Under-promote to a Knight. */
         public static final int PROMOTE_KNIGHT = 7;
+
+        /** Mask for viable bits. */
+        static final int MASK = 0x07;
         }   /* end of nested class Type */
 
     }   /* end of class Move */

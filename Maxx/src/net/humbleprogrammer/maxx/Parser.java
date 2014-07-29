@@ -33,8 +33,6 @@
 package net.humbleprogrammer.maxx;
 
 import net.humbleprogrammer.humble.StrUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -87,65 +85,12 @@ public class Parser
     //	STATIC DECLARATIONS
     //	-----------------------------------------------------------------------
 
-
-    /** Logger. */
-    static final Logger s_log = LoggerFactory.getLogger( "MAXX" );
     /** Last error encountered. */
     static String s_strError;
 
     //  -----------------------------------------------------------------------
     //	PUBLIC METHODS
     //	-----------------------------------------------------------------------
-
-    /**
-     * Tests a PGN Tag Name for validity.
-     *
-     * Tag names must start with a capital letter, and contain only letters, digits, or the
-     * underscore ('_').  They cannot exceed 255 characters in length.
-     *
-     * @param strName
-     *     Name to test.
-     *
-     * @return <c>true</c> if valid; <c>false</c> otherwise.
-     */
-    public static boolean isValidTagName( String strName )
-        {
-        if (strName == null || strName.isEmpty() || strName.length() > 255)
-            return false;
-        /*
-        **  CODE
-        */
-        int ch = strName.codePointAt( 0 );
-
-        if (!(Character.isLetter( ch ) && Character.isUpperCase( ch )))
-            return false;
-
-        for ( int index = 1; index < strName.length(); ++index )
-            {
-            if (Character.isSupplementaryCodePoint( ch ))
-                index++;
-
-            ch = strName.codePointAt( index );
-            if (!(ch == '_' || Character.isLetter( ch ) || Character.isDigit( ch )))
-                return false;
-            }
-
-        return true;
-        }
-
-
-    /**
-     * Tests a PGN Tag Value for validity.
-     *
-     * Tag values cannot exceed 255 characters in length.
-     *
-     * @param strValue
-     *     Value to test.
-     *
-     * @return <c>true</c> if valid; <c>false</c> otherwise.
-     */
-    public static boolean isValidTagValue( String strValue )
-        { return (strValue != null && strValue.length() < 256); }
 
     /**
      * Searches a string for a valid FEN string.
@@ -271,7 +216,7 @@ public class Parser
      *
      * @return Language code.
      */
-    @SuppressWarnings("SameReturnValue")
+    @SuppressWarnings( "SameReturnValue" )
     public static String getLanguage()
         { return "en-US"; }
 

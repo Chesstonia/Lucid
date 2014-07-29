@@ -35,6 +35,7 @@ package net.humbleprogrammer.maxx;
 import net.humbleprogrammer.TestBase;
 import org.junit.Test;
 
+import static net.humbleprogrammer.maxx.Constants.HASH_INITIAL;
 import static org.junit.Assert.*;
 
 public class TestGameFactory extends TestBase
@@ -44,16 +45,26 @@ public class TestGameFactory extends TestBase
     //	UNIT TESTS
     //	-----------------------------------------------------------------------
     @Test
-    public void t_createFromPGN_fail()
+    public void t_createBlank()
         {
-        assertNull( GameFactory.createFromPGN( null ) );
-        assertNull( GameFactory.createFromPGN( "" ) );
-        assertNull( GameFactory.createFromPGN( "  \n\r\t" ) );
+        Game gm = GameFactory.createBlank();
+
+        assertNotNull( gm );
+        assertNotNull( gm.getPosition() );
+        assertEquals( HASH_INITIAL, gm.getPosition().getZobristHash() );
         }
 
     @Test
-    public void t_createFromPGN_fail_FEN()
+    public void t_fromString_fail()
         {
-        assertNull( GameFactory.createFromPGN( "[FEN \"\"]" ) );
+        assertNull( GameFactory.fromString( null ) );
+        assertNull( GameFactory.fromString( "" ) );
+        assertNull( GameFactory.fromString( "  \n\r\t" ) );
+        }
+
+    @Test
+    public void t_fromString_fail_FEN()
+        {
+        assertNull( GameFactory.fromString( "[FEN \"\"]" ) );
         }
     }

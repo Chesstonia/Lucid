@@ -34,7 +34,6 @@ package net.humbleprogrammer.maxx;
 
 import net.humbleprogrammer.humble.DBC;
 import net.humbleprogrammer.humble.StrUtil;
-import net.humbleprogrammer.maxx.pgn.*;
 
 public class GameFactory extends Parser
     {
@@ -62,23 +61,6 @@ public class GameFactory extends Parser
         { return new Game(); }
 
     /**
-     * Creates a game from a PGN string.
-     *
-     * @param strPGN
-     *     FEN string.
-     *
-     * @return Game object, or <code>null</code> if PGN is invalid.
-     */
-    public static Game createFromPGN( String strPGN )
-        {
-        return fromString( strPGN );
-        }
-
-    //  -----------------------------------------------------------------------
-    //	METHODS
-    //	-----------------------------------------------------------------------
-
-    /**
      * Converts a PGN string to a Game.
      *
      * <PGN-game> ::= <tag-section> <movetext-section>
@@ -88,7 +70,7 @@ public class GameFactory extends Parser
      *
      * @return {@link Game} object if parsed, <c>null</c> otherwise.
      */
-    private static Game fromString( final String strPGN )
+    public static Game fromString( final String strPGN )
         {
         if (StrUtil.isBlank( strPGN ))
             return null;
@@ -96,19 +78,6 @@ public class GameFactory extends Parser
         **  CODE
         */
         s_strError = null;
-
-        try
-            {
-            PgnStream stream = new PgnStream(strPGN);
-
-            while (stream.nextToken() != null)
-                { /* EMPTY BLOCK */ }
-            }
-        catch (PgnException ex)
-            {
-            s_strError = ex.getMessage();
-            s_log.debug( s_strError, ex );
-            }
 
         return null;
         }
@@ -155,5 +124,9 @@ public class GameFactory extends Parser
 
         return sb.toString();
         }
+
+    //  -----------------------------------------------------------------------
+    //	METHODS
+    //	-----------------------------------------------------------------------
 
     }   /* end of class GameFactory */

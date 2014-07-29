@@ -32,10 +32,9 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import net.humbleprogrammer.maxx.pgn.PgnStream;
-
 import java.util.*;
 
+@SuppressWarnings("unused")
 public class Game
     {
     //  -----------------------------------------------------------------------
@@ -56,10 +55,11 @@ public class Game
 
     /** Current position. */
     private final Board _board;
-    /** Initial position, or <code>null</code> for normal starting position. */
-    private       Board.State         _stateInitial = null;
     /** Map of PGN tags. */
-    private final Map<String, String> _tags         = new HashMap<String, String>();
+    private final Map<String, String> _tags = new HashMap<>();
+
+    /** Initial position, or <code>null</code> for normal starting position. */
+    private Board.State _stateInitial = null;
     /** Verdict, or <code>null</code> if not set. */
     private Verdict _verdict;
 
@@ -121,15 +121,7 @@ public class Game
      */
     public void setTag( String strName, String strValue )
         {
-        if (!PgnStream.isValidTagName( strName ))
-            return;
-        /*
-        **  CODE
-        */
         _tags.put( strName, strValue );
-
-        if (strName.equalsIgnoreCase( "FEN" ))
-            setStartingPosition( strValue );
         }
 
     /**
@@ -139,27 +131,6 @@ public class Game
      */
     public Set<String> getTagNames()
         { return Collections.unmodifiableSet( _tags.keySet() ); }
-
-    /**
-     * Sets the starting position for the game.
-     *
-     * @param strFEN
-     *     Starting position expressed as a FEN string.
-     *
-     * @return <code>.T.</code> if successful; <code>.F.</code> otherwise.
-     */
-    public boolean setStartingPosition( String strFEN )
-        {
-        Board bd = BoardFactory.createFromFEN( strFEN );
-
-        if (bd == null)
-            return false;
-
-        _stateInitial = bd.getState();
-        _board.setState( _stateInitial );
-
-        return true;
-        }
 
     //  -----------------------------------------------------------------------
     //	PUBLIC OVERRIDES

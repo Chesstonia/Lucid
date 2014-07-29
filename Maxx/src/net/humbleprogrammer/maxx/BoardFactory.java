@@ -87,8 +87,8 @@ public class BoardFactory extends Parser
     public static Board createCopy( final Board src )
         {
         return (src != null)
-                ? new Board( src )
-                : null;
+               ? new Board( src )
+               : null;
         }
 
     /**

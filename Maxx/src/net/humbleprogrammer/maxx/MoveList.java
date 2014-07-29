@@ -44,7 +44,7 @@ public class MoveList implements Iterable<Move>
     {
 
     //  -----------------------------------------------------------------------
-    //	CONSTANTS
+    //	STATIC DECLARATIONS
     //	-----------------------------------------------------------------------
 
     /** Maximum possible moves in a single position. */
@@ -473,17 +473,20 @@ public class MoveList implements Iterable<Move>
             long bbPinners = 0L;
             long bbPlayer = _state.map[ MAP_W_ALL + _player ];
             long bbPieces = Bitboards.bishop[ _iSqKing ] &
-                            (_state.map[ MAP_W_BISHOP + _opponent ] | _state.map[ MAP_W_QUEEN + _opponent ]);
+                            ~Bitboards.king[ _iSqKing ] &
+                            (_state.map[ MAP_W_BISHOP + _opponent ] |
+                             _state.map[ MAP_W_QUEEN + _opponent ]);
 
             if (bbPieces != 0L)
                 bbPinners |= bbPieces & Bitboards.getBishopAttacks( _iSqKing, _bbOpponent );
 
             bbPieces = Bitboards.rook[ _iSqKing ] &
-                       (_state.map[ MAP_W_ROOK + _opponent ] | _state.map[ MAP_W_QUEEN + _opponent ]);
+                       ~Bitboards.king[ _iSqKing ] &
+                       (_state.map[ MAP_W_ROOK + _opponent ] |
+                        _state.map[ MAP_W_QUEEN + _opponent ]);
+
             if (bbPieces != 0L)
                 bbPinners |= bbPieces & Bitboards.getRookAttacks( _iSqKing, _bbOpponent );
-
-            bbPinners &= ~Bitboards.king[ _iSqKing ];
 
             while ( bbPinners != 0L )
                 {
@@ -507,7 +510,6 @@ public class MoveList implements Iterable<Move>
             int iSqChecker = BitUtil.first( _bbCheckers );
             long bbXRays = Bitboards.getQueenAttacks( iSqChecker, _bbAll ) &
                            Bitboards.getQueenAttacks( _iSqKing, _bbAll );
-
             //
             //  If the King is being checked by a Knight or Pawn--or the attacker is adjacent
             //  to the King--so the only possible "From" squares are the King's square, plus

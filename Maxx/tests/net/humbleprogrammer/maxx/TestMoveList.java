@@ -66,7 +66,7 @@ public class TestMoveList extends TestBase
         assertFalse( moves.hasLegalMove() );
         }
 
-    @Test( expected = IllegalArgumentException.class )
+    @Test(expected = IllegalArgumentException.class)
     public void t_ctor_fail()
         {
         new MoveList( null );
@@ -320,8 +320,9 @@ public class TestMoveList extends TestBase
                               new long[]{ 23L, 585L, 9604L, 224795L, 4087490L, 89726430L, 1713104983L } ),
             new TestPosition( "8/k7/8/2R5/8/4q3/8/4B2K w - -",
                               new long[]{ 23L, 587L, 10041L, 234668L, 4173427L, 95031011L, 1730763310L } ),
-
+            //
             //  http://www.talkchess.com/forum/viewtopic.php?p=509159#509159
+            //
             new TestPosition( "r3k1rr/8/8/3PpP2/8/8/8/R3K2R w KQkq e6",
                               new long[]{ 29L, 829L, 20501L, 624871L, 15446339L, 485647607L, 12010433360L } ),
             new TestPosition( "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq -",
@@ -345,8 +346,9 @@ public class TestMoveList extends TestBase
                               new long[]{ 9L, 85L, 795L, 7658L, 72120L, 703851L, 6627106L } ),
             new TestPosition( "r3k2r/pb3p2/5npp/n2p4/1p1PPB2/6P1/P2N1PBP/R3K2R w KQkq -",
                               new long[]{ 33L, 946L, 30962L, 899715L, 29179893L, 857918729L, 27638313532L } ),
-
+            //
             // http://www.rocechess.ch/perftsuite.zip
+            //
             new TestPosition( "7K/7p/7k/8/8/8/8/8 w - -",
                               new long[]{ 1L, 3L, 12L, 80L, 342L, 2343L, 12377L } ),
             new TestPosition( "K7/p7/k7/8/8/8/8/8 w - -",
