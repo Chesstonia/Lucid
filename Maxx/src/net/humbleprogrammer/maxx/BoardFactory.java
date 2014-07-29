@@ -45,7 +45,7 @@ public class BoardFactory extends Parser
     //	-----------------------------------------------------------------------
 
     /** Initial board. */
-    private static final Board   s_bdInitial     = fromString( FEN_INITIAL );
+    static final         Board   s_bdInitial     = fromString( FEN_INITIAL );
     /** Used for creating mirrored positions. */
     private static final Piece[] s_pieceMirrored = new Piece[ Piece.values().length ];
 
@@ -170,6 +170,14 @@ public class BoardFactory extends Parser
     //	METHODS
     //	-----------------------------------------------------------------------
 
+    /**
+     * Creates a board from a FEN string.
+     *
+     * @param strFEN
+     *     FEN string.
+     *
+     * @return Populated board, or null if FEN string is not valid.
+     */
     private static Board fromString( String strFEN )
         {
         assert strFEN != null;
