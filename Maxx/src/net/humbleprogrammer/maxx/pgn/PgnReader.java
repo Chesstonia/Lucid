@@ -33,7 +33,6 @@
 package net.humbleprogrammer.maxx.pgn;
 
 import net.humbleprogrammer.humble.DBC;
-import net.humbleprogrammer.humble.StrUtil;
 import net.humbleprogrammer.maxx.Parser;
 
 import java.io.*;
@@ -97,24 +96,24 @@ public class PgnReader
         /*
         **  CODE
         */
-        int iPos;
-        String str;
-
-        _sb.setLength( 0 );
-
         try
             {
+            int iPos;
+            String str = (_strCached != null)
+                         ? _strCached
+                         : _reader.readLine();
+
+            _sb.setLength( 0 );
             //
             //  Read in lines one-by-one until an Event tag is found.
             //
-            for ( str = getNextLine(); str != null; str = _reader.readLine() )
-                if ((iPos = findEventTag( str )) >= 0)
+            for ( _strCached = null; str != null; str = _reader.readLine() )
+                if ((iPos = str.indexOf( EVENT_TAG )) >= 0)
                     {
                     if (iPos > 0)
                         str = str.substring( iPos );
 
                     _sb.append( str.trim() );
-                    _sb.append( Parser.STR_CRLF );
                     break;
                     }
 
@@ -133,10 +132,10 @@ public class PgnReader
             //
             while ( (str = _reader.readLine()) != null )
                 {
-                if ((iPos = findEventTag( str )) < 0)
+                if ((iPos = str.indexOf( EVENT_TAG )) < 0)
                     {
-                    _sb.append( str.trim() );
                     _sb.append( Parser.STR_CRLF );
+                    _sb.append( str.trim() );
                     }
                 else
                     {
@@ -146,56 +145,20 @@ public class PgnReader
                         {
                         _strCached = str.substring( iPos );
 
-                        _sb.append( str.substring( 0, iPos - 1 ).trim() );
                         _sb.append( Parser.STR_CRLF );
+                        _sb.append( str.substring( 0, iPos - 1 ).trim() );
                         }
 
                     break;
                     }
                 }
-
-            StrUtil.trim( _sb );
             }
         catch (IOException ex)
-            { _bAtEOF = true; }
+            {
+            _bAtEOF = true;
+            _sb.setLength( 0 );
+            }
 
         return _sb.toString();
-        }
-
-    //  -----------------------------------------------------------------------
-    //	METHODS
-    //	-----------------------------------------------------------------------
-
-    /**
-     * Searches the current string for the first event tag.
-     *
-     * @param strIn
-     *     Input string.
-     *
-     * @return Index of event tag in string, or <0 if not found.
-     */
-    private static int findEventTag( String strIn )
-        {
-        assert strIn != null;
-        /*
-        **  CODE
-        */
-        return strIn.indexOf( EVENT_TAG );
-        }
-
-    //  -----------------------------------------------------------------------
-    //	GETTERS & SETTERS
-    //	-----------------------------------------------------------------------
-
-    /**
-     * Gets the next line in the input stream.
-     *
-     * @return Next line, or <code>null</code> if no more lines.
-     */
-    private String getNextLine() throws IOException
-        {
-        return (_strCached != null)
-               ? _strCached
-               : _reader.readLine();
         }
     }   /* end of class PgnReader() */
