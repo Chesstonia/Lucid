@@ -153,7 +153,7 @@ public class Board
     public boolean equals( Object obj )
         {
         return ((obj instanceof Board) &&
-                ((Board) obj).getZobristHash() == _hashFull);
+                (obj == this || _hashFull == ((Board) obj)._hashFull));
         }
 
     @Override
@@ -161,6 +161,15 @@ public class Board
         {
         return ((397 * (int) (_hashFull >>> 32)) ^ (int) (_hashFull & 0xFFFFFFFFL));
         }
+
+    /**
+     * Creates a Forsth-Edwards Notation (FEN) string for the board.
+     *
+     * @return FEN string.
+     */
+    @Override
+    public String toString()
+        { return BoardFactory.toString( this ); }
 
     //  -----------------------------------------------------------------------
     //	PUBLIC METHODS
@@ -330,20 +339,6 @@ public class Board
         */
         setState( move.state );
         }
-
-    //  -----------------------------------------------------------------------
-    //	PUBLIC OVERRIDES
-    //	-----------------------------------------------------------------------
-
-
-    /**
-     * Creates a Forsth-Edwards Notation (FEN) string for the board.
-     *
-     * @return FEN string.
-     */
-    @Override
-    public String toString()
-        { return BoardFactory.toString( this ); }
 
     //  -----------------------------------------------------------------------
     //	PUBLIC GETTERS & SETTERS
