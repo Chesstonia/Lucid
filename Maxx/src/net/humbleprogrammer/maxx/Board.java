@@ -569,6 +569,20 @@ public class Board
     //	GETTERS & SETTERS
     //	-----------------------------------------------------------------------
 
+    /**
+     * Gets the piece map for a given piece type.
+     *
+     * @param iPieceType
+     *     Piece type [PAWN...KING]
+     *
+     * @return Bitboard of pieces.
+     */
+    long getPieceMap( int iPieceType )
+        {
+        return (iPieceType >= PAWN && iPieceType <= KING)
+               ? _map[ (iPieceType << 1) + _player ]
+               : 0L;
+        }
 
     /**
      * Collects the internal board state.

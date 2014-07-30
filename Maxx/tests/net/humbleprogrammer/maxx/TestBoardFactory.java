@@ -36,6 +36,8 @@ import net.humbleprogrammer.TestBase;
 import net.humbleprogrammer.humble.Stopwatch;
 import org.junit.Test;
 
+import java.util.*;
+
 import static org.junit.Assert.*;
 
 public class TestBoardFactory extends TestBase
@@ -48,12 +50,12 @@ public class TestBoardFactory extends TestBase
     @Test
     public void t_createFromFEN()
         {
-        assertNotNull( BoardFactory.createFromFEN( FEN_TEST ) );
+        final Collection<String> listFEN = getFEN();
+        final Stopwatch swatch = Stopwatch.startNew();
 
         int iCount = 0;
-        Stopwatch swatch = Stopwatch.startNew();
 
-        for ( String strFEN : s_listFEN )
+        for ( String strFEN : listFEN )
             {
             assertNotNull( strFEN, BoardFactory.createFromFEN( strFEN ) );
 

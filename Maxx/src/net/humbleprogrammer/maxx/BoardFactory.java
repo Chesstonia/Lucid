@@ -45,7 +45,7 @@ public class BoardFactory extends Parser
     //	-----------------------------------------------------------------------
 
     /** Initial board. */
-    static final         Board   s_bdInitial     = fromString( FEN_INITIAL );
+    private static final Board   s_bdInitial     = fromString( FEN_INITIAL );
     /** Used for creating mirrored positions. */
     private static final Piece[] s_pieceMirrored = new Piece[ Piece.values().length ];
 

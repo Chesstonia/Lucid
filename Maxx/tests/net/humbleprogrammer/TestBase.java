@@ -42,7 +42,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /** The {@link TestBase} class contains all of the test configuration information. */
-@SuppressWarnings( "unused" )
+@SuppressWarnings("unused")
 public abstract class TestBase
     {
 
@@ -98,20 +98,32 @@ public abstract class TestBase
         "67. Kb2 Qb7+ 68. Kc3 Qb3+ 69. Kd2 Qd3+ 70. Ke1 Kb3 71. Kf2 Qd1 72. Kg3 Qf3+ 73. \n" +
         "Kh4 Qf5 74. Kg3 Kc3 75. Ne1 Kd2 76. Nac2 Ke2 77. Ng2 Qg5+ 0-1\n";
 
+    /** Sample game as a list of SAN moves. */
+    protected static final String[] SAMPLE_MOVES =
+        {
+            "d4", "Nf6", "Bg5", "d5", "Bxf6", "exf6", "e3", "Be6", "Nd2", "c6", "c3", "f5",
+            "Bd3", "Nd7", "Qf3", "g6", "Ne2", "Bd6", "Nf4", "Qc7", "O-O", "Nf6", "h3", "h5",
+            "Nxe6", "fxe6", "c4", "g5", "Qe2", "g4", "c5", "Be7", "f4", "gxf3", "Nxf3", "O-O-O",
+            "b4", "Rdg8", "b5", "cxb5", "Rfb1", "Qg3", "Rxb5", "Qxh3", "Ne1", "Bd8", "Rxb7",
+            "Bc7", "Rxc7+", "Kxc7", "Qd2", "Kd7", "Rb1", "Ne4", "Bxe4", "fxe4", "c6+", "Ke7",
+            "Rb2", "Qh4", "Qb4+", "Kf6", "Rf2+", "Kg6", "Qd6", "Re8", "c7", "Qe7", "c8=N",
+            "Qxd6", "Nxd6", "Re7", "Rc2", "Rb8", "Rc6", "Rb2", "a4", "Ra2", "Nc8", "Rb7",
+            "Rxe6+", "Kf7", "Nd6+", "Kxe6", "Nxb7", "h4", "Kf1", "Ke7", "Nc5", "Kd6", "Nb7+",
+            "Kc6", "Nd8+", "Kb6", "Ne6", "Rxa4", "Nf4", "Kc6", "Ke2", "Ra2+", "Kd1", "Ra1+",
+            "Kd2", "a5", "Nc2", "Rg1", "Ne1", "a4", "Nc2", "Kb5", "Kc3", "Rxg2", "Nb4", "a3",
+            "Nxg2", "h3", "Ne1", "h2", "Nec2", "Ka4", "Nxd5", "h1=Q", "Nb6+", "Kb5", "Nc4",
+            "a2", "N4a3+", "Ka4", "Kb2", "Qh7", "Kxa2", "Qf7+", "Kb2", "Qb7+", "Kc3", "Qb3+",
+            "Kd2", "Qd3+", "Ke1", "Kb3", "Kf2", "Qd1", "Kg3", "Qf3+", "Kh4", "Qf5", "Kg3",
+            "Kc3", "Ne1", "Kd2", "Nac2", "Ke2", "Ng2", "Qg5+"
+        };
     //  -----------------------------------------------------------------------
     //	DECLARATIONS
     //	-----------------------------------------------------------------------
 
     /** Maximum test duration, in nanoseconds. */
     protected static final long s_lMaxNanosecs;
-    /** Array of FEN strings. */
-    protected static final List<String> s_listFEN = new ArrayList<>();
-    /** Array of PGN files. */
-    protected static final List<Path>   s_listPGN = new ArrayList<>();
-
     /** Logger. */
-    protected static final Logger s_log = LoggerFactory.getLogger( "MAXXTEST" );
-
+    protected static final Logger s_log    = LoggerFactory.getLogger( "MAXXTEST" );
     //
     // Sample position used for testing; after 17. f4
     //	    a   b   c   d   e   f   g   h
@@ -140,6 +152,10 @@ public abstract class TestBase
     /** Test position expressed as an FEN string, after 17. f4 . */
     protected static final String FEN_TEST = EPD_TEST + " 0 17";
 
+    /** Array of FEN strings. */
+    private static List<String> s_listFEN;
+    /** Array of PGN files. */
+    private static List<Path>   s_listPGN;
 
     //  -----------------------------------------------------------------------
     //	CTOR
@@ -165,55 +181,81 @@ public abstract class TestBase
                 s_lMaxNanosecs = Long.MAX_VALUE;
                 break;
             }
-        //
-        //  Build a list of FEN positions.
-        //
-        try (BufferedReader reader = openTestFile( FEN_TEST_FILE ))
-            {
-            String strFEN;
-
-            while ( (strFEN = reader.readLine()) != null )
-                if (Parser.matchFEN( strFEN ) != null)
-                    s_listFEN.add( strFEN );
-
-            reader.close();
-            }
-        catch (IOException ex)
-            {
-            s_log.warn( "Failed to read from {}: {}",
-                        FEN_TEST_FILE,
-                        ex.getMessage() );
-            }
-
-        s_log.debug( "Found {} FEN samples.", s_listFEN.size() );
-        Collections.sort( s_listFEN );
-        //
-        //  Build a list of *.pgn files
-        //
-        Path pathPgnRoot = Paths.get( "P:\\Chess\\PGN\\TWIC" );
-
-        try
-            {
-            DirectoryStream<Path> stream = Files.newDirectoryStream( pathPgnRoot, "*.pgn" );
-
-            for ( Path path : stream )
-                s_listPGN.add( path );
-
-            stream.close();
-            }
-        catch (IOException ex)
-            {
-            s_log.warn( "Failed to find PGN files: {}",
-                        ex.getMessage() );
-            }
-
-        s_log.debug( "Found {} PGN files.", s_listPGN.size() );
-        Collections.sort( s_listPGN );
         }
 
     //  -----------------------------------------------------------------------
     //	METHODS
     //	-----------------------------------------------------------------------
+
+    /**
+     * Gets a set of FEN positions.
+     *
+     * @return Collection of FEN positions.
+     */
+    protected static Collection<String> getFEN()
+        {
+        if (s_listFEN == null)
+            {
+            s_listFEN = new ArrayList<>();
+
+            try (BufferedReader reader = openTestFile( FEN_TEST_FILE ))
+                {
+                String strFEN;
+
+                while ( (strFEN = reader.readLine()) != null )
+                    if (Parser.matchFEN( strFEN ) != null)
+                        s_listFEN.add( strFEN );
+
+                reader.close();
+                }
+            catch (IOException ex)
+                {
+                s_log.warn( "Failed to read from {}: {}",
+                            FEN_TEST_FILE,
+                            ex.getMessage() );
+                }
+
+            s_log.debug( "Found {} FEN samples.", s_listFEN.size() );
+            Collections.sort( s_listFEN );
+            }
+
+        return s_listFEN;
+        }
+
+    /**
+     * Builds a set of *.pgn files.
+     *
+     * @return Collection of files.
+     */
+    protected static Collection<Path> getPGN()
+        {
+        if (s_listPGN == null)
+            {
+            Path pathPgnRoot = Paths.get( "P:\\Chess\\PGN\\TWIC" );
+
+            s_listPGN = new ArrayList<>();
+
+            try
+                {
+                DirectoryStream<Path> stream = Files.newDirectoryStream( pathPgnRoot, "*.pgn" );
+
+                for ( Path path : stream )
+                    s_listPGN.add( path );
+
+                stream.close();
+                }
+            catch (IOException ex)
+                {
+                s_log.warn( "Failed to find PGN files: {}",
+                            ex.getMessage() );
+                }
+
+            s_log.debug( "Found {} PGN files.", s_listPGN.size() );
+            Collections.sort( s_listPGN );
+            }
+
+        return s_listPGN;
+        }
 
     /**
      * Opens a reader for a file in the system Test Data directory.

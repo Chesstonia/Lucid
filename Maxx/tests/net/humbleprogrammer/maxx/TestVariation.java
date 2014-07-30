@@ -32,96 +32,43 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import net.humbleprogrammer.humble.DBC;
-import net.humbleprogrammer.humble.StrUtil;
-import net.humbleprogrammer.maxx.pgn.PgnParser;
+import org.junit.Test;
 
-import java.util.List;
+import static net.humbleprogrammer.maxx.Constants.HASH_INITIAL;
+import static org.junit.Assert.*;
 
-public class GameFactory extends Parser
+public class TestVariation extends net.humbleprogrammer.TestBase
     {
-
     //  -----------------------------------------------------------------------
-    //	PUBLIC METHODS
+    //	UNIT TESTS
     //	-----------------------------------------------------------------------
 
-    /**
-     * Creates a new game.
-     *
-     * @return Game object.
-     */
-    public static Game createBlank()
-        { return new Game(); }
-
-    /**
-     * Converts a PGN string to a Game.
-     *
-     * @param strPGN
-     *     String to parse.
-     *
-     * @return {@link Game} object if parsed, <c>null</c> otherwise.
-     */
-    public static Game fromString( final String strPGN )
+    @Test
+    public void t_ctor()
         {
-        if (StrUtil.isBlank( strPGN ))
-            return null;
-        /*
-        **  CODE
-        */
-        s_strError = null;
+        Variation var = new Variation();
 
-        return null;
+        assertNull( var.getResult() );
+
+        assertNotNull( var.getCurrentPosition() );
+        assertEquals( HASH_INITIAL, var.getCurrentPosition().getZobristHash() );
+
+        assertTrue( var.isEmpty() );
+        assertNull( var.getResult() );
         }
 
-    /**
-     * Exports a game as a PGN string.
-     *
-     * @param gm
-     *     Game to export.
-     *
-     * @return PGN string.
-     */
-    public static String toString( Game gm )
+    @Test
+    public void t_setResult()
         {
-        DBC.requireNotNull( gm, "Game" );
-        /*
-        **  CODE
-        */
-        final List<String> listTags = PgnParser.getMandatoryTags();
-        final StringBuilder sb = new StringBuilder();
+        Variation var = new Variation();
 
-        String strValue;
-        //
-        //  Export mandatory tags.
-        //
-        for ( String strName : listTags )
+        assertNull( var.getResult() );
+
+        for ( Result result : Result.values() )
             {
-            if ((strValue = gm.getTag( strName )) == null)
-                strValue = "";
-
-            sb.append( String.format( "[%s \"%s\"]" + STR_CRLF,
-                                      strName,
-                                      strValue ) );
+            var.setResult( result );
+            assertEquals( result, var.getResult() );
             }
-        //
-        //  Export optional tags.
-        //
-        for ( String strName : gm.getTagNames() )
-            if (!listTags.contains( strName ) &&
-                (strValue = gm.getTag( strName )) != null)
-                {
-                sb.append( String.format( "[%s \"%s\"]" + STR_CRLF,
-                                          strName,
-                                          strValue ) );
-                }
-
-        sb.append( STR_CRLF );  // empty line after tag section
-
-        return sb.toString();
         }
 
-    //  -----------------------------------------------------------------------
-    //	METHODS
-    //	-----------------------------------------------------------------------
-
-    }   /* end of class GameFactory */
+    }   /* end of class TestVariation */

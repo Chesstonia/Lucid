@@ -36,6 +36,8 @@ import net.humbleprogrammer.TestBase;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collection;
+
 import static org.junit.Assert.*;
 
 public class TestParser extends TestBase
@@ -54,7 +56,9 @@ public class TestParser extends TestBase
     @Test
     public void t_matchFEN()
         {
-        for ( String strFEN : s_listFEN )
+        final Collection<String> listFEN = getFEN();
+
+        for ( String strFEN : listFEN )
             assertNotNull( strFEN, Parser.matchFEN( strFEN ) );
         }
 

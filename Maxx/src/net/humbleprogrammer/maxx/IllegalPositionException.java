@@ -32,25 +32,13 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import net.humbleprogrammer.TestBase;
-import org.junit.Test;
-
-import static net.humbleprogrammer.maxx.Constants.HASH_INITIAL;
-import static org.junit.Assert.*;
-
-public class TestGame extends TestBase
+public class IllegalPositionException extends RuntimeException
     {
-
-    //  -----------------------------------------------------------------------
-    //	UNIT TESTS
-    //	-----------------------------------------------------------------------
-
-    @Test
-    public void t_ctor()
+    public IllegalPositionException( final String strFEN )
         {
-        Game gm = new Game();
-
-        assertNotNull( gm.getPosition() );
-        assertEquals( HASH_INITIAL, gm.getPosition().getZobristHash() );
+        super( String.format( "'%s' is not a legal position.", strFEN ) );
+        /*
+        **  EMPTY CTOR
+        */
         }
-    }   /* end of class TestGame */
+    }   /* end of class IllegalPositionException */

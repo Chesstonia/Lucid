@@ -32,96 +32,38 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import net.humbleprogrammer.humble.DBC;
-import net.humbleprogrammer.humble.StrUtil;
-import net.humbleprogrammer.maxx.pgn.PgnParser;
-
-import java.util.List;
-
-public class GameFactory extends Parser
+public enum Result
     {
+        INDETERMINATE,
+        DRAW,
+        WON_BY_BLACK,
+        WON_BY_WHITE;
 
     //  -----------------------------------------------------------------------
-    //	PUBLIC METHODS
+    //	PUBLIC OVERRIDES
     //	-----------------------------------------------------------------------
 
     /**
-     * Creates a new game.
-     *
-     * @return Game object.
-     */
-    public static Game createBlank()
-        { return new Game(); }
-
-    /**
-     * Converts a PGN string to a Game.
-     *
-     * @param strPGN
-     *     String to parse.
-     *
-     * @return {@link Game} object if parsed, <c>null</c> otherwise.
-     */
-    public static Game fromString( final String strPGN )
-        {
-        if (StrUtil.isBlank( strPGN ))
-            return null;
-        /*
-        **  CODE
-        */
-        s_strError = null;
-
-        return null;
-        }
-
-    /**
-     * Exports a game as a PGN string.
-     *
-     * @param gm
-     *     Game to export.
+     * Returns the string representation of a result.
      *
      * @return PGN string.
      */
-    public static String toString( Game gm )
+    public static String toString( Result result )
         {
-        DBC.requireNotNull( gm, "Game" );
-        /*
-        **  CODE
-        */
-        final List<String> listTags = PgnParser.getMandatoryTags();
-        final StringBuilder sb = new StringBuilder();
-
-        String strValue;
-        //
-        //  Export mandatory tags.
-        //
-        for ( String strName : listTags )
+        if (result != null)
             {
-            if ((strValue = gm.getTag( strName )) == null)
-                strValue = "";
-
-            sb.append( String.format( "[%s \"%s\"]" + STR_CRLF,
-                                      strName,
-                                      strValue ) );
-            }
-        //
-        //  Export optional tags.
-        //
-        for ( String strName : gm.getTagNames() )
-            if (!listTags.contains( strName ) &&
-                (strValue = gm.getTag( strName )) != null)
+            switch (result)
                 {
-                sb.append( String.format( "[%s \"%s\"]" + STR_CRLF,
-                                          strName,
-                                          strValue ) );
+                case DRAW:
+                    return "1/2-1/2";
+                case WON_BY_BLACK:
+                    return "0-1";
+                case WON_BY_WHITE:
+                    return "1-0";
                 }
+            }
 
-        sb.append( STR_CRLF );  // empty line after tag section
-
-        return sb.toString();
+        return "*";
         }
 
-    //  -----------------------------------------------------------------------
-    //	METHODS
-    //	-----------------------------------------------------------------------
-
-    }   /* end of class GameFactory */
+    }   /* end of enum Result */

@@ -30,96 +30,59 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx;
+package net.humbleprogrammer.maxx.pgn;
 
-import java.util.*;
+import net.humbleprogrammer.TestBase;
+import net.humbleprogrammer.humble.StrUtil;
+import org.junit.Test;
 
-@SuppressWarnings( "unused" )
-public class Game
+import static org.junit.Assert.*;
+
+public class TestPgnParser extends TestBase
     {
 
     //  -----------------------------------------------------------------------
-    //	DECLARATIONS
+    //	UNIT TESTS
     //	-----------------------------------------------------------------------
 
-    /** Map of PGN tags. */
-    private final Map<String, String> _tags = new HashMap<>();
-    /** Main line. */
-    private final Variation           _pv   = new Variation();
-    //  -----------------------------------------------------------------------
-    //	CTOR
-    //	-----------------------------------------------------------------------
-
-    Game()
+    @Test
+    public void t_isValidTagName()
         {
-        /*
-        **  EMPTY CTOR.
-        */
+        for ( String strName : PgnParser.getMandatoryTags() )
+            assertTrue( PgnParser.isValidTagName( strName ) );
         }
 
-    //  -----------------------------------------------------------------------
-    //	PUBLIC METHODS
-    //	-----------------------------------------------------------------------
-
-    //  -----------------------------------------------------------------------
-    //	PUBLIC GETTERS & SETTERS
-    //	-----------------------------------------------------------------------
-
-    /**
-     * Gets the current position.
-     *
-     * @return Board.
-     */
-    public Board getPosition()
-        { return _pv.getCurrentPosition(); }
-
-    /**
-     * Gets a PGN tag.
-     *
-     * @param strName
-     *     Tag key.
-     *
-     * @return Tag value, or <code>null</code> if not found.
-     */
-    public String getTag( String strName )
+    @Test
+    public void t_isValidTagName_fail_empty()
         {
-        return (strName != null)
-               ? _tags.get( strName )
-               : null;
+        assertFalse( PgnParser.isValidTagName( null ) );
+        assertFalse( PgnParser.isValidTagName( "" ) );
+        assertFalse( PgnParser.isValidTagName( " \b\n\r\t" ) );
         }
 
-    /**
-     * Sets a PGN tag.
-     *
-     * @param strName
-     *     Tag key.
-     * @param strValue
-     *     Tag value.
-     */
-    public void setTag( String strName, String strValue )
+    @Test
+    public void t_isValidTagName_fail_length()
         {
-        _tags.put( strName, strValue );
+        assertFalse( PgnParser.isValidTagName( StrUtil.create( 'A', 256 ) ) );
         }
 
-    /**
-     * Gets all the tag names.
-     *
-     * @return Set of tag names.
-     */
-    public Set<String> getTagNames()
-        { return Collections.unmodifiableSet( _tags.keySet() ); }
+    @Test
+    public void t_isValidTagValue()
+        {
+        assertTrue( PgnParser.isValidTagValue( "" ) );
+        assertTrue( PgnParser.isValidTagValue( " \b\n\r\t" ) );
+        }
 
-    //  -----------------------------------------------------------------------
-    //	PUBLIC OVERRIDES
-    //	-----------------------------------------------------------------------
+    @Test
+    public void t_isValidTagValue_fail()
+        {
+        assertFalse( PgnParser.isValidTagValue( null ) );
+        }
 
-    /**
-     * Creates a Portable Game Notation (PGN) string for the game.
-     *
-     * @return PGN string.
-     */
-    @Override
-    public String toString()
-        { return GameFactory.toString( this ); }
+    @Test
+    public void t_isValidTagValue_fail_length()
+        {
+        assertFalse( PgnParser.isValidTagValue( StrUtil.create( ' ', 256 ) ) );
+        }
 
-    }   /* end of class Game */
+    }   /* end of class TestPgnParser */

@@ -49,12 +49,12 @@ public class Parser
     /** CR/LF seqquence. */
     public static final String STR_CRLF = System.getProperty( "line.separator" );
     /** Placeholder in EPD/FEN strings. */
-    public static final String STR_DASH = "-";
+    static final        String STR_DASH = "-";
 
     /** Regular expresion for whitespace or end of string. */
-    static final String RX_EOS = "(?:\\z|\\s+)";
+    private static final String RX_EOS = "(?:\\z|\\s+)";
     /** Regular expresion for an EPD string. */
-    static final String RX_EPD =
+    private static final String RX_EPD =
         // group[1] -- position
         "([BbKkNnQqRr1-8]{1,8}(?:/[BbKkNnPpQqRr1-8]{1,8}){6}/[BbKkNnQqRr1-8]{1,8})" +
         // group[2] -- player
@@ -120,7 +120,7 @@ public class Parser
      *
      * @return {@link net.humbleprogrammer.maxx.Piece} if recognized; <c>null</c> otherwise.
      */
-    public static Piece pieceFromGlyph( int ch )
+    static Piece pieceFromGlyph( int ch )
         {
         int iPos = PIECE_GLYPHS.indexOf( ch );
 
@@ -137,7 +137,7 @@ public class Parser
      *
      * @return Character, or zero if piece is invalid.
      */
-    public static char pieceToGlyph( Piece piece )
+    static char pieceToGlyph( Piece piece )
         {
         return (piece != null)
                ? PIECE_GLYPHS.charAt( piece.ordinal() )
@@ -152,7 +152,7 @@ public class Parser
      *
      * @return Piece type [PAWN..KING] if recognized; <c>INVALID</c> otherwise.
      */
-    @SuppressWarnings( "unused" )
+    @SuppressWarnings("unused")
     public static int pieceTypeFromGlyph( int ch )
         {
         int iPos = PIECE_GLYPHS.indexOf( ch );
@@ -185,7 +185,7 @@ public class Parser
      *
      * @return [WHITE|BLACK] if recognized; <c>INVALID</c> otherwise.
      */
-    public static int playerFromGlyph( final int ch )
+    static int playerFromGlyph( final int ch )
         {
         int iPos = PLAYER_GLYPHS.indexOf( ch );
 
@@ -200,7 +200,7 @@ public class Parser
      *
      * @return Single character if recognized; zero otherwise.
      */
-    public static char playerToGlyph( int player )
+    static char playerToGlyph( int player )
         {
         return (player == WHITE || player == BLACK)
                ? PLAYER_GLYPHS.charAt( player )

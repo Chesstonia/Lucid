@@ -32,94 +32,45 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import java.util.*;
+import org.junit.Test;
 
-@SuppressWarnings( "unused" )
-public class Game
+import static org.junit.Assert.*;
+
+public class TestMove extends net.humbleprogrammer.TestBase
     {
 
     //  -----------------------------------------------------------------------
-    //	DECLARATIONS
+    //	UNIT TESTS
     //	-----------------------------------------------------------------------
 
-    /** Map of PGN tags. */
-    private final Map<String, String> _tags = new HashMap<>();
-    /** Main line. */
-    private final Variation           _pv   = new Variation();
-    //  -----------------------------------------------------------------------
-    //	CTOR
-    //	-----------------------------------------------------------------------
-
-    Game()
+    @Test
+    public void t_fromString()
         {
-        /*
-        **  EMPTY CTOR.
-        */
+        final Board bd = BoardFactory.createInitial();
+
+        for ( String str : SAMPLE_MOVES )
+            {
+            Move move = Move.fromString( bd, str );
+
+            assertNotNull( str, move );
+            bd.makeMove( move );
+            }
+
         }
 
-    //  -----------------------------------------------------------------------
-    //	PUBLIC METHODS
-    //	-----------------------------------------------------------------------
-
-    //  -----------------------------------------------------------------------
-    //	PUBLIC GETTERS & SETTERS
-    //	-----------------------------------------------------------------------
-
-    /**
-     * Gets the current position.
-     *
-     * @return Board.
-     */
-    public Board getPosition()
-        { return _pv.getCurrentPosition(); }
-
-    /**
-     * Gets a PGN tag.
-     *
-     * @param strName
-     *     Tag key.
-     *
-     * @return Tag value, or <code>null</code> if not found.
-     */
-    public String getTag( String strName )
+    @Test( expected = IllegalArgumentException.class )
+    public void t_fromString_fail()
         {
-        return (strName != null)
-               ? _tags.get( strName )
-               : null;
+        Move.fromString( null, "" );
         }
 
-    /**
-     * Sets a PGN tag.
-     *
-     * @param strName
-     *     Tag key.
-     * @param strValue
-     *     Tag value.
-     */
-    public void setTag( String strName, String strValue )
+    @Test
+    public void t_fromString_fail_blank()
         {
-        _tags.put( strName, strValue );
+        final Board bd = BoardFactory.createInitial();
+
+        assertNull( Move.fromString( bd, null ) );
+        assertNull( Move.fromString( bd, "" ) );
+        assertNull( Move.fromString( bd, " \n\r\t" ) );
         }
-
-    /**
-     * Gets all the tag names.
-     *
-     * @return Set of tag names.
-     */
-    public Set<String> getTagNames()
-        { return Collections.unmodifiableSet( _tags.keySet() ); }
-
-    //  -----------------------------------------------------------------------
-    //	PUBLIC OVERRIDES
-    //	-----------------------------------------------------------------------
-
-    /**
-     * Creates a Portable Game Notation (PGN) string for the game.
-     *
-     * @return PGN string.
-     */
-    @Override
-    public String toString()
-        { return GameFactory.toString( this ); }
-
-    }   /* end of class Game */
+    }   /* end of class TestMove */

@@ -32,91 +32,67 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx.pgn;
 
-import net.humbleprogrammer.TestBase;
-import net.humbleprogrammer.humble.Stopwatch;
-import net.humbleprogrammer.humble.TimeUtil;
-import org.junit.*;
+import net.humbleprogrammer.maxx.Parser;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.regex.Pattern;
 
-import static org.junit.Assert.fail;
-
-public class TestPgnReader extends TestBase
+public class PgnParser extends Parser
     {
+
+    //  -----------------------------------------------------------------------
+    //	CONSTANTS
+    //	-----------------------------------------------------------------------
+
+    /** Regex to validate tag names. */
+    private static final String STR_TAG_NAME = "^[A-Z]\\w{0,254}$";
+
     //  -----------------------------------------------------------------------
     //	STATIC DECLARATIONS
     //	-----------------------------------------------------------------------
 
-    /** Total number of games read in. */
-    protected static int  s_iNetGames    = 0;
-    /** Total number of nanoseconds spent generating moves. */
-    protected static long s_lNetNanosecs = 0L;
-
+    /** The mandatory "Seven Tag Roster". */
+    private static List<String> s_listTags =
+        Arrays.asList( "Event", "Site", "Date", "Round", "White", "Black", "Result" );
     //  -----------------------------------------------------------------------
-    //	UNIT TESTS
+    //	PUBLIC METHODS
     //	-----------------------------------------------------------------------
 
-    @Test( expected = IllegalArgumentException.class )
-    public void t_ctor_fail_null()
+    /**
+     * Tests a tag name for validity.
+     *
+     * @param strName
+     *     Name to test.
+     *
+     * @return <code>.T.</code> if valid; <code>.F.</code> otherwise.
+     */
+    public static boolean isValidTagName( final String strName )
         {
-        new PgnReader( null );
+        return (strName != null && Pattern.matches( STR_TAG_NAME, strName ));
         }
 
-    @Test
-    public void t_comprehensive()
+    /**
+     * Tests a tag value for validity.
+     *
+     * @param strValue
+     *     Value to test.
+     *
+     * @return <code>.T.</code> if valid; <code>.F.</code> otherwise.
+     */
+    public static boolean isValidTagValue( final String strValue )
         {
-        final Collection<Path> listPGN = getPGN();
-        final Stopwatch swatch = new Stopwatch();
-
-        try
-            {
-            for ( Path path : listPGN )
-                {
-                PgnReader pgn = new PgnReader( new FileReader( path.toFile() ) );
-
-                swatch.start();
-                while ( pgn.readGame() != null )
-                    s_iNetGames++;
-                swatch.stop();
-
-                if ((s_lNetNanosecs += swatch.getElapsed()) >= s_lMaxNanosecs)
-                    break;
-                }
-            }
-        catch (IOException ex)
-            {
-            fail( ex.getMessage() );
-            }
+        return (strValue != null && strValue.length() < 256);
         }
 
     //  -----------------------------------------------------------------------
-    //	METHODS
+    //	PUBLIC GETTERS & SETTERS
     //	-----------------------------------------------------------------------
 
-    @AfterClass
-    public static void displayResults()
-        {
-        final long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
-
-        if (lMillisecs > 0L && s_iNetGames > 0)
-            {
-            s_log.info( String.format( "%s: PgnReader read %,d games in %s (%,d/sec)",
-                                       DURATION.toString(),
-                                       s_iNetGames,
-                                       TimeUtil.formatMillisecs( lMillisecs, true ),
-                                       (s_iNetGames * 1000L) / lMillisecs ) );
-            }
-        }
-
-    @BeforeClass
-    public static void setup()
-        {
-        s_iNetGames = 0;
-        s_lNetNanosecs = 0L;
-        }
-
-    }   /* end of class TestPgnReader */
+    /**
+     * Gets the mandatory tags.
+     *
+     * @return List of tags.
+     */
+    public static List<String> getMandatoryTags()
+        { return Collections.unmodifiableList( s_listTags ); }
+    }   /* end of class PgnParser() */

@@ -30,93 +30,88 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx.pgn;
+package net.humbleprogrammer.maxx;
 
-import net.humbleprogrammer.TestBase;
-import net.humbleprogrammer.humble.Stopwatch;
-import net.humbleprogrammer.humble.TimeUtil;
-import org.junit.*;
+import net.humbleprogrammer.humble.DBC;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.fail;
-
-public class TestPgnReader extends TestBase
+/**
+ * The {@link Variation} class stores a sequence of moves.
+ */
+public class Variation
     {
     //  -----------------------------------------------------------------------
-    //	STATIC DECLARATIONS
+    //	DECLARATIONS
     //	-----------------------------------------------------------------------
 
-    /** Total number of games read in. */
-    protected static int  s_iNetGames    = 0;
-    /** Total number of nanoseconds spent generating moves. */
-    protected static long s_lNetNanosecs = 0L;
+    /** Current position. */
+    private final Board _board = BoardFactory.createInitial();
+
+    /** Result, or <code>null</code> if not set. */
+    private Result _result;
 
     //  -----------------------------------------------------------------------
-    //	UNIT TESTS
+    //	PUBLIC METHODS
     //	-----------------------------------------------------------------------
 
-    @Test( expected = IllegalArgumentException.class )
-    public void t_ctor_fail_null()
+    /**
+     * Appends a move to the variation.
+     *
+     * @param move
+     *     Move to append.
+     *
+     * @return <code>.T.</code> if added; <code>.F.</code> otherwise.
+     */
+    public boolean appendMove( final Move move )
         {
-        new PgnReader( null );
-        }
-
-    @Test
-    public void t_comprehensive()
-        {
-        final Collection<Path> listPGN = getPGN();
-        final Stopwatch swatch = new Stopwatch();
-
+        DBC.requireNotNull( move, "Move" );
+        /*
+        **  CODE
+        */
         try
             {
-            for ( Path path : listPGN )
-                {
-                PgnReader pgn = new PgnReader( new FileReader( path.toFile() ) );
-
-                swatch.start();
-                while ( pgn.readGame() != null )
-                    s_iNetGames++;
-                swatch.stop();
-
-                if ((s_lNetNanosecs += swatch.getElapsed()) >= s_lMaxNanosecs)
-                    break;
-                }
+            _board.makeMove( move );
             }
-        catch (IOException ex)
+        catch (IllegalMoveException ex)
             {
-            fail( ex.getMessage() );
+            return false;
             }
-        }
 
+        return true;
+        }
     //  -----------------------------------------------------------------------
-    //	METHODS
+    //	PUBLIC GETTERS & SETTERS
     //	-----------------------------------------------------------------------
 
-    @AfterClass
-    public static void displayResults()
-        {
-        final long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
+    /**
+     * Gets the current position.
+     *
+     * @return Board.
+     */
+    public Board getCurrentPosition()
+        { return _board; }
 
-        if (lMillisecs > 0L && s_iNetGames > 0)
-            {
-            s_log.info( String.format( "%s: PgnReader read %,d games in %s (%,d/sec)",
-                                       DURATION.toString(),
-                                       s_iNetGames,
-                                       TimeUtil.formatMillisecs( lMillisecs, true ),
-                                       (s_iNetGames * 1000L) / lMillisecs ) );
-            }
-        }
+    /**
+     * Gets the result.
+     *
+     * @return Result, or <code>null</code> if not set.
+     */
+    public Result getResult()
+        { return _result; }
 
-    @BeforeClass
-    public static void setup()
-        {
-        s_iNetGames = 0;
-        s_lNetNanosecs = 0L;
-        }
+    /**
+     * Sets the result.
+     *
+     * @param result
+     *     Desired result.
+     */
+    public void setResult( Result result )
+        { _result = result; }
 
-    }   /* end of class TestPgnReader */
+    /**
+     * Tests if the variation contains any moves.
+     *
+     * @return .T. if at least one move present; .F. otherwise.
+     */
+    public boolean isEmpty()
+        { return true; }
+    }   /* end of class Variation */
