@@ -33,6 +33,8 @@
 package net.humbleprogrammer.maxx;
 
 import net.humbleprogrammer.humble.StrUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,8 +50,15 @@ public class Parser
 
     /** CR/LF seqquence. */
     public static final String STR_CRLF = System.getProperty( "line.separator" );
+
+    /** Castling Queen-side, AKA "castling long". */
+    static final           String STR_CASTLE_LONG  = "O-O-O";
+    /** Castling King-side, AKA "castling short". */
+    static final           String STR_CASTLE_SHORT = "O-O";
     /** Placeholder in EPD/FEN strings. */
-    static final        String STR_DASH = "-";
+    static final           String STR_DASH         = "-";
+    /** Characters allowed in a move. */
+    protected static final String STR_MOVE         = "abcdefgh12345678BKNQRx:=O-";
 
     /** Regular expresion for whitespace or end of string. */
     private static final String RX_EOS = "(?:\\z|\\s+)";
@@ -85,8 +94,11 @@ public class Parser
     //	STATIC DECLARATIONS
     //	-----------------------------------------------------------------------
 
+
+    /** Logger */
+    protected static final Logger s_log = LoggerFactory.getLogger( "PARSER" );
     /** Last error encountered. */
-    static String s_strError;
+    protected static String s_strError;
 
     //  -----------------------------------------------------------------------
     //	PUBLIC METHODS
@@ -152,7 +164,7 @@ public class Parser
      *
      * @return Piece type [PAWN..KING] if recognized; <c>INVALID</c> otherwise.
      */
-    @SuppressWarnings("unused")
+    @SuppressWarnings( "unused" )
     public static int pieceTypeFromGlyph( int ch )
         {
         int iPos = PIECE_GLYPHS.indexOf( ch );

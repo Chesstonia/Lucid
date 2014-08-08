@@ -131,7 +131,7 @@ public class TestBoardFactory extends TestBase
             Board bd = BoardFactory.createFromFEN( str );
 
             assertNotNull( str, bd );
-            assertTrue( str, bd.isValid() );
+            assertTrue( str, bd.isLegal() );
             assertFalse( str, Square.isValid( bd.getEnPassantSquare() ) );
             }
         }

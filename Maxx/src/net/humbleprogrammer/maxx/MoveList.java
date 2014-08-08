@@ -155,6 +155,21 @@ public class MoveList implements Iterable<Move>
     //	-----------------------------------------------------------------------
 
     /**
+     * Gets the move at a given index.
+     *
+     * @param index
+     *     Zero-based index of move.
+     *
+     * @return Move if valid index; <c>null/c> otherwise.
+     */
+    public Move getAt( int index )
+        {
+        return (index >= 0 && index < _iCount)
+               ? new Move( _moves[ index ], _state )
+               : null;
+        }
+
+    /**
      * Gets the empty / not empty state of the move list.
      *
      * @return <code>.T.</code> if no legal moves available; <code>.F.</code> otherwise.
@@ -309,7 +324,8 @@ public class MoveList implements Iterable<Move>
                 }
             }
 
-        generateEnPassantCaptures( _state.iSqEP );
+        if (Square.isValid( _state.iSqEP ))
+            generateEnPassantCaptures( _state.iSqEP, bbFromSq );
 
         return _iCount;
         }
@@ -317,29 +333,27 @@ public class MoveList implements Iterable<Move>
     /**
      * Generate all possible en passant captures.
      *
-     * This ignores the {@link #_bbToSq} restriction, because if the moving player's King is being
-     * checked by a pawn that can be captured via e.p., the "To" square of the opposing pawn's move
-     * are not visible by the King.
-     *
      * @param iSqEP
      *     En passant square in 8x8 format.
+     * @param bbFromSq
+     *     Bitboard of pawns that can move.
      */
-    private void generateEnPassantCaptures( final int iSqEP )
+    private void generateEnPassantCaptures( final int iSqEP, final long bbFromSq )
         {
-        if (!Square.isValid( iSqEP ))
-            return;
+        assert Square.isValid( iSqEP );
         /*
         **  CODE
         */
-        long bbEP = (_player == WHITE)
-                    ? (_state.map[ MAP_W_PAWN ] & Bitboards.pawnDownwards[ iSqEP ])
-                    : (_state.map[ MAP_B_PAWN ] & Bitboards.pawnUpwards[ iSqEP ]);
+        long bbPawns = (_player == WHITE)
+                       ? (bbFromSq & Bitboards.pawnDownwards[ iSqEP ] &
+                          _state.map[ MAP_W_PAWN ])
+                       : (bbFromSq & Bitboards.pawnUpwards[ iSqEP ] & _state.map[ MAP_B_PAWN ]);
 
-        while ( bbEP != 0L )
+        while ( bbPawns != 0L )
             {
-            final int iSqFrom = BitUtil.first( bbEP );
+            final int iSqFrom = BitUtil.first( bbPawns );
 
-            bbEP ^= 1L << iSqFrom;
+            bbPawns ^= 1L << iSqFrom;
             addMove( iSqFrom, iSqEP, Move.Type.EN_PASSANT );
             }
         }
@@ -401,7 +415,6 @@ public class MoveList implements Iterable<Move>
             // White O-O
             if ((_state.castling & Board.CastlingFlags.WHITE_SHORT) != 0 &&
                 (_bbAll & Board.CastlingFlags.WHITE_SHORT_MASK) == 0L &&
-                (_bbToSq & Square.G1_MASK) != 0L &&
                 !Bitboards.isAttackedByBlack( _state.map, Square.F1 ))
                 {
                 addMoves( Square.E1, Square.G1_MASK, Move.Type.CASTLING );
@@ -410,7 +423,6 @@ public class MoveList implements Iterable<Move>
             // White O-O-O
             if ((_state.castling & Board.CastlingFlags.WHITE_LONG) != 0 &&
                 (_bbAll & Board.CastlingFlags.WHITE_LONG_MASK) == 0L &&
-                (_bbToSq & Square.C1_MASK) != 0L &&
                 !Bitboards.isAttackedByBlack( _state.map, Square.D1 ))
                 {
                 addMoves( Square.E1, Square.C1_MASK, Move.Type.CASTLING );
@@ -568,10 +580,13 @@ public class MoveList implements Iterable<Move>
             //  to the King-- the only possible "From" squares are the King's square, plus any
             //  of the moving player's pieces that are able to reach the checking piece.
             //
-            if (bbXRays == 0L)
+            if (bbXRays != 0L)
+                _bbToSq &= (_bbCheckers | bbXRays | Bitboards.king[ _iSqKing ]);
+            else
+                {
                 bbFromSq &= ((1L << _iSqKing) | Bitboards.all[ iSqChecker ]);
-
-            _bbToSq &= (_bbCheckers | bbXRays | Bitboards.king[ _iSqKing ]);
+                _bbToSq &= (_bbCheckers | Bitboards.king[ _iSqKing ]);
+                }
             }
         //
         //  The King is being threatened by multiple attackers (double check).  The only

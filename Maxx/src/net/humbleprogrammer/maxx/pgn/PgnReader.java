@@ -37,7 +37,7 @@ import net.humbleprogrammer.maxx.Parser;
 
 import java.io.*;
 
-public class PgnReader
+public class PgnReader implements AutoCloseable
     {
 
     //  -----------------------------------------------------------------------
@@ -160,5 +160,24 @@ public class PgnReader
             }
 
         return _sb.toString();
+        }
+
+    //  -----------------------------------------------------------------------
+    //	OVERRIDES
+    //	-----------------------------------------------------------------------
+
+    @Override
+    public void close()
+        {
+        try
+            {
+            _reader.close();
+            }
+        catch (IOException ex)
+            {
+            /*
+            **  EMPTY CATCH BLOCK
+            */
+            }
         }
     }   /* end of class PgnReader() */

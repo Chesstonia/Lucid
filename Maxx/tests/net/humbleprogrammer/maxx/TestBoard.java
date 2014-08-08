@@ -104,6 +104,6 @@ public class TestBoard extends TestBase
         final Board bd = BoardFactory.createFromFEN( FEN_TEST );
 
         assertNotNull( bd );
-        assertTrue( bd.isValid() );
+        assertTrue( bd.isLegal() );
         }
     }   /* end of class TestBoard */

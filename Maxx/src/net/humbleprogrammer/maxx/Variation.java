@@ -32,23 +32,38 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import net.humbleprogrammer.humble.DBC;
+import java.util.*;
 
 /**
  * The {@link Variation} class stores a sequence of moves.
  */
-public class Variation
+public class Variation implements Iterable<Move>
     {
     //  -----------------------------------------------------------------------
     //	DECLARATIONS
     //	-----------------------------------------------------------------------
 
     /** Current position. */
-    private final Board _board = BoardFactory.createInitial();
+    private final Board _board;
+    /** List of moves */
+    private final List<Move> _moves = new ArrayList<>();
 
+    /** First ply of the variation. */
+    private int         _iFirstPly;
+    /** Starting position. */
+    private Board.State _stateStart;
     /** Result, or <code>null</code> if not set. */
-    private Result _result;
+    private Result      _result;
 
+    //  -----------------------------------------------------------------------
+    //	CTOR
+    //	-----------------------------------------------------------------------
+
+    public Variation()
+        {
+        _board = BoardFactory.createInitial();
+        _stateStart = _board.getState();
+        }
     //  -----------------------------------------------------------------------
     //	PUBLIC METHODS
     //	-----------------------------------------------------------------------
@@ -63,21 +78,33 @@ public class Variation
      */
     public boolean appendMove( final Move move )
         {
-        DBC.requireNotNull( move, "Move" );
-        /*
-        **  CODE
-        */
-        try
+        if (_board.isLegalMove( move ) && _moves.add( move ))
             {
             _board.makeMove( move );
-            }
-        catch (IllegalMoveException ex)
-            {
-            return false;
+            return true;
             }
 
-        return true;
+        return false;
         }
+
+    /**
+     * Appends a move to the variation.
+     *
+     * @param strSAN
+     *     Move to append, in SAN notation.
+     *
+     * @return <code>.T.</code> if added; <code>.F.</code> otherwise.
+     */
+    public boolean appendMove( final String strSAN )
+        { return appendMove( MoveFactory.fromSAN( _board, strSAN ) ); }
+
+    /**
+     * Tests if the variation contains any moves.
+     *
+     * @return .T. if at least one move present; .F. otherwise.
+     */
+    public boolean isEmpty()
+        { return _moves.isEmpty(); }
     //  -----------------------------------------------------------------------
     //	PUBLIC GETTERS & SETTERS
     //	-----------------------------------------------------------------------
@@ -89,6 +116,67 @@ public class Variation
      */
     public Board getCurrentPosition()
         { return _board; }
+
+    /**
+     * Gets the move move at a given move number.
+     *
+     * @param iMoveNum
+     *     Move number (starts at 1).
+     * @param player
+     *     Moving player [WHITE|BLACK].
+     *
+     * @return Move made by the player at the requested point in the variation.
+     */
+    public Move getMove( int iMoveNum, int player )
+        {
+        if (iMoveNum < 1 || (player & ~0x01) != 0)
+            return null;
+        /*
+        **  CODE
+        */
+        final int index = Board.computePly( iMoveNum, player ) - _iFirstPly;
+        Move move = null;
+
+        if (index >= 0 && index < _moves.size())
+            {
+            move = _moves.get( index );
+
+            assert move.state.iFullMoves == iMoveNum;
+            assert move.state.player == player;
+            }
+
+        return move;
+        }
+
+    /**
+     * Gets the position <i>BEFORE</i> the player's move at a given move number.
+     *
+     * @param iMoveNum
+     *     Move number (starts at 1)
+     * @param player
+     *     Moving player [WHITE|BLACK]
+     *
+     * @return Board position, or <code>null</code> if move number or player are invalid.
+     */
+    public Board getPosition( final int iMoveNum, final int player )
+        {
+        if (iMoveNum < 1)
+            return null;
+        /*
+        **  CODE
+        */
+        if (_stateStart.iFullMoves == iMoveNum && _stateStart.player == player)
+            return new Board( _stateStart );
+        //
+        //  Not the initial position, so get the move and create the board from
+        //  the saved move state.
+        //
+        final Move move = getMove( iMoveNum, player );
+
+        return (move != null)
+               ? new Board( move.state )
+               : null;
+        }
 
     /**
      * Gets the result.
@@ -108,10 +196,45 @@ public class Variation
         { _result = result; }
 
     /**
-     * Tests if the variation contains any moves.
+     * Sets the starting position for the variation.  This is only necessary if the variation
+     * doesn't start at the initial position.
      *
-     * @return .T. if at least one move present; .F. otherwise.
+     * @param bd
+     *     Starting position.
+     *
+     * @return <code>.T.</code> if position is legal; <code>.F.</code> otherwise.
      */
-    public boolean isEmpty()
-        { return true; }
+    public boolean setStartingPosition( final Board bd )
+        {
+        if (bd == null)
+            return false;
+        /*
+        **  CODE
+        */
+        _moves.clear();
+        _stateStart = bd.getState();
+        _board.setState( _stateStart );
+        _iFirstPly = Board.computePly( _stateStart.iFullMoves, _stateStart.player );
+
+        return true;
+        }
+
+    /**
+     * Sets the starting position for the variation.  This is only necessary if the variation
+     * doesn't start at the initial position.
+     *
+     * @param strFEN
+     *     Starting position expressed as a FEN string.
+     *
+     * @return <code>.T.</code> if position is legal; <code>.F.</code> otherwise.
+     */
+    public boolean setStartingPosition( final String strFEN )
+        { return setStartingPosition( BoardFactory.createFromFEN( strFEN ) ); }
+
+    //  -----------------------------------------------------------------------
+    //	INTEFACE: Iterable<Move>
+    //	-----------------------------------------------------------------------
+    @Override
+    public Iterator<Move> iterator()
+        { return _moves.iterator(); }
     }   /* end of class Variation */

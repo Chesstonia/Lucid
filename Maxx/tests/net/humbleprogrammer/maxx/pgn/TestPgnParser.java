@@ -33,17 +33,69 @@
 package net.humbleprogrammer.maxx.pgn;
 
 import net.humbleprogrammer.TestBase;
-import net.humbleprogrammer.humble.StrUtil;
-import org.junit.Test;
+import net.humbleprogrammer.humble.*;
+import org.junit.*;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
 public class TestPgnParser extends TestBase
     {
+    //  -----------------------------------------------------------------------
+    //	STATIC DECLARATIONS
+    //	-----------------------------------------------------------------------
+
+    /** Total number of games read in. */
+    protected static int  s_iNetGames    = 0;
+    /** Total number of nanoseconds spent generating moves. */
+    protected static long s_lNetNanosecs = 0L;
 
     //  -----------------------------------------------------------------------
     //	UNIT TESTS
     //	-----------------------------------------------------------------------
+
+    @Test
+    public void t_isValid()
+        {
+        final Collection<Path> listPGN = getPGN();
+
+        try
+            {
+            for ( Path path : listPGN )
+                {
+                try (PgnReader pgn = new PgnReader( new FileReader( path.toFile() ) ))
+                    {
+                    Stopwatch swatch = new Stopwatch();
+                    String strPGN;
+
+                    while ( (strPGN = pgn.readGame()) != null )
+                        {
+                        if (PgnParser.isValid( strPGN ))
+                            s_iNetGames++;
+                        else
+                            {
+                            fail( String.format( "%s:\n%s",
+                                                 path.toFile(),
+                                                 strPGN ) );
+                            }
+
+                        if ((s_lNetNanosecs += swatch.getElapsed()) >= s_lMaxNanosecs)
+                            return;
+                        }
+                    }
+                }
+            }
+        catch (IOException ex)
+            {
+            fail( ex.getMessage() );
+            }
+
+        }
 
     @Test
     public void t_isValidTagName()
@@ -83,6 +135,32 @@ public class TestPgnParser extends TestBase
     public void t_isValidTagValue_fail_length()
         {
         assertFalse( PgnParser.isValidTagValue( StrUtil.create( ' ', 256 ) ) );
+        }
+
+    //  -----------------------------------------------------------------------
+    //	METHODS
+    //	-----------------------------------------------------------------------
+
+    @AfterClass
+    public static void displayResults()
+        {
+        final long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
+
+        if (lMillisecs > 0L)
+            {
+            s_log.info( String.format( "%s: PgnParser parsed %,d games in %s (%,d gps)",
+                                       DURATION.toString(),
+                                       s_iNetGames,
+                                       TimeUtil.formatMillisecs( lMillisecs, true ),
+                                       (s_iNetGames * 1000L) / lMillisecs ) );
+            }
+        }
+
+    @BeforeClass
+    public static void setup()
+        {
+        s_iNetGames = 0;
+        s_lNetNanosecs = 0L;
         }
 
     }   /* end of class TestPgnParser */

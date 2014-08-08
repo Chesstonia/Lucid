@@ -32,7 +32,7 @@
  ******************************************************************************/
 package net.humbleprogrammer.humble;
 
-@SuppressWarnings( "unused" )
+@SuppressWarnings("unused")
 public class GfxUtil
     {
 

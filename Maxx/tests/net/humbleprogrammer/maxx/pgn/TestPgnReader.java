@@ -102,9 +102,9 @@ public class TestPgnReader extends TestBase
         {
         final long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
 
-        if (lMillisecs > 0L && s_iNetGames > 0)
+        if (lMillisecs > 0L)
             {
-            s_log.info( String.format( "%s: PgnReader read %,d games in %s (%,d/sec)",
+            s_log.info( String.format( "%s: PgnReader read %,d games in %s (%,d gps)",
                                        DURATION.toString(),
                                        s_iNetGames,
                                        TimeUtil.formatMillisecs( lMillisecs, true ),

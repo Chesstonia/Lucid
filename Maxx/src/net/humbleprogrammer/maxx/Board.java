@@ -145,6 +145,21 @@ public class Board
         setState( src.getState() );
         }
 
+    /**
+     * Alternate CTOR for the {@link Board} class.
+     *
+     * @param state
+     *     Board state to copy from.
+     */
+    Board( State state )
+        {
+        assert state != null;
+        /*
+        **  CODE
+        */
+        setState( state );
+        }
+
     //  -----------------------------------------------------------------------
     //	OVERRIDES
     //	-----------------------------------------------------------------------
@@ -176,6 +191,23 @@ public class Board
     //	-----------------------------------------------------------------------
 
     /**
+     * Computes the ply from a move number and player.
+     *
+     * @param iMoveNum
+     *     Move number (starts at 1).
+     * @param player
+     *     Moving player [WHITE|BLACK].
+     *
+     * @return Zero-based ply number, or INVALID if move number is less than 1.
+     */
+    public static int computePly( final int iMoveNum, final int player )
+        {
+        return (iMoveNum >= 1)
+               ? (((iMoveNum - 1) << 1) + (player & 0x01))
+               : INVALID;
+        }
+
+    /**
      * Tests a board for validity.
      *
      * In order to be valid, all of the following must be <i>true</i>: <ul> <li>Neither side can
@@ -186,7 +218,7 @@ public class Board
      *
      * @return .T. if the position is valid; .F. otherwise.
      */
-    public boolean isValid()
+    public boolean isLegal()
         {
         //  Test 1 -- neither player can have more than 16 pieces on the board.
         if (BitUtil.count( _map[ MAP_W_ALL ] ) > 16 || BitUtil.count( _map[ MAP_B_ALL ] ) > 16)
@@ -231,6 +263,17 @@ public class Board
                ? !Bitboards.isAttackedBy( _map, getKingSquare( WHITE ), BLACK )
                : !Bitboards.isAttackedBy( _map, getKingSquare( BLACK ), WHITE );
         }
+
+    /**
+     * Tests a move for legality against the current position.
+     *
+     * @param move
+     *     Move to test.
+     *
+     * @return <code>.T.</code> if move is legal; <code>.F.</code> otherwise.
+     */
+    public boolean isLegalMove( final Move move )
+        { return (move != null && move.state.hashFull == _hashFull); }
 
     /**
      * Makes a move on the board.
@@ -568,6 +611,50 @@ public class Board
     //  -----------------------------------------------------------------------
     //	GETTERS & SETTERS
     //	-----------------------------------------------------------------------
+
+    /**
+     * Gets all pieces for a given type that can move to a target square.
+     *
+     * @param iSqTo
+     *     Target square, in 8x8 format.
+     * @param pt
+     *     Piece type [PAWN|KNIGHT|BISHOP|ROOK|QUEEN|KING].
+     *
+     * @return Bitboard of pieces.
+     */
+    long getCandidates( final int iSqTo, final int pt )
+        {
+        if ((iSqTo & ~0x3F) != 0)
+            return 0L;
+        /*
+        **  CODE
+        */
+        switch (pt)
+            {
+            case PAWN:
+                return (_player == WHITE)
+                       ? (_map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]))
+                       : (_map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]));
+
+            case KNIGHT:
+                return _map[ MAP_W_KNIGHT + _player ] & Bitboards.knight[ iSqTo ];
+
+            case BISHOP:
+                return _map[ MAP_W_BISHOP + _player ] & Bitboards.bishop[ iSqTo ];
+
+            case ROOK:
+                return _map[ MAP_W_ROOK + _player ] & Bitboards.rook[ iSqTo ];
+
+            case QUEEN:
+                return _map[ MAP_W_QUEEN + _player ] &
+                       (Bitboards.bishop[ iSqTo ] | Bitboards.rook[ iSqTo ]);
+
+            case KING:
+                return _map[ MAP_W_KING + _player ];
+            }
+
+        return 0L;
+        }
 
     /**
      * Gets the piece map for a given piece type.

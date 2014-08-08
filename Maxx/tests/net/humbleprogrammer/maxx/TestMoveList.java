@@ -66,7 +66,7 @@ public class TestMoveList extends TestBase
         assertFalse( moves.hasLegalMove() );
         }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test( expected = IllegalArgumentException.class )
     public void t_ctor_fail()
         {
         new MoveList( null );
@@ -81,7 +81,7 @@ public class TestMoveList extends TestBase
         assertTrue( moves.hasLegalMove() );
         assertEquals( 1, moves.size() );
 
-        for (Move mv : moves)
+        for ( Move mv : moves )
             {
             assertEquals( Square.C7, mv.iSqFrom );
             assertEquals( Square.E5, mv.iSqTo );
@@ -164,7 +164,6 @@ public class TestMoveList extends TestBase
     public void t_perft()
         {
         int iMaxDepth = 0;
-        long lMillisecs;
 
         for ( TestPosition position : s_positions )
             iMaxDepth = Math.max( iMaxDepth, position._lExpected.length );
@@ -178,15 +177,16 @@ public class TestMoveList extends TestBase
                     return;
                     }
 
-            if (iDepth > 0 &&
-                s_lNetMoves > 0L &&
-                (lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs )) > 0L)
+            if (s_log.isInfoEnabled() &&
+                s_lNetNanosecs >= TimeUnit.SECONDS.toNanos( 15L ))
                 {
+                final long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
+
                 s_log.info( String.format( "Depth %d: generated %,d moves in %s (%,d mps)",
                                            iDepth,
                                            s_lNetMoves,
                                            TimeUtil.formatMillisecs( lMillisecs, true ),
-                                           (s_lNetMoves * 1000) / lMillisecs ) );
+                                           (s_lNetMoves * 1000L) / lMillisecs ) );
                 }
             }
         }
