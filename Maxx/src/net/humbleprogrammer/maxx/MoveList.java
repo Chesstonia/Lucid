@@ -60,6 +60,10 @@ public class MoveList implements Iterable<Move>
     private final int         _player;
     /** Square occupied by the moving player's King. */
     private final int         _iSqKing;
+    /** Bitboard of opposing pieces. */
+    private final long _bbOpponent;
+    /** Bitboard of moving pieces. */
+    private final long _bbPlayer;
     /** Current position. */
     private final Board.State _state;
     /** Array of packed moves. */
@@ -73,8 +77,6 @@ public class MoveList implements Iterable<Move>
     private long _bbAll;
     /** Bitboard of pieces threatening the moving player's King. */
     private long _bbCheckers;
-    /** Bitboard of opposing pieces. */
-    private long _bbOpponent;
     /** Bitboard of all pinned pieces. */
     private long _bbPinned;
     /** Bitboard of potential "To" squares. */
@@ -105,6 +107,9 @@ public class MoveList implements Iterable<Move>
         _opponent = _player ^ 1;
         _iSqKing = bd.getKingSquare( _player );
 
+        _bbOpponent = _state.map[ _opponent ];
+        _bbPlayer = _state.map[ _player ];
+
         generateAllMoves( _state.map[ _player ], ~_state.map[ _player ] );
         }
 
@@ -134,14 +139,17 @@ public class MoveList implements Iterable<Move>
         _opponent = _player ^ 1;
         _iSqKing = bd.getKingSquare( _player );
 
-        if ((iSqTo & ~0x3F) == 0 &&
-            generateAllMoves( bbCandidates, (1L << iSqTo) ) > 0)
+        _bbOpponent = _state.map[ _opponent ];
+        _bbPlayer = _state.map[ _player ];
+
+        generateAllMoves( bbCandidates & _bbPlayer, (1L << iSqTo) & ~_bbPlayer );
+        //
+        //  Take out all moves that don't reach the "To" square.  Do this by copying the last
+        //  move on top of the "bad" move.  The current index is decremented so that the next
+        //  iteration of the loop will test the copied move, which is now in the same element.
+        //
+        if (_iCount > 0)
             {
-            //
-            //  Take out all moves that don't reach the "To" square.  Do this by copying the last
-            //  move on top of the "bad" move.  The current index is decremented so that the next
-            //  iteration of the loop will test the copied move, which is now in the same element.
-            //
             final int iToMask = Move.pack( 0, iSqTo );
 
             for ( int index = 0; index < _iCount; ++index )
@@ -261,11 +269,14 @@ public class MoveList implements Iterable<Move>
      *     Bitboard of pieces to generate moves for.
      * @param bbToSq
      *     Bitboard of target squares.
-     *
-     * @return Number of moves generated.
      */
-    private int generateAllMoves( long bbFromSq, long bbToSq )
+    private void generateAllMoves( long bbFromSq, long bbToSq )
         {
+        if (bbFromSq == 0L || bbToSq == 0L)
+            return;
+        /*
+        **  CODE
+        */
         long bbPieces = initBitboards( bbFromSq, bbToSq );
 
         while ( bbPieces != 0L )
@@ -326,8 +337,6 @@ public class MoveList implements Iterable<Move>
 
         if (Square.isValid( _state.iSqEP ))
             generateEnPassantCaptures( _state.iSqEP, bbFromSq );
-
-        return _iCount;
         }
 
     /**
@@ -518,9 +527,8 @@ public class MoveList implements Iterable<Move>
         /*
         **  CODE
         */
-        _bbAll = _state.map[ MAP_W_ALL ] | _state.map[ MAP_B_ALL ];
+        _bbAll = _bbPlayer | _bbOpponent;
         _bbCheckers = Bitboards.getAttackedBy( _state.map, _iSqKing, _opponent );
-        _bbOpponent = _state.map[ _opponent ];
         _bbPinned = 0L;
         _bbToSq = bbToSq;
         //
@@ -549,14 +557,12 @@ public class MoveList implements Iterable<Move>
             //  Now check if there is one (and only one) moving piece that lies on the path
             //  between a threatening piece and the King, then it is pinned.
             //
-            final long bbPlayer = _state.map[ MAP_W_ALL + _player ];
-
             long bbPinners = bbDiagonal | bbLateral;
 
             while ( bbPinners != 0L )
                 {
                 final int iSqPinner = BitUtil.first( bbPinners );
-                long bbBetween = bbPlayer & Bitboards.getSquaresBetween( _iSqKing, iSqPinner );
+                final long bbBetween = _bbPlayer & Bitboards.getSquaresBetween( _iSqKing, iSqPinner );
 
                 bbPinners ^= 1L << iSqPinner;
 

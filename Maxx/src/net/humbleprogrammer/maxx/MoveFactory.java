@@ -374,8 +374,12 @@ public class MoveFactory
                 iPieceMoving = pt;
                 return STATE_FILE;
                 }
-
-            if (iState == STATE_PROMOTION)
+            //
+            //  If we got a piece type -- but didn't see the promotion separator -- make sure
+            //  this is really a promotion move.
+            //
+            if (iState == STATE_PROMOTION ||
+                (iState == STATE_SUFFIX && iPieceMoving == PAWN && (iRankTo == 0 || iRankTo == 7)))
                 {
                 if (pt == QUEEN)
                     iType = Move.Type.PROMOTION;
