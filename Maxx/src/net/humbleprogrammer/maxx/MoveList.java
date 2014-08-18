@@ -287,46 +287,46 @@ public class MoveList implements Iterable<Move>
 
             switch (_state.sq[ iSq ])
                 {
-                case W_PAWN:
+                case MAP_W_PAWN:
                     generatePawnMovesWhite( iSq );
                     break;
 
-                case B_PAWN:
+                case MAP_B_PAWN:
                     generatePawnMovesBlack( iSq );
                     break;
 
-                case W_KNIGHT:
-                case B_KNIGHT:
+                case MAP_W_KNIGHT:
+                case MAP_B_KNIGHT:
                     addMoves( iSq,
                               Bitboards.knight[ iSq ],
                               Move.Type.NORMAL );
                     break;
-                case W_BISHOP:
-                case B_BISHOP:
+                case MAP_W_BISHOP:
+                case MAP_B_BISHOP:
                     addMoves( iSq,
                               Bitboards.getBishopAttacks( iSq, _bbAll ),
                               Move.Type.NORMAL );
                     break;
 
-                case W_ROOK:
-                case B_ROOK:
+                case MAP_W_ROOK:
+                case MAP_B_ROOK:
                     addMoves( iSq,
                               Bitboards.getRookAttacks( iSq, _bbAll ),
                               Move.Type.NORMAL );
                     break;
 
-                case W_QUEEN:
-                case B_QUEEN:
+                case MAP_W_QUEEN:
+                case MAP_B_QUEEN:
                     addMoves( iSq,
                               Bitboards.getQueenAttacks( iSq, _bbAll ),
                               Move.Type.NORMAL );
                     break;
 
-                case W_KING:
+                case MAP_W_KING:
                     generateKingMovesWhite( iSq );
                     break;
 
-                case B_KING:
+                case MAP_B_KING:
                     generateKingMovesBlack( iSq );
                     break;
 
@@ -465,11 +465,11 @@ public class MoveList implements Iterable<Move>
         //
         int iSqTo = iSqFrom - 8;
 
-        if (_state.sq[ iSqTo ] == null)
+        if (_state.sq[ iSqTo ] == EMPTY)
             {
             addMove( iSqFrom, iSqTo, iType );
             // If moving from 7th rank, check for pawn advance.
-            if (iSqFrom >= Square.A7 && _state.sq[ (iSqTo -= 8) ] == null)
+            if (iSqFrom >= Square.A7 && _state.sq[ (iSqTo -= 8) ] == EMPTY)
                 addMove( iSqFrom, iSqTo, Move.Type.PAWN_PUSH );
             }
         }
@@ -501,11 +501,11 @@ public class MoveList implements Iterable<Move>
         //
         int iSqTo = iSqFrom + 8;
 
-        if (_state.sq[ iSqTo ] == null)
+        if (_state.sq[ iSqTo ] == EMPTY)
             {
             addMove( iSqFrom, iSqTo, iType );
             // If moving from 2nd rank, check for pawn advance.
-            if (iSqFrom <= Square.H2 && _state.sq[ (iSqTo += 8) ] == null)
+            if (iSqFrom <= Square.H2 && _state.sq[ (iSqTo += 8) ] == EMPTY)
                 addMove( iSqFrom, iSqTo, Move.Type.PAWN_PUSH );
             }
         }
@@ -630,12 +630,12 @@ public class MoveList implements Iterable<Move>
         */
         final long bbSqFrom = 1L << iSqFrom;
         final long bbSqTo = 1L << iSqTo;
-        Piece piece = _state.sq[ iSqFrom ];
+        int piece = _state.sq[ iSqFrom ];
 
         System.arraycopy( _state.map, 0, _map, 0, MAP_LENGTH );
 
+        _map[ piece ] ^= bbSqFrom | bbSqTo;
         _map[ _player ] ^= bbSqFrom | bbSqTo;
-        _map[ piece.index ] ^= bbSqFrom | bbSqTo;
 
         if (iMoveType == Move.Type.CASTLING)
             {
@@ -666,10 +666,10 @@ public class MoveList implements Iterable<Move>
             _map[ _opponent ] ^= bbMask;
             _map[ MAP_W_PAWN + _opponent ] ^= bbMask;
             }
-        else if ((piece = _state.sq[ iSqTo ]) != null)
+        else if ((piece = _state.sq[ iSqTo ]) != EMPTY)
             {
+            _map[ piece  ] ^= bbSqTo;
             _map[ _opponent ] ^= bbSqTo;
-            _map[ piece.index ] ^= bbSqTo;
             }
 
         return !Bitboards.isAttackedBy( _map,

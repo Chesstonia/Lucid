@@ -166,7 +166,7 @@ public class PgnParser extends Parser
      *
      * @return <code>.T.</code> if valid; <code>.F.</code> otherwise.
      */
-    public static boolean isValidTagName( final String strName )
+    public static boolean isValidTagName( String strName )
         { return (strName != null && Pattern.matches( STR_TAG_NAME, strName )); }
 
     /**
@@ -177,7 +177,7 @@ public class PgnParser extends Parser
      *
      * @return <code>.T.</code> if valid; <code>.F.</code> otherwise.
      */
-    public static boolean isValidTagValue( final String strValue )
+    public static boolean isValidTagValue( String strValue )
         { return (strValue != null && strValue.length() < 256); }
 
     /**
@@ -190,7 +190,7 @@ public class PgnParser extends Parser
      *
      * @return .T. if parsed successfully; .F. on error.
      */
-    static boolean parse( final IPgnListener listener, final String strPGN )
+    static boolean parse( IPgnListener listener, String strPGN )
         {
         DBC.requireNotNull( listener, "PGN Listener" );
 
@@ -405,13 +405,13 @@ public class PgnParser extends Parser
     private void parseMove() throws ParseException
         {
         assert Character.isLetter( _lexer.peek( 0 ) );
-
-        if ((_iValidTokens & TT_MOVE) == 0)
-            throw new ParseException( "Unexpected move.", _lexer.getOffset() );
         /*
         **  CODE
         */
+        final int iMoveCol = _lexer.getColumn();
+
         int ch;
+        String strSuffix;
 
         for ( ch = _lexer.peek( 0 ); STR_MOVE.indexOf( ch ) >= 0; ch = _lexer.readChar() )
             _sb.appendCodePoint( ch );
@@ -419,20 +419,16 @@ public class PgnParser extends Parser
         //  Build the move suffix, if any. These are typically ver short (2-3 characters
         //  at most) so any performance hit from string concantenation is acceptable.
         //
-        String strSuffix = "";
-
-        while ( STR_MOVE_SUFFIX.indexOf( ch ) >= 0 )
-            {
+        for ( strSuffix = ""; STR_MOVE_SUFFIX.indexOf( ch ) >= 0; ch = _lexer.readChar() )
             strSuffix += (char) ch;
-            ch = _lexer.readChar();
-            }
 
         if (!(ch == 0 || Character.isWhitespace( ch )))
             _lexer.undoRead();
         //
         //  Pass the move to the listener.
         //
-        if (_listener.onMove( _sb.toString(), strSuffix ))
+        if ((_iValidTokens & TT_MOVE) != 0 &&
+            _listener.onMove( _sb.toString(), strSuffix ))
             {
             _iMovesSeen++;
             _iValidTokens = _iVariations |
@@ -443,10 +439,9 @@ public class PgnParser extends Parser
             }
         else
             {
-            String strWhat = String.format( "%s move '%s' in column %,d.",
-                                            ((_sb.length() > 1) ? "Illegal" : "Invalid"),
+            String strWhat = String.format( "Invalid move '%s' in column %,d.",
                                             _sb.toString(),
-                                            (_lexer.getColumn() - _sb.length()) );
+                                            iMoveCol );
 
             throw new ParseException( strWhat, _lexer.getOffset() );
             }
@@ -523,7 +518,8 @@ public class PgnParser extends Parser
         //
         //  Inform the listener.
         //
-        if ((_iValidTokens & TT_MOVE_PLACEHOLDER) != 0 && _listener.onMovePlaceholder())
+        if ((_iValidTokens & TT_MOVE_PLACEHOLDER) != 0 &&
+            _listener.onMovePlaceholder())
             {
             _iMovesSeen++;
             _iValidTokens = TT_MOVE;
@@ -550,7 +546,8 @@ public class PgnParser extends Parser
         //
         //  Inform the listener.
         //
-        if ((_iValidTokens & TT_MOVE) != 0 && !_listener.onNullMove())
+        if ((_iValidTokens & TT_MOVE) != 0 &&
+            _listener.onNullMove())
             {
             _iMovesSeen++;
             _iValidTokens = _iVariations |
@@ -590,7 +587,8 @@ public class PgnParser extends Parser
         if (result == null)
             return false;
 
-        if ((_iValidTokens & TT_RESULT) != 0 && _listener.onResult( result ))
+        if ((_iValidTokens & TT_RESULT) != 0 &&
+            _listener.onResult( result ))
             {
             _iValidTokens = (_iVariationDepth > 0)
                             ? TT_VARIATION_END
@@ -608,18 +606,19 @@ public class PgnParser extends Parser
     private void parseTag() throws ParseException
         {
         assert _lexer.peek( 0 ) == TAG_BEGIN;
-
-        if ((_iValidTokens & TT_TAG_PAIR) == 0)
-            throw new ParseException( "Unexpected tag marker.", _lexer.getOffset() );
         /*
         **  CODE
         */
-        _listener.onTag( parseTagName(), parseTagValue() );
-
-        _iValidTokens = TT_COMMENT |
-                        TT_TAG_PAIR |
-                        TT_MOVE_NUMBER |
-                        TT_RESULT;
+        if ((_iValidTokens & TT_TAG_PAIR) != 0 &&
+            _listener.onTag( parseTagName(), parseTagValue() ))
+            {
+            _iValidTokens = TT_COMMENT |
+                            TT_TAG_PAIR |
+                            TT_MOVE_NUMBER |
+                            TT_RESULT;
+            }
+        else
+            throw new ParseException( "Invalid tag marker.", _lexer.getOffset() );
         }
 
     /**
@@ -639,14 +638,12 @@ public class PgnParser extends Parser
         //
         final String strName = _sb.toString();
 
-        if (!isValidTagName( strName ))
-            {
-            String strWhat = String.format( "Invalid tag name '%s'.",
-                                            _sb.toString() );
-            throw new ParseException( strWhat, _lexer.getOffset() - strName.length() );
-            }
+        if (isValidTagName( strName ))
+            return strName;
 
-        return strName;
+        String strWhat = String.format( "Invalid tag name '%s'.",
+                                        _sb.toString() );
+        throw new ParseException( strWhat, _lexer.getOffset() - strName.length() );
         }
 
     /**
@@ -695,14 +692,12 @@ public class PgnParser extends Parser
         //
         final String strValue = _sb.toString();
 
-        if (!isValidTagValue( strValue ))
-            {
-            String strWhat = String.format( "Invalid tag value '%s'.",
-                                            _sb.toString() );
-            throw new ParseException( strWhat, _lexer.getOffset() - strValue.length() );
-            }
+        if (isValidTagValue( strValue ))
+            return strValue;
 
-        return strValue;
+        String strWhat = String.format( "Invalid tag value '%s'.",
+                                        _sb.toString() );
+        throw new ParseException( strWhat, _lexer.getOffset() - strValue.length() );
         }
 
     /**
@@ -750,8 +745,8 @@ public class PgnParser extends Parser
         }
 
     //  -----------------------------------------------------------------------
-    //	TOKEN TYPE CONSTANTS (TT_*)
-    //	-----------------------------------------------------------------------
+//	TOKEN TYPE CONSTANTS (TT_*)
+//	-----------------------------------------------------------------------
     @SuppressWarnings( "PointlessBitwiseExpression" )
     private static final int TT_ANNOTATION       = 1 << 0;
     private static final int TT_COMMENT          = 1 << 1;

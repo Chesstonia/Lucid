@@ -39,7 +39,6 @@ import org.junit.*;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
@@ -62,19 +61,16 @@ public class TestPgnParser extends TestBase
     @Test
     public void t_isValid()
         {
-        final Collection<Path> listPGN = getPGN();
-
         try
             {
-            for ( Path path : listPGN )
+            for ( Path path : getPGN() )
                 {
                 try (PgnReader pgn = new PgnReader( new FileReader( path.toFile() ) ))
                     {
-                    Stopwatch swatch = new Stopwatch();
+                    Stopwatch swatch = Stopwatch.startNew();
                     String strPGN;
 
                     while ( (strPGN = pgn.readGame()) != null )
-                        {
                         if (PgnParser.isValid( strPGN ))
                             s_iNetGames++;
                         else
@@ -84,9 +80,8 @@ public class TestPgnParser extends TestBase
                                                  strPGN ) );
                             }
 
-                        if ((s_lNetNanosecs += swatch.getElapsed()) >= s_lMaxNanosecs)
-                            return;
-                        }
+                    if ((s_lNetNanosecs += swatch.getElapsed()) >= s_lMaxNanosecs)
+                        return;
                     }
                 }
             }
@@ -144,11 +139,11 @@ public class TestPgnParser extends TestBase
     @AfterClass
     public static void displayResults()
         {
-        final long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
+        long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
 
         if (lMillisecs > 0L)
             {
-            s_log.info( String.format( "%s: PgnParser parsed %,d games in %s (%,d gps)",
+            s_log.info( String.format( "%s: PgnParser validated %,d games in %s (%,d gps)",
                                        DURATION.toString(),
                                        s_iNetGames,
                                        TimeUtil.formatMillisecs( lMillisecs, true ),

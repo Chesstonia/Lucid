@@ -36,58 +36,45 @@ import net.humbleprogrammer.TestBase;
 import org.junit.Test;
 
 import static net.humbleprogrammer.maxx.Constants.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class TestPiece extends TestBase
     {
     //  -----------------------------------------------------------------------
     //	UNIT TESTS
     //	-----------------------------------------------------------------------
-    @Test
-    public void t_index()
-        {
-        int iBits = 0;
-
-        for ( final Piece piece : Piece.values() )
-            {
-            assertTrue( piece.index >= 2 && piece.index < 14 );
-            iBits |= 1 << piece.index;
-            }
-
-        assertEquals( 0x3FFC, iBits );
-        }
 
     @Test
-    public void t_side()
+    public void t_getColor()
         {
-        assertEquals( WHITE, Piece.W_PAWN.color );
-        assertEquals( BLACK, Piece.B_PAWN.color );
-        assertEquals( WHITE, Piece.W_KNIGHT.color );
-        assertEquals( BLACK, Piece.B_KNIGHT.color );
-        assertEquals( WHITE, Piece.W_BISHOP.color );
-        assertEquals( BLACK, Piece.B_BISHOP.color );
-        assertEquals( WHITE, Piece.W_ROOK.color );
-        assertEquals( BLACK, Piece.B_ROOK.color );
-        assertEquals( WHITE, Piece.W_QUEEN.color );
-        assertEquals( BLACK, Piece.B_QUEEN.color );
-        assertEquals( WHITE, Piece.W_KING.color );
-        assertEquals( BLACK, Piece.B_KING.color );
+        assertEquals( WHITE, Piece.getColor( Piece.W_PAWN ) );
+        assertEquals( BLACK, Piece.getColor( Piece.B_PAWN ) );
+        assertEquals( WHITE, Piece.getColor( Piece.W_KNIGHT ) );
+        assertEquals( BLACK, Piece.getColor( Piece.B_KNIGHT ) );
+        assertEquals( WHITE, Piece.getColor( Piece.W_BISHOP ) );
+        assertEquals( BLACK, Piece.getColor( Piece.B_BISHOP ) );
+        assertEquals( WHITE, Piece.getColor( Piece.W_ROOK ) );
+        assertEquals( BLACK, Piece.getColor( Piece.B_ROOK ) );
+        assertEquals( WHITE, Piece.getColor( Piece.W_QUEEN ) );
+        assertEquals( BLACK, Piece.getColor( Piece.B_QUEEN ) );
+        assertEquals( WHITE, Piece.getColor( Piece.W_KING ) );
+        assertEquals( BLACK, Piece.getColor( Piece.B_KING ) );
         }
 
     @Test
     public void t_type()
         {
-        assertEquals( PAWN, Piece.W_PAWN.type );
-        assertEquals( PAWN, Piece.B_PAWN.type );
-        assertEquals( KNIGHT, Piece.W_KNIGHT.type );
-        assertEquals( KNIGHT, Piece.B_KNIGHT.type );
-        assertEquals( BISHOP, Piece.W_BISHOP.type );
-        assertEquals( BISHOP, Piece.B_BISHOP.type );
-        assertEquals( ROOK, Piece.W_ROOK.type );
-        assertEquals( ROOK, Piece.B_ROOK.type );
-        assertEquals( QUEEN, Piece.W_QUEEN.type );
-        assertEquals( QUEEN, Piece.B_QUEEN.type );
-        assertEquals( KING, Piece.W_KING.type );
-        assertEquals( KING, Piece.B_KING.type );
+        assertEquals( PAWN, Piece.getType( Piece.W_PAWN ) );
+        assertEquals( PAWN, Piece.getType( Piece.B_PAWN ) );
+        assertEquals( KNIGHT, Piece.getType( Piece.W_KNIGHT ) );
+        assertEquals( KNIGHT, Piece.getType( Piece.B_KNIGHT ) );
+        assertEquals( BISHOP, Piece.getType( Piece.W_BISHOP ) );
+        assertEquals( BISHOP, Piece.getType( Piece.B_BISHOP ) );
+        assertEquals( ROOK, Piece.getType( Piece.W_ROOK ) );
+        assertEquals( ROOK, Piece.getType( Piece.B_ROOK ) );
+        assertEquals( QUEEN, Piece.getType( Piece.W_QUEEN ) );
+        assertEquals( QUEEN, Piece.getType( Piece.B_QUEEN ) );
+        assertEquals( KING, Piece.getType( Piece.W_KING ) );
+        assertEquals( KING, Piece.getType( Piece.B_KING ) );
         }
     }   /* end of class TestPiece */

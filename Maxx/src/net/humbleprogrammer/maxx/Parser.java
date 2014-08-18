@@ -33,8 +33,6 @@
 package net.humbleprogrammer.maxx;
 
 import net.humbleprogrammer.humble.StrUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,7 +47,7 @@ public class Parser
     //	-----------------------------------------------------------------------
 
     /** CR/LF seqquence. */
-    public static final String STR_CRLF = System.getProperty( "line.separator" );
+    public static final String  STR_CRLF      = System.getProperty( "line.separator" );
 
     /** Castling Queen-side, AKA "castling long". */
     static final           String STR_CASTLE_LONG  = "O-O-O";
@@ -57,6 +55,7 @@ public class Parser
     static final           String STR_CASTLE_SHORT = "O-O";
     /** Placeholder in EPD/FEN strings. */
     static final           String STR_DASH         = "-";
+
     /** Characters allowed in a move. */
     protected static final String STR_MOVE         = "abcdefgh12345678BKNQRx:=O-";
 
@@ -94,9 +93,6 @@ public class Parser
     //	STATIC DECLARATIONS
     //	-----------------------------------------------------------------------
 
-
-    /** Logger */
-    protected static final Logger s_log = LoggerFactory.getLogger( "PARSER" );
     /** Last error encountered. */
     protected static String s_strError;
 
@@ -130,15 +126,15 @@ public class Parser
      * @param ch
      *     Character (code point)
      *
-     * @return {@link net.humbleprogrammer.maxx.Piece} if recognized; <c>null</c> otherwise.
+     * @return {@link net.humbleprogrammer.maxx.Piece} if recognized; <c>EMPTY</c> otherwise.
      */
-    static Piece pieceFromGlyph( int ch )
+    static int pieceFromGlyph( int ch )
         {
         int iPos = PIECE_GLYPHS.indexOf( ch );
 
         return (iPos >= 0)
-               ? Piece.values()[ iPos ]
-               : null;
+               ? (iPos + MAP_W_PAWN)
+               : EMPTY;
         }
 
     /**
@@ -149,10 +145,10 @@ public class Parser
      *
      * @return Character, or zero if piece is invalid.
      */
-    static char pieceToGlyph( Piece piece )
+    static char pieceToGlyph( int piece )
         {
-        return (piece != null)
-               ? PIECE_GLYPHS.charAt( piece.ordinal() )
+        return (piece >= MAP_W_PAWN && piece <= MAP_B_KING)
+               ? PIECE_GLYPHS.charAt( piece - MAP_W_PAWN )
                : '\0';
         }
 
@@ -170,7 +166,7 @@ public class Parser
         int iPos = PIECE_GLYPHS.indexOf( ch );
 
         return (iPos >= 0)
-               ? Piece.values()[ iPos ].type
+               ? ((iPos + MAP_W_PAWN) >> 1)
                : INVALID;
         }
 

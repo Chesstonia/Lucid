@@ -32,7 +32,7 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import static net.humbleprogrammer.maxx.Constants.BLACK;
+import static net.humbleprogrammer.maxx.Constants.*;
 
 final class ZobristHash
     {
@@ -316,14 +316,14 @@ final class ZobristHash
      *
      * @return Zobrist hash.
      */
-    static long getPieceHash( final int iSq, final Piece piece )
+    static long getPieceHash( final int iSq, final int piece )
         {
         assert Square.isValid( iSq );
-        assert piece != null;
+        assert piece >= MAP_W_PAWN && piece <= MAP_B_KING;
         /*
         **	CODE
 		*/
-        final int iOffset = (piece.ordinal() << 6) + iSq;
+        final int iOffset = ((piece - MAP_W_PAWN) << 6) + iSq;
 
         assert (iOffset >= 0 && iOffset < 768);
 
@@ -342,15 +342,15 @@ final class ZobristHash
      *
      * @return Zobrist hash.
      */
-    static long getPieceHash( final int iSqFrom, final int iSqTo, final Piece piece )
+    static long getPieceHash( final int iSqFrom, final int iSqTo, final int piece )
         {
         assert Square.isValid( iSqFrom );
         assert Square.isValid( iSqTo );
-        assert piece != null;
+        assert piece >= MAP_W_PAWN && piece <= MAP_B_KING;
         /*
         **	CODE
 		*/
-        final int iOffset = piece.ordinal() << 6;
+        final int iOffset = (piece - MAP_W_PAWN) << 6;
 
         return s_hashPieces[ iOffset + iSqFrom ] ^ s_hashPieces[ iOffset + iSqTo ];
         }

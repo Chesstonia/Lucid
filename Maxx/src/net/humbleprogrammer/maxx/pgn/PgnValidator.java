@@ -33,6 +33,8 @@
 package net.humbleprogrammer.maxx.pgn;
 
 import net.humbleprogrammer.maxx.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Stack;
 
@@ -40,6 +42,12 @@ import static net.humbleprogrammer.maxx.Constants.*;
 
 public class PgnValidator extends PgnAdapter
     {
+    //  -----------------------------------------------------------------------
+    //	STATIC DECLARATIONS
+    //	-----------------------------------------------------------------------
+
+    /** Logger */
+    private static final Logger s_log = LoggerFactory.getLogger( PgnParser.class );
 
     //  -----------------------------------------------------------------------
     //	DECLARATIONS
@@ -114,10 +122,14 @@ public class PgnValidator extends PgnAdapter
         //
         final Move moveFound = MoveFactory.fromSAN( _pv.getCurrentPosition(), strSAN );
 
-        if (moveFound != null && _pv.appendMove( moveFound ))
-            return true;
+        if (moveFound != null)
+            return _pv.appendMove( moveFound );
 
-        MoveFactory.fromSAN( _pv.getCurrentPosition(), strSAN );
+        s_log.debug( "{} => '{}' is illegal or ambiguous.",
+                     _pv.getCurrentPosition(),
+                     strSAN );
+
+        // MoveFactory.fromSAN( _pv.getCurrentPosition(), strSAN );
 
         return false;
         }
@@ -200,16 +212,17 @@ public class PgnValidator extends PgnAdapter
     public boolean onResult( final Result result )
         {
         assert result != null;
-
-        if (_pv == null)
-            return true;
         /*
         **  CODE
         */
-        if (_pv.getResult() != null)
-            return false;
+        if (_pv != null)
+            {
+            if (_pv.getResult() != null)
+                return false;
 
-        _pv.setResult( result );
+            _pv.setResult( result );
+            }
+
         return true;
         }
 
@@ -221,22 +234,17 @@ public class PgnValidator extends PgnAdapter
      * @param strValue
      *     Tag value.
      *
-     * @throws IllegalPositionException
-     *     if a FEN tag is encountered, but doesn't have a valid FEN value.
+     * @return .T. if parsing should continue; .F. to abort parsing.
      */
-    public void onTag( final String strName, final String strValue )
-        throws IllegalPositionException
+    public boolean onTag( final String strName, final String strValue )
         {
         assert PgnParser.isValidTagName( strName );
         assert PgnParser.isValidTagValue( strValue );
         /*
         **  CODE
         */
-        if (PgnParser.TAG_FEN.equalsIgnoreCase( strName ) &&
-            !(strValue != null && _pv.setStartingPosition( strValue )))
-            {
-            throw new IllegalPositionException( strValue );
-            }
+        return (!strName.equalsIgnoreCase( PgnParser.TAG_FEN ) ||
+               _pv.setStartingPosition( strValue ));
         }
 
     /**

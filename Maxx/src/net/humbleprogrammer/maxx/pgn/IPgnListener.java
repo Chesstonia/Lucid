@@ -32,9 +32,12 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx.pgn;
 
-import net.humbleprogrammer.maxx.IllegalPositionException;
-import net.humbleprogrammer.maxx.Result;
+import net.humbleprogrammer.maxx.*;
 
+/**
+ * The {@link IPgnListener} interface describes the behavior of listeners attached to the {@link
+ * PgnParser} class must implement.
+ */
 interface IPgnListener
     {
     /**
@@ -61,7 +64,7 @@ interface IPgnListener
      * @param strSuffix
      *     Optional suffix string.
      *
-     * @return .T. if parsing is to continue; .F. to abort parsing.
+     * @return .T. if parsing should continue; .F. to abort parsing.
      */
     boolean onMove( final String strSAN, final String strSuffix );
 
@@ -71,7 +74,7 @@ interface IPgnListener
      * @param iMoveNumber
      *     Move number.
      *
-     * @return .T. if parsing is to continue; .F. to abort parsing.
+     * @return .T. if parsing should continue; .F. to abort parsing.
      */
     boolean onMoveNumber( final int iMoveNumber );
 
@@ -85,7 +88,7 @@ interface IPgnListener
     /**
      * A null move ("--") has been parsed.
      *
-     * @return .T. if parsing is to continue; .F. to abort parsing.
+     * @return .T. if parsing should continue; .F. to abort parsing.
      */
     boolean onNullMove();
 
@@ -95,7 +98,7 @@ interface IPgnListener
      * @param result
      *     Result
      *
-     * @return .T. if parsing is to continue; .F. to abort parsing.
+     * @return .T. if parsing should continue; .F. to abort parsing.
      */
     boolean onResult( final Result result );
 
@@ -107,10 +110,9 @@ interface IPgnListener
      * @param strValue
      *     Tag value.
      *
-     * @throws IllegalPositionException
-     *     if a FEN tag is encountered, but doesn't have a valid FEN value.
+     * @return .T. if parsing should continue; .F. to abort parsing.
      */
-    void onTag( final String strName, final String strValue ) throws IllegalPositionException;
+    boolean onTag( final String strName, final String strValue );
 
     /**
      * A variation open marker '(' was parsed.

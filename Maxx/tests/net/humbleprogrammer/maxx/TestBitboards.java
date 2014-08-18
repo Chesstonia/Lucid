@@ -87,11 +87,11 @@ public class TestBitboards extends TestBase
     @Test
     public void t_getAttackedBy()
         {
-        final Board.State state = BoardFactory.createFromFEN( FEN_TEST ).getState();
+        Board.State state = BoardFactory.createFromFEN( FEN_TEST ).getState();
 
         for ( int iSq = 0; iSq < Math.min( 64, s_bbAttacks.length ); ++iSq )
             {
-            final long bbAttacks = s_bbAttacks[ iSq ];
+            long bbAttacks = s_bbAttacks[ iSq ];
 
             assertEquals( "White attacking " + Square.toString( iSq ),
                           (s_bbPieces[ WHITE ] & bbAttacks),
@@ -106,7 +106,7 @@ public class TestBitboards extends TestBase
     @Test
     public void t_isAttackedBy()
         {
-        final Board.State state = BoardFactory.createFromFEN( FEN_TEST ).getState();
+        Board.State state = BoardFactory.createFromFEN( FEN_TEST ).getState();
 
         for ( int iSq = 0; iSq < 64; ++iSq )
             {

@@ -34,6 +34,11 @@ package net.humbleprogrammer.maxx.pgn;
 
 import net.humbleprogrammer.maxx.Result;
 
+/**
+ * The {@link PgnAdapter} class implements the {@link IPgnListener} interface, allowing some or
+ * all of the methods to be overridden.  Base methods will always accept the PGN token,
+ * effectively ignoring them
+ */
 public class PgnAdapter implements IPgnListener
     {
     /**
@@ -134,13 +139,14 @@ public class PgnAdapter implements IPgnListener
      * @param strValue
      *     Tag value.
      *
-     * @throws net.humbleprogrammer.maxx.IllegalPositionException
-     *     if a FEN tag is encountered, but doesn't have a valid FEN value.
+     * @return .T. if parsing should continue; .F. to abort parsing.
      */
-    public void onTag( final String strName, final String strValue )
+    public boolean onTag( final String strName, final String strValue )
         {
         assert strName != null;
         assert strValue != null;
+
+        return true;
         }
 
     /**
@@ -154,4 +160,4 @@ public class PgnAdapter implements IPgnListener
      */
     public void onVariationExit()
         { /* STUB METHOD */ }
-    }
+    }   /* end of class PgnAdapter */

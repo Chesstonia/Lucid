@@ -47,16 +47,70 @@ public class TestMoveFactory extends TestBase
     @Test
     public void t_sample()
         {
-        final Board bd = BoardFactory.createInitial();
+        Board bd = BoardFactory.createInitial();
 
         for ( String str : SAMPLE_MOVES )
             {
-            final Move move = MoveFactory.fromSAN( bd, str );
+            Move move = MoveFactory.fromSAN( bd, str );
 
             assertNotNull( str, move );
             assertTrue( bd.isLegalMove( move ) );
 
             bd.makeMove( move );
             }
+        }
+
+    @Test
+    public void t_fromSAN_fail()
+        {
+        assertNull( MoveFactory.fromSAN( null, null ) );
+        }
+
+    @Test
+    public void t_fromSAN_fail_blank()
+        {
+        Board bd = BoardFactory.createInitial();
+
+        assertNull( MoveFactory.fromSAN( bd, null ) );
+        assertNull( MoveFactory.fromSAN( bd, "" ) );
+        assertNull( MoveFactory.fromSAN( bd, "   " ) );
+        assertNull( MoveFactory.fromSAN( bd, Parser.STR_CRLF ) );
+        }
+
+    @Test
+    public void t_fromSAN_fail_invalidFile()
+        {
+        Board bd = BoardFactory.createInitial();
+
+        assertNull( MoveFactory.fromSAN( bd, "x4" ) );
+        assertNull( MoveFactory.fromSAN( bd, "14" ) );
+        assertNull( MoveFactory.fromSAN( bd, "-4" ) );
+        assertNull( MoveFactory.fromSAN( bd, "E4" ) );
+        assertNull( MoveFactory.fromSAN( bd, "*4" ) );
+        }
+
+    @Test
+    public void t_fromSAN_fail_invalidRank()
+        {
+        Board bd = BoardFactory.createInitial();
+
+        assertNull( MoveFactory.fromSAN( bd, "ex" ) );
+        assertNull( MoveFactory.fromSAN( bd, "e0" ) );
+        assertNull( MoveFactory.fromSAN( bd, "e9" ) );
+        assertNull( MoveFactory.fromSAN( bd, "e" ) );
+        assertNull( MoveFactory.fromSAN( bd, "e " ) );
+        assertNull( MoveFactory.fromSAN( bd, "e-" ) );
+        }
+
+    @Test
+    public void t_fromSAN_fail_invalidPiece()
+        {
+        Board bd = BoardFactory.createInitial();
+
+        assertNull( MoveFactory.fromSAN( bd, "Je4" ) );
+        assertNull( MoveFactory.fromSAN( bd, "1e4" ) );
+        assertNull( MoveFactory.fromSAN( bd, "-e4" ) );
+        assertNull( MoveFactory.fromSAN( bd, "pe4" ) );
+        assertNull( MoveFactory.fromSAN( bd, "Pe4" ) );
         }
     }   /* end of class TestMoveFactory */

@@ -58,7 +58,7 @@ public class TestBoard extends TestBase
         assertEquals( HASH_BLANK, bd.getZobristHash() );
 
         for ( int iSq = 0; iSq < 64; ++iSq )
-            assertNull( bd.get( iSq ) );
+            assertEquals( EMPTY, bd.get( iSq ) );
         }
 
     @Test

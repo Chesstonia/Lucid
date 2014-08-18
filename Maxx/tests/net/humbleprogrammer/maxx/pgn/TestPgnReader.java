@@ -69,8 +69,8 @@ public class TestPgnReader extends TestBase
     @Test
     public void t_comprehensive()
         {
-        final Collection<Path> listPGN = getPGN();
-        final Stopwatch swatch = new Stopwatch();
+        Collection<Path> listPGN = getPGN();
+        Stopwatch swatch = new Stopwatch();
 
         try
             {
@@ -100,7 +100,7 @@ public class TestPgnReader extends TestBase
     @AfterClass
     public static void displayResults()
         {
-        final long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
+        long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
 
         if (lMillisecs > 0L)
             {

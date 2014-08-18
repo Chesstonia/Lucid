@@ -44,10 +44,10 @@ public class BoardFactory extends Parser
     //	STATIC DECLARATIONS
     //	-----------------------------------------------------------------------
 
-    /** Initial board. */
-    private static final Board   s_bdInitial     = fromString( FEN_INITIAL );
     /** Used for creating mirrored positions. */
-    private static final Piece[] s_pieceMirrored = new Piece[ Piece.values().length ];
+    private static final int[] s_pieceMirrored = new int[ MAP_LENGTH ];
+    /** Initial board. */
+    private static final Board s_bdInitial     = fromString( FEN_INITIAL );
 
     //  -----------------------------------------------------------------------
     //	CTOR
@@ -55,12 +55,10 @@ public class BoardFactory extends Parser
 
     static
         {
-        Piece[] pieces = Piece.values();
-
-        for ( int idx = 0; idx < s_pieceMirrored.length; idx += 2 )
+        for ( int idx = MAP_W_PAWN; idx < s_pieceMirrored.length; idx += 2 )
             {
-            s_pieceMirrored[ idx ] = pieces[ idx + 1 ];
-            s_pieceMirrored[ idx + 1 ] = pieces[ idx ];
+            s_pieceMirrored[ idx ] = idx + 1;
+            s_pieceMirrored[ idx + 1] = idx;
             }
         }
 
@@ -134,13 +132,13 @@ public class BoardFactory extends Parser
         /*
         **  CODE
         */
-        Board bd = new Board();
-        Piece piece;
+        final Board bd = new Board();
+        int piece;
 
         // Invert the board.
         for ( int iSq = 0; iSq < 64; ++iSq )
-            if ((piece = src.get( iSq )) != null)
-                bd.placePiece( Square.toMirror( iSq ), s_pieceMirrored[ piece.ordinal() ] );
+            if ((piece = src.get( iSq )) != EMPTY)
+                bd.placePiece( Square.toMirror( iSq ), s_pieceMirrored[ piece ] );
 
         // Invert the castling flags.
         int castlingSrc = src.getCastlingFlags();
@@ -229,13 +227,13 @@ public class BoardFactory extends Parser
         if (!strFlags.equals( STR_DASH ))
             {
             int iFlag;
-            Piece piece;
+            int piece;
 
             for ( int idx = 0; idx < strFlags.length(); ++idx )
                 {
                 int ch = strFlags.codePointAt( idx );
 
-                if ((piece = pieceFromGlyph( ch )) == null)
+                if ((piece = pieceFromGlyph( ch )) == EMPTY)
                     return false;
 
                 if (Character.isSupplementaryCodePoint( ch ))
@@ -243,16 +241,16 @@ public class BoardFactory extends Parser
 
                 switch (piece)
                     {
-                    case W_KING:
+                    case MAP_W_KING:
                         iFlag = Board.CastlingFlags.WHITE_SHORT;
                         break;
-                    case W_QUEEN:
+                    case MAP_W_QUEEN:
                         iFlag = Board.CastlingFlags.WHITE_LONG;
                         break;
-                    case B_KING:
+                    case MAP_B_KING:
                         iFlag = Board.CastlingFlags.BLACK_SHORT;
                         break;
-                    case B_QUEEN:
+                    case MAP_B_QUEEN:
                         iFlag = Board.CastlingFlags.BLACK_LONG;
                         break;
 
@@ -399,7 +397,7 @@ public class BoardFactory extends Parser
         */
         int iRank = 7;  // EPD/FEN positions start at the back rank
         int iFile = 0;
-        Piece piece;
+        int piece;
 
         for ( int idx = 0; idx < strPosition.length(); ++idx )
             {
@@ -418,7 +416,7 @@ public class BoardFactory extends Parser
                 iFile = 0;
                 iRank--;
                 }
-            else if ((piece = pieceFromGlyph( ch )) != null)
+            else if ((piece = pieceFromGlyph( ch )) != EMPTY)
                 {
                 int iSq = Square.toIndex( iRank, iFile++ );
 
@@ -454,9 +452,9 @@ public class BoardFactory extends Parser
 
             for ( int iFile = 0; iFile < 8; ++iFile )
                 {
-                Piece piece = bd.get( Square.toIndex( iRank, iFile ) );
+                int piece = bd.get( Square.toIndex( iRank, iFile ) );
 
-                if (piece == null)
+                if (piece == EMPTY)
                     iSkip++;
                 else
                     {

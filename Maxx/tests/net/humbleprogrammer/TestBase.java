@@ -52,11 +52,7 @@ public abstract class TestBase
 
     public enum Duration
         {
-            QUICK,
-            NORMAL,
-            SLOW,
-            EPIC,
-            UNLIMITED
+            QUICK, NORMAL, SLOW, EPIC, UNLIMITED
         }
 
     /** Test duration. */

@@ -95,10 +95,10 @@ public class Board
     /** Zobrist hash of piece/square combinations. */
     private long _hashPieces = HASH_BLANK;
 
-    /** Array of bitboards. */
-    private final long[]  _map = new long[ 14 ];
     /** Array of pieces */
-    private final Piece[] _sq  = new Piece[ 64 ];
+    private final int[]  _sq  = new int[ 64 ];
+    /** Array of bitboards. */
+    private final long[] _map = new long[ 14 ];
     //  -----------------------------------------------------------------------
     //	CTOR
     //	-----------------------------------------------------------------------
@@ -295,12 +295,12 @@ public class Board
 
         _iSqEP = INVALID;
 
-        if (_sq[ iSqTo ] != null)
+        if (_sq[ iSqTo ] != EMPTY)
             {
             _iHalfMoves = 0;
             removePiece( iSqTo );
             }
-        else if (_sq[ iSqFrom ].index == PAWN)
+        else if (Piece.getType( _sq[ iSqFrom ] ) == PAWN)
             _iHalfMoves = 0;
         else
             _iHalfMoves++;
@@ -331,22 +331,22 @@ public class Board
 
             case Move.Type.PROMOTION:
                 removePiece( iSqFrom );
-                placePiece( iSqTo, (_player == WHITE) ? Piece.W_QUEEN : Piece.B_QUEEN );
+                placePiece( iSqTo, Piece.W_QUEEN + _player );
                 break;
 
             case Move.Type.PROMOTE_ROOK:
                 removePiece( iSqFrom );
-                placePiece( iSqTo, (_player == WHITE) ? Piece.W_ROOK : Piece.B_ROOK );
+                placePiece( iSqTo, Piece.W_ROOK + _player );
                 break;
 
             case Move.Type.PROMOTE_BISHOP:
                 removePiece( iSqFrom );
-                placePiece( iSqTo, (_player == WHITE) ? Piece.W_BISHOP : Piece.B_BISHOP );
+                placePiece( iSqTo, Piece.W_BISHOP + _player );
                 break;
 
             case Move.Type.PROMOTE_KNIGHT:
                 removePiece( iSqFrom );
-                placePiece( iSqTo, (_player == WHITE) ? Piece.W_KNIGHT : Piece.B_KNIGHT );
+                placePiece( iSqTo, Piece.W_KNIGHT + _player );
                 break;
 
             default:
@@ -393,10 +393,10 @@ public class Board
      * @param iSq
      *     Square index in 8x8 format.
      *
-     * @return Piece type on square, or <c>null</c> if square is empty.
+     * @return Piece on square, or <c>EMPTY</c> if square is empty.
      */
-    public Piece get( final int iSq )
-        { return Square.isValid( iSq ) ? _sq[ iSq ] : null; }
+    public int get( final int iSq )
+        { return Square.isValid( iSq ) ? _sq[ iSq ] : EMPTY; }
 
     /**
      * Sets the piece on a square.
@@ -409,19 +409,19 @@ public class Board
      * @return .T. on success, .F. on failure.
      */
     @SuppressWarnings( "unused" )
-    public boolean set( final int iSq, final Piece piece )
+    public boolean set( final int iSq, final int piece )
         {
-        if (!Square.isValid( iSq ))
+        if (!Square.isValid( iSq ) || piece < MAP_W_PAWN || piece > MAP_B_KING)
             return false;
         /*
         **  CODE
         */
         if (_sq[ iSq ] != piece)
             {
-            if (_sq[ iSq ] != null)
+            if (_sq[ iSq ] != EMPTY)
                 removePiece( iSq );
 
-            if (piece != null)
+            if (piece != EMPTY)
                 placePiece( iSq, piece );
 
             _hashFull = _hashPieces ^ ZobristHash.getExtraHash( _castling, _iSqEP, _player );
@@ -495,7 +495,7 @@ public class Board
      */
     public void setEnPassantSquare( int iSq )
         {
-        if (Square.isValid( iSq ) && _sq[ iSq ] == null)
+        if (Square.isValid( iSq ) && _sq[ iSq ] == EMPTY)
             {
             if (_player == WHITE)
                 {
@@ -633,8 +633,10 @@ public class Board
             {
             case PAWN:
                 return (_player == WHITE)
-                       ? (_map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]))
-                       : (_map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]));
+                       ? (_map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] |
+                                                Bitboards.fileMask[ iSqTo & 0x07 ]))
+                       : (_map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] |
+                                                Bitboards.fileMask[ iSqTo & 0x07 ]));
 
             case KNIGHT:
                 return _map[ MAP_W_KNIGHT + _player ] & Bitboards.knight[ iSqTo ];
@@ -720,18 +722,18 @@ public class Board
         assert Square.isValid( iSqFrom );
         assert Square.isValid( iSqTo );
 
-        assert _sq[ iSqFrom ] != null;
-        assert _sq[ iSqTo ] == null;
+        assert _sq[ iSqFrom ] != EMPTY;
+        assert _sq[ iSqTo ] == EMPTY;
         /*
         **  CODE
         */
+        final int piece = _sq[ iSqFrom ];
         final long bbSqMask = (1L << iSqFrom) | (1L << iSqTo);
-        final Piece piece = _sq[ iSqFrom ];
 
-        _map[ piece.color ] ^= bbSqMask;
-        _map[ piece.index ] ^= bbSqMask;
+        _map[ piece ] ^= bbSqMask;
+        _map[ piece & 1 ] ^= bbSqMask;
 
-        _sq[ iSqFrom ] = null;
+        _sq[ iSqFrom ] = EMPTY;
         _sq[ iSqTo ] = piece;
 
         _hashPieces ^= ZobristHash.getPieceHash( iSqFrom, iSqTo, piece );
@@ -745,17 +747,17 @@ public class Board
      * @param piece
      *     Piece to place.
      */
-    void placePiece( int iSq, final Piece piece )
+    void placePiece( int iSq, final int piece )
         {
         assert Square.isValid( iSq );
-        assert piece != null;
+        assert piece >= MAP_W_PAWN && piece <= MAP_B_KING;
         /*
         **  CODE
         */
         final long bbMask = 1L << iSq;
 
-        _map[ piece.color ] |= bbMask;
-        _map[ piece.index ] |= bbMask;
+        _map[ piece ] |= bbMask;
+        _map[ piece & 1 ] |= bbMask;
 
         _sq[ iSq ] = piece;
         _hashPieces ^= ZobristHash.getPieceHash( iSq, piece );
@@ -773,13 +775,13 @@ public class Board
         /*
         **  CODE
         */
-        long bbNotMask = ~(1L << iSq);
-        Piece piece = _sq[ iSq ];
+        final int piece = _sq[ iSq ];
+        final long bbNotMask = ~(1L << iSq);
 
-        _map[ piece.color ] &= bbNotMask;
-        _map[ piece.index ] &= bbNotMask;
+        _map[ piece ] &= bbNotMask;
+        _map[ piece & 1 ] &= bbNotMask;
 
-        _sq[ iSq ] = null;
+        _sq[ iSq ] = EMPTY;
         _hashPieces ^= ZobristHash.getPieceHash( iSq, piece );
         }
 
@@ -822,15 +824,16 @@ public class Board
 
     static class State
         {
-        final int     castling;
-        final int     iFullMoves;
-        final int     iHalfMoves;
-        final int     iSqEP;
-        final int     player;
-        final long    hashFull;
-        final long    hashPieces;
-        final long[]  map;
-        final Piece[] sq;
+        final int  castling;
+        final int  iFullMoves;
+        final int  iHalfMoves;
+        final int  iSqEP;
+        final int  player;
+        final long hashFull;
+        final long hashPieces;
+
+        final int[]  sq;
+        final long[] map;
 
         State( Board bd )
             {
@@ -846,8 +849,8 @@ public class Board
             hashPieces = bd._hashPieces;
             player = bd._player;
 
-            map = bd._map.clone();
-            sq = bd._sq.clone();
+            map = Arrays.copyOf( bd._map, MAP_LENGTH );
+            sq = Arrays.copyOf( bd._sq, 64 );
             }
         }
     }   /* end of class Board */

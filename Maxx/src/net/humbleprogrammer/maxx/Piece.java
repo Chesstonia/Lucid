@@ -34,106 +34,84 @@ package net.humbleprogrammer.maxx;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
-public enum Piece
+public class Piece
     {
     //  -----------------------------------------------------------------------
     //	PUBLIC DECLARATIONS
     //	-----------------------------------------------------------------------
-        /** index = 2 */
-        W_PAWN( WHITE, PAWN ),
-        /** index = 3 */
-        B_PAWN( BLACK, PAWN ),
-        /** index = 4 */
-        W_KNIGHT( WHITE, KNIGHT ),
-        /** index = 5 */
-        B_KNIGHT( BLACK, KNIGHT ),
-        /** index = 6 */
-        W_BISHOP( WHITE, BISHOP ),
-        /** index = 7 */
-        B_BISHOP( BLACK, BISHOP ),
-        /** index = 8 */
-        W_ROOK( WHITE, ROOK ),
-        /** index = 9 */
-        B_ROOK( BLACK, ROOK ),
-        /** index = 10 */
-        W_QUEEN( WHITE, QUEEN ),
-        /** index = 11 */
-        B_QUEEN( BLACK, QUEEN ),
-        /** index = 12 */
-        W_KING( WHITE, KING ),
-        /** index = 13 */
-        B_KING( BLACK, KING );
+    /** index = 2 */
+    public static final int W_PAWN   = MAP_W_PAWN;
+    /** index = 3 */
+    public static final int B_PAWN   = MAP_B_PAWN;
+    /** index = 4 */
+    public static final int W_KNIGHT = MAP_W_KNIGHT;
+    /** index = 5 */
+    public static final int B_KNIGHT = MAP_B_KNIGHT;
+    /** index = 6 */
+    public static final int W_BISHOP = MAP_W_BISHOP;
+    /** index = 7 */
+    public static final int B_BISHOP = MAP_B_BISHOP;
+    /** index = 8 */
+    public static final int W_ROOK   = MAP_W_ROOK;
+    /** index = 9 */
+    public static final int B_ROOK   = MAP_B_ROOK;
+    /** index = 10 */
+    public static final int W_QUEEN  = MAP_W_QUEEN;
+    /** index = 11 */
+    public static final int B_QUEEN  = MAP_B_QUEEN;
+    /** index = 12 */
+    public static final int W_KING   = MAP_W_KING;
+    /** index = 13 */
+    public static final int B_KING   = MAP_B_KING;
 
     //  -----------------------------------------------------------------------
-    //	DECLARATIONS
-    //	-----------------------------------------------------------------------
-
-    /** The piece color [BLACK|WHITE]. */
-    public final int color;
-    /** The piece type [PAWN|KNIGHT|BISHOP|ROOK|QUEEN|KING]. */
-    public final int type;
-
-    /** The index into the board bitmaps. */
-    final int index;
-
-    //  -----------------------------------------------------------------------
-    //	CTOR
+    //	PUBLIC METHODS
     //	-----------------------------------------------------------------------
 
     /**
-     * CTOR
+     * Extracts the piece color from a Piece.* constant.
      *
-     * @param pc
-     *     Piece color [BLACK|WHITE]
-     * @param pt
-     *     Piece type [PAWN|KNIGHT|BISHOP|ROOK|QUEEN|KING]
+     * @param piece
+     *     Piece.* constant.
+     *
+     * @return [WHITE|BLACK] if piece is valid; EMPTY otherwise.
      */
-    Piece( final int pc, final int pt )
+    public static int getColor( int piece )
         {
-        assert (pc == WHITE || pc == BLACK);
-        assert (pt >= PAWN && pt <= KING);
-        /*
-        **  CODE
-        */
-        index = (pt << 1) | pc;
+        return (piece >= W_PAWN && piece <= B_KING)
+               ? (piece & 1)
+               : INVALID;
+        }
 
-        color = pc;
-        type = pt;
+    /**
+     * Extracts the piece color from a Piece.* constant.
+     *
+     * @param piece
+     *     Piece.* constant.
+     *
+     * @return Piece type (PAWN, KNIGHT, BISHOP, etc.)  if piece is valid; EMPTY otherwise.
+     */
+    public static int getType( int piece )
+        {
+        return (piece >= W_PAWN && piece <= B_KING)
+               ? (piece >> 1)
+               : INVALID;
         }
 
     /**
      * Returns a piece of the given type and color.
      *
-     * @param pt
-     *     Piece type [PAWN..KING]
      * @param pc
      *     Piece color [BLACK|WHITE]
+     * @param pt
+     *     Piece type [PAWN..KING]
      *
-     * @return Piece, or <code>null</code> if either type or color are invalid.
+     * @return Piece.*, or EMPTY if either type or color are invalid.
      */
-    public static Piece makePiece( int pt, int pc )
+    static int set( int pc, int pt )
         {
-        assert pt >= PAWN && pt <= KING;
-        assert pc == WHITE || pc == BLACK;
-        /*
-        **  CODE
-        */
-        switch (pt)
-            {
-            case PAWN:
-                return (pc == WHITE) ? W_PAWN : B_PAWN;
-            case KNIGHT:
-                return (pc == WHITE) ? W_KNIGHT : B_KNIGHT;
-            case BISHOP:
-                return (pc == WHITE) ? W_BISHOP : B_BISHOP;
-            case ROOK:
-                return (pc == WHITE) ? W_ROOK : B_ROOK;
-            case QUEEN:
-                return (pc == WHITE) ? W_QUEEN : B_QUEEN;
-            case KING:
-                return (pc == WHITE) ? W_KING : B_KING;
-            }
-
-        return null;
+        return (pt >= PAWN && pt <= KING && (pc == WHITE || pc == BLACK))
+               ? ((pt << 1) + pc)
+               : EMPTY;
         }
     }   /* end of enum Piece */
