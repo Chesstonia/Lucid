@@ -34,7 +34,7 @@ package net.humbleprogrammer.maxx;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class TestMove extends net.humbleprogrammer.TestBase
     {
@@ -44,33 +44,15 @@ public class TestMove extends net.humbleprogrammer.TestBase
     //	-----------------------------------------------------------------------
 
     @Test
-    public void t_fromString()
+    public void t_constants()
         {
-        final Board bd = BoardFactory.createInitial();
-
-        for ( String str : SAMPLE_MOVES )
-            {
-            Move move = Move.fromString( bd, str );
-
-            assertNotNull( str, move );
-            bd.makeMove( move );
-            }
-
-        }
-
-    @Test( expected = IllegalArgumentException.class )
-    public void t_fromString_fail()
-        {
-        Move.fromString( null, "" );
-        }
-
-    @Test
-    public void t_fromString_fail_blank()
-        {
-        final Board bd = BoardFactory.createInitial();
-
-        assertNull( Move.fromString( bd, null ) );
-        assertNull( Move.fromString( bd, "" ) );
-        assertNull( Move.fromString( bd, " \n\r\t" ) );
+        assertEquals( Move.Type.NORMAL, (Move.Type.NORMAL & Move.Type.MASK) );
+        assertEquals( Move.Type.CASTLING, (Move.Type.CASTLING & Move.Type.MASK) );
+        assertEquals( Move.Type.EN_PASSANT, (Move.Type.EN_PASSANT & Move.Type.MASK) );
+        assertEquals( Move.Type.PAWN_PUSH, (Move.Type.PAWN_PUSH & Move.Type.MASK) );
+        assertEquals( Move.Type.PROMOTION, (Move.Type.PROMOTION & Move.Type.MASK) );
+        assertEquals( Move.Type.PROMOTE_BISHOP, (Move.Type.PROMOTE_BISHOP & Move.Type.MASK));
+        assertEquals( Move.Type.PROMOTE_KNIGHT, (Move.Type.PROMOTE_KNIGHT & Move.Type.MASK));
+        assertEquals( Move.Type.PROMOTE_ROOK, (Move.Type.PROMOTE_ROOK & Move.Type.MASK));
         }
     }   /* end of class TestMove */

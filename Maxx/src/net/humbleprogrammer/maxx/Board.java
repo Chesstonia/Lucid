@@ -225,8 +225,8 @@ public class Board
             return false;
 
         //  Test 2 -- both players must have one (and only one) king on the board.
-        if (BitUtil.count( _map[ MAP_W_KING ] ) != 1 ||
-            BitUtil.count( _map[ MAP_B_KING ] ) != 1)
+        if (!BitUtil.singleton( _map[ MAP_W_KING ] ) ||
+            !BitUtil.singleton( _map[ MAP_B_KING ] ))
             return false;
 
         // Test 3 -- neither player can have more than 8 pawns on the board.
@@ -300,7 +300,7 @@ public class Board
             _iHalfMoves = 0;
             removePiece( iSqTo );
             }
-        else if (Piece.getType( _sq[ iSqFrom ] ) == PAWN)
+        else if (_sq[ iSqFrom ] <= MAP_B_PAWN)
             _iHalfMoves = 0;
         else
             _iHalfMoves++;
@@ -633,10 +633,8 @@ public class Board
             {
             case PAWN:
                 return (_player == WHITE)
-                       ? (_map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] |
-                                                Bitboards.fileMask[ iSqTo & 0x07 ]))
-                       : (_map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] |
-                                                Bitboards.fileMask[ iSqTo & 0x07 ]));
+                       ? (_map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]))
+                       : (_map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]));
 
             case KNIGHT:
                 return _map[ MAP_W_KNIGHT + _player ] & Bitboards.knight[ iSqTo ];
@@ -659,21 +657,6 @@ public class Board
         }
 
     /**
-     * Gets the piece map for a given piece type.
-     *
-     * @param iPieceType
-     *     Piece type [PAWN...KING]
-     *
-     * @return Bitboard of pieces.
-     */
-    long getPieceMap( int iPieceType )
-        {
-        return (iPieceType >= PAWN && iPieceType <= KING)
-               ? _map[ (iPieceType << 1) + _player ]
-               : 0L;
-        }
-
-    /**
      * Collects the internal board state.
      *
      * @return Board state.
@@ -690,6 +673,9 @@ public class Board
     void setState( State state )
         {
         DBC.requireNotNull( state, "Board state" );
+
+        if (state.hashFull == _hashFull)
+            return;
         /*
         **  CODE
         */

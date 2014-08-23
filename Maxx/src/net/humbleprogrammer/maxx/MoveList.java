@@ -60,10 +60,12 @@ public class MoveList implements Iterable<Move>
     private final int         _player;
     /** Square occupied by the moving player's King. */
     private final int         _iSqKing;
+    /** Bitboard of all pieces. */
+    private final long _bbAll;
     /** Bitboard of opposing pieces. */
-    private final long _bbOpponent;
+    private final long        _bbOpponent;
     /** Bitboard of moving pieces. */
-    private final long _bbPlayer;
+    private final long        _bbPlayer;
     /** Current position. */
     private final Board.State _state;
     /** Array of packed moves. */
@@ -73,8 +75,6 @@ public class MoveList implements Iterable<Move>
 
     /** Number of moves in {@link #_moves}. */
     private int  _iCount;
-    /** Bitboard of all pieces. */
-    private long _bbAll;
     /** Bitboard of pieces threatening the moving player's King. */
     private long _bbCheckers;
     /** Bitboard of all pinned pieces. */
@@ -109,8 +109,9 @@ public class MoveList implements Iterable<Move>
 
         _bbOpponent = _state.map[ _opponent ];
         _bbPlayer = _state.map[ _player ];
+        _bbAll = _bbPlayer | _bbOpponent;
 
-        generateAllMoves( _state.map[ _player ], ~_state.map[ _player ] );
+        generateAllMoves( _bbPlayer, ~_bbPlayer );
         }
 
 
@@ -141,21 +142,19 @@ public class MoveList implements Iterable<Move>
 
         _bbOpponent = _state.map[ _opponent ];
         _bbPlayer = _state.map[ _player ];
+        _bbAll = _bbPlayer | _bbOpponent;
 
-        generateAllMoves( bbCandidates & _bbPlayer, (1L << iSqTo) & ~_bbPlayer );
+        generateAllMoves( bbCandidates, (1L << iSqTo) );
         //
         //  Take out all moves that don't reach the "To" square.  Do this by copying the last
         //  move on top of the "bad" move.  The current index is decremented so that the next
         //  iteration of the loop will test the copied move, which is now in the same element.
         //
-        if (_iCount > 0)
-            {
-            final int iToMask = Move.pack( 0, iSqTo );
+        final int iToMask = Move.pack( 0, iSqTo );
 
-            for ( int index = 0; index < _iCount; ++index )
-                if ((_moves[ index ] & 0xFF0000) != iToMask && --_iCount > index)
-                    _moves[ index-- ] = _moves[ _iCount ];
-            }
+        for ( int index = 0; index < _iCount; ++index )
+            if ((_moves[ index ] & 0xFF0000) != iToMask && --_iCount > index)
+                _moves[ index-- ] = _moves[ _iCount ];
         }
 
     //  -----------------------------------------------------------------------
@@ -208,21 +207,15 @@ public class MoveList implements Iterable<Move>
      */
     private void addMove( int iSqFrom, int iSqTo, int iType )
         {
-        //
-        //  We can shortcut the move legality test if ALL of the following are true:
-        //      (1) It is not an en passant capture
-        //      (2) The king is not moving
-        //      (3) The king is not in check
-        //      (4) The moving piece is not pinned.
-        //
-        //  If all of these are TRUE, then the move cannot put the King in check.
-        //
-        final boolean bSafeMove = (iType != Move.Type.EN_PASSANT &&
-                                   iSqFrom != _iSqKing &&
-                                   _bbCheckers == 0L &&
-                                   (_bbPinned & (1L << iSqFrom)) == 0L);
+        boolean bLegal = true;
 
-        if (bSafeMove || testMove( iSqFrom, iSqTo, iType ))
+        if (iType == Move.Type.EN_PASSANT || iSqFrom == _iSqKing)
+            bLegal = testMove(iSqFrom, iSqTo, iType);
+
+        else if (_bbCheckers != 0L || (_bbPinned & (1L << iSqFrom)) != 0L)
+            bLegal = testMove(iSqFrom, iSqTo, iType);
+
+        if (bLegal)
             {
             if (iType != Move.Type.PROMOTION)
                 _moves[ _iCount++ ] = Move.pack( iSqFrom, iSqTo, iType );
@@ -252,12 +245,9 @@ public class MoveList implements Iterable<Move>
         {
         int iSqTo;
 
-        bbTo &= _bbToSq;
-
-        while ( bbTo != 0L )
+        for (bbTo &= _bbToSq; bbTo != 0L; bbTo ^= (1L << iSqTo))
             {
             iSqTo = BitUtil.first( bbTo );
-            bbTo ^= 1L << iSqTo;
             addMove( iSqFrom, iSqTo, iType );
             }
         }
@@ -354,8 +344,7 @@ public class MoveList implements Iterable<Move>
         **  CODE
         */
         long bbPawns = (_player == WHITE)
-                       ? (bbFromSq & Bitboards.pawnDownwards[ iSqEP ] &
-                          _state.map[ MAP_W_PAWN ])
+                       ? (bbFromSq & Bitboards.pawnDownwards[ iSqEP ] & _state.map[ MAP_W_PAWN ])
                        : (bbFromSq & Bitboards.pawnUpwards[ iSqEP ] & _state.map[ MAP_B_PAWN ]);
 
         while ( bbPawns != 0L )
@@ -527,10 +516,9 @@ public class MoveList implements Iterable<Move>
         /*
         **  CODE
         */
-        _bbAll = _bbPlayer | _bbOpponent;
         _bbCheckers = Bitboards.getAttackedBy( _state.map, _iSqKing, _opponent );
         _bbPinned = 0L;
-        _bbToSq = bbToSq;
+        _bbToSq = bbToSq & ~_bbPlayer;
         //
         //  The moving player is NOT in check.
         //
@@ -542,10 +530,8 @@ public class MoveList implements Iterable<Move>
             //
             long bbQueen = _state.map[ MAP_W_QUEEN + _opponent ];
             long bbDiagonal = Bitboards.bishop[ _iSqKing ] &
-                              ~Bitboards.king[ _iSqKing ] &
                               (bbQueen | _state.map[ MAP_W_BISHOP + _opponent ]);
             long bbLateral = Bitboards.rook[ _iSqKing ] &
-                             ~Bitboards.king[ _iSqKing ] &
                              (bbQueen | _state.map[ MAP_W_ROOK + _opponent ]);
 
             if (bbDiagonal != 0L)
@@ -557,12 +543,12 @@ public class MoveList implements Iterable<Move>
             //  Now check if there is one (and only one) moving piece that lies on the path
             //  between a threatening piece and the King, then it is pinned.
             //
-            long bbPinners = bbDiagonal | bbLateral;
+            long bbPinners = (bbDiagonal | bbLateral) & ~Bitboards.king[ _iSqKing ];
 
             while ( bbPinners != 0L )
                 {
-                final int iSqPinner = BitUtil.first( bbPinners );
-                final long bbBetween = _bbPlayer & Bitboards.getSquaresBetween( _iSqKing, iSqPinner );
+                int iSqPinner = BitUtil.first( bbPinners );
+                long bbBetween = _bbPlayer & Bitboards.getSquaresBetween( _iSqKing, iSqPinner );
 
                 bbPinners ^= 1L << iSqPinner;
 
@@ -578,13 +564,12 @@ public class MoveList implements Iterable<Move>
         //
         else if (BitUtil.singleton( _bbCheckers ))
             {
-            final int iSqChecker = BitUtil.first( _bbCheckers );
-            final long bbXRays = Bitboards.getQueenAttacks( iSqChecker, _bbAll ) &
-                                 Bitboards.getQueenAttacks( _iSqKing, _bbAll );
+            int iSqChecker = BitUtil.first( _bbCheckers );
+            long bbXRays = Bitboards.getSquaresBetween( _iSqKing, iSqChecker );
             //
             //  If the King is being checked by a Knight or Pawn--or the attacker is adjacent
-            //  to the King-- the only possible "From" squares are the King's square, plus any
-            //  of the moving player's pieces that are able to reach the checking piece.
+            //  to the King--the only possible "From" squares are the King's square, plus any
+            //  of the moving player's pieces that can capture the checking piece.
             //
             if (bbXRays != 0L)
                 _bbToSq &= (_bbCheckers | bbXRays | Bitboards.king[ _iSqKing ]);
@@ -604,9 +589,8 @@ public class MoveList implements Iterable<Move>
             bbFromSq &= (1L << _iSqKing);
             }
 
-        return bbFromSq;
+        return bbFromSq & _bbPlayer;
         }
-
 
     /**
      * Tests a move to see if the King is left exposed to check.
@@ -668,7 +652,7 @@ public class MoveList implements Iterable<Move>
             }
         else if ((piece = _state.sq[ iSqTo ]) != EMPTY)
             {
-            _map[ piece  ] ^= bbSqTo;
+            _map[ piece ] ^= bbSqTo;
             _map[ _opponent ] ^= bbSqTo;
             }
 

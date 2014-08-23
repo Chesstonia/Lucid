@@ -73,22 +73,6 @@ public class TestMoveList extends TestBase
         }
 
     @Test
-    public void t_ctor_alt()
-        {
-        Board bd = BoardFactory.createFromFEN( FEN_TEST );
-        final MoveList moves = new MoveList( bd, bd.getPieceMap( QUEEN ), Square.E5 );
-
-        assertTrue( moves.hasLegalMove() );
-        assertEquals( 1, moves.size() );
-
-        for ( Move mv : moves )
-            {
-            assertEquals( Square.C7, mv.iSqFrom );
-            assertEquals( Square.E5, mv.iSqTo );
-            }
-        }
-
-    @Test
     public void t_count_checkmates()
         {
         //	http://www.chessgames.com/perl/chessgame?gid=1274437

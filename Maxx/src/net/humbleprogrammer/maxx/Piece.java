@@ -77,11 +77,7 @@ public class Piece
      * @return [WHITE|BLACK] if piece is valid; EMPTY otherwise.
      */
     public static int getColor( int piece )
-        {
-        return (piece >= W_PAWN && piece <= B_KING)
-               ? (piece & 1)
-               : INVALID;
-        }
+        { return isValid( piece ) ? (piece & 1) : INVALID; }
 
     /**
      * Extracts the piece color from a Piece.* constant.
@@ -92,11 +88,18 @@ public class Piece
      * @return Piece type (PAWN, KNIGHT, BISHOP, etc.)  if piece is valid; EMPTY otherwise.
      */
     public static int getType( int piece )
-        {
-        return (piece >= W_PAWN && piece <= B_KING)
-               ? (piece >> 1)
-               : INVALID;
-        }
+        { return isValid( piece ) ? (piece >> 1) : INVALID; }
+
+    /**
+     * Tests a piece value for validity.
+     *
+     * @param piece
+     *     Piece.* constant.
+     *
+     * @return .T. if valid; .F. otherwise.
+     */
+    public static boolean isValid( int piece )
+        { return (piece >= W_PAWN && piece <= B_KING); }
 
     /**
      * Returns a piece of the given type and color.

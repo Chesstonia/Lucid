@@ -52,11 +52,15 @@ public abstract class TestBase
 
     public enum Duration
         {
-            QUICK, NORMAL, SLOW, EPIC, UNLIMITED
+            QUICK,
+            NORMAL,
+            SLOW,
+            EPIC,
+            UNLIMITED
         }
 
     /** Test duration. */
-    protected static final Duration DURATION = Duration.QUICK;
+    protected static final Duration DURATION = Duration.NORMAL;
 
     /** Square index used for range testing. */
     protected static final int SQ_LO = -512;
@@ -188,7 +192,7 @@ public abstract class TestBase
      *
      * @return Collection of FEN positions.
      */
-    protected static Collection<String> getFEN()
+    protected static List<String> getFEN()
         {
         if (s_listFEN == null)
             {
@@ -215,7 +219,7 @@ public abstract class TestBase
             Collections.sort( s_listFEN );
             }
 
-        return s_listFEN;
+        return Collections.unmodifiableList( s_listFEN );
         }
 
     /**
@@ -223,7 +227,7 @@ public abstract class TestBase
      *
      * @return Collection of files.
      */
-    protected static Collection<Path> getPGN()
+    protected static List<Path> getPGN()
         {
         if (s_listPGN == null)
             {
@@ -250,7 +254,7 @@ public abstract class TestBase
             Collections.sort( s_listPGN );
             }
 
-        return s_listPGN;
+        return Collections.unmodifiableList( s_listPGN );
         }
 
     /**

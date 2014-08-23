@@ -32,7 +32,6 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import net.humbleprogrammer.humble.DBC;
 import net.humbleprogrammer.humble.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -188,7 +187,7 @@ class Bitboards
 
     static
         {
-        final Stopwatch swatch = Stopwatch.startNew();
+        Stopwatch swatch = Stopwatch.startNew();
 
         int iByteCount = (8 * all.length) +
                          (8 * bishop.length) +
@@ -202,7 +201,7 @@ class Bitboards
 
         for ( int iSq = 0; iSq < 64; ++iSq )
             {
-            final long bbMask = 1L << iSq;
+            long bbMask = 1L << iSq;
 
             pawnUpwards[ iSq ] = squareAttacked( bbMask, 7, MASK_UP | MASK_RIGHT ) |
                                  squareAttacked( bbMask, 9, MASK_UP | MASK_LEFT );
@@ -252,17 +251,17 @@ class Bitboards
             //
             // Bishops & Queens
             //
-            final int bishopPositions = 1 << bishopShiftBits[ iSq ];
+            int bishopPositions = 1 << bishopShiftBits[ iSq ];
 
             iByteCount += bishopPositions * 8;
             bishopMagic[ iSq ] = new long[ bishopPositions ];
 
             for ( int idx = 0; idx < bishopPositions; idx++ )
                 {
-                final long pieces = generatePieces( idx,
+                long pieces = generatePieces( idx,
                                                     bishopShiftBits[ iSq ],
                                                     bishopMask[ iSq ] );
-                final int index = magicTransform( pieces,
+                int index = magicTransform( pieces,
                                                   bishopMagicNumber[ iSq ],
                                                   bishopShiftBits[ iSq ] );
                 bishopMagic[ iSq ][ index ] = getBishopShiftAttacks( bbMask, pieces );
@@ -270,24 +269,23 @@ class Bitboards
             //
             //  Rooks & Queens
             //
-            final int rookPositions = 1 << rookShiftBits[ iSq ];
+            int rookPositions = 1 << rookShiftBits[ iSq ];
 
             iByteCount += rookPositions * 8;
             rookMagic[ iSq ] = new long[ rookPositions ];
 
             for ( int idx = 0; idx < rookPositions; ++idx )
                 {
-                final long pieces = generatePieces( idx,
+                long pieces = generatePieces( idx,
                                                     rookShiftBits[ iSq ],
                                                     rookMask[ iSq ] );
-                final int index = magicTransform( pieces,
+                int index = magicTransform( pieces,
                                                   rookMagicNumber[ iSq ],
                                                   rookShiftBits[ iSq ] );
                 rookMagic[ iSq ][ index ] = getRookShiftAttacks( bbMask, pieces );
                 }
-
             //
-            //  Compute the intervening squares.     * Source:
+            //  Compute the intervening squares.  Source:
             //  http://chessprogramming.wikispaces.com/Square+Attacked+By#Legality Test-InBetween-Pure Calculation
             //
             for ( int iSqRHS = 0; iSqRHS < 64; ++iSqRHS )
@@ -334,7 +332,7 @@ class Bitboards
      *
      * @return Bitboard of pieces that attack the square.
      */
-    static long getAttackedBy( final long[] map, final int iSq, final int player )
+    static long getAttackedBy( long[] map, int iSq, int player )
         {
         assert map != null;
         assert (player == WHITE || player == BLACK);
@@ -460,10 +458,9 @@ class Bitboards
      *
      * @return <c>true</c> if attacked; <c>false</c> otherwise.
      */
-    static boolean isAttackedBy( final long[] map, final int iSq, final int player )
+    static boolean isAttackedBy( long[] map, int iSq, int player )
         {
-        DBC.requireNotNull( map, "map" );
-
+        assert map != null;
         assert (iSq & ~0x3F) == 0;
         assert (player == WHITE || player == BLACK);
         /*
@@ -484,7 +481,7 @@ class Bitboards
      *
      * @return <c>true</c> if attacked; <c>false</c> otherwise.
      */
-    static boolean isAttackedByBlack( final long[] map, final int iSq )
+    static boolean isAttackedByBlack( long[] map, int iSq )
         {
         assert map != null;
 
@@ -500,7 +497,7 @@ class Bitboards
             return true;
             }
 
-        final long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
+        long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
 
         //  Sliding attacks: rooks & queens.
         long bbLateral = map[ MAP_B_QUEEN ] | map[ MAP_B_ROOK ];
@@ -523,7 +520,7 @@ class Bitboards
      *
      * @return <c>true</c> if attacked; <c>false</c> otherwise.
      */
-    static boolean isAttackedByWhite( final long[] map, final int iSq )
+    static boolean isAttackedByWhite( long[] map, int iSq )
         {
         assert map != null;
 
@@ -539,7 +536,7 @@ class Bitboards
             return true;
             }
 
-        final long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
+        long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
 
         //  Sliding attacks: rooks & queens.
         long bbLateral = map[ MAP_W_QUEEN ] | map[ MAP_W_ROOK ];
@@ -604,7 +601,7 @@ class Bitboards
 
         for ( int idx = 0; idx < iBits; ++idx )
             {
-            final long bbLSB = bbMask & -bbMask;
+            long bbLSB = bbMask & -bbMask;
 
             bbMask ^= bbLSB; // Deactivates lsb bit of the mask to get next bit next time
 

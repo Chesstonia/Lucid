@@ -61,15 +61,15 @@ public class MoveFactory
      *
      * @return Move on success; null if move is illegal, ambiguous, or invalid.
      */
-    public static Move fromSAN( final Board bd, final String strSAN )
+    public static Move fromSAN( Board bd, String strSAN )
         {
         if (bd == null || strSAN == null || strSAN.isEmpty())
             return null;
         /*
         **  CODE
         */
-        final int player = bd.getMovingPlayer();
-        final MoveInfo info = new MoveInfo( strSAN, player );
+        int player = bd.getMovingPlayer();
+        MoveInfo info = new MoveInfo( strSAN, player );
 
         if (info.iLength <= 0)
             return null;
@@ -77,7 +77,7 @@ public class MoveFactory
         //  Create a bitboard of moving pieces (candidates) and find all
         //  legal moves to the target square.
         //
-        final int iSqTo = Square.toIndex( info.iRankTo, info.iFileTo );
+        int iSqTo = Square.toIndex( info.iRankTo, info.iFileTo );
         long bbCandidates = bd.getCandidates( iSqTo, info.iPieceMoving );
 
         if (info.iPieceMoving == PAWN)
@@ -100,9 +100,8 @@ public class MoveFactory
         //  legal games) only a single move will be returns.  THe only exception is
         //  promotions, which have to be searched to find the matching piece type.
         //
-        final MoveList moves = new MoveList( bd, bbCandidates, iSqTo );
-
         Move moveFound = null;
+        MoveList moves = new MoveList( bd, bbCandidates, iSqTo );
 
         if (moves.size() == 1)
             moveFound = moves.getAt( 0 );
@@ -178,7 +177,7 @@ public class MoveFactory
          * @param player
          *     Moving player color [WHITE|BLACK]
          */
-        MoveInfo( final String strIn, int player )
+        MoveInfo( String strIn, int player )
             {
             assert strIn != null;
             assert (player & ~0x01) == 0;
@@ -229,7 +228,7 @@ public class MoveFactory
          * @param player
          *     Moving player color [BLACK|WHITE] return Length of parsed move, or zero on error.
          */
-        private int parseCastling( final String strIn, int player )
+        private int parseCastling( String strIn, int player )
             {
             int iLen;
 
@@ -293,6 +292,7 @@ public class MoveFactory
                 iRankTo = iRank;
                 return STATE_SUFFIX;
                 }
+
             if (iState == STATE_FILE && iRankFrom < 0)
                 {
                 iRankFrom = iRank;
@@ -364,7 +364,7 @@ public class MoveFactory
             //  Handle everything else, which should be a piece type: either the
             //  moving piece, or the piece being promoted to.
             //
-            final int pt = Parser.pieceTypeFromGlyph( ch );
+            int pt = Parser.pieceTypeFromGlyph( ch );
 
             if (pt <= PAWN || pt > KING)
                 return INVALID;
@@ -398,4 +398,5 @@ public class MoveFactory
             return INVALID;
             }
         }   /* end of nested class MoveInfo */
+
     }   /* end of class MoveFactory */
