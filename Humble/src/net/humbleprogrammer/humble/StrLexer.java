@@ -52,7 +52,14 @@ public class StrLexer
     //  -----------------------------------------------------------------------
     //	CTOR
     //	-----------------------------------------------------------------------
-    public StrLexer( String strIn )
+
+    /**
+     * Default CTOR.
+     *
+     * @param strIn
+     *     String to analyze.
+     */
+    public StrLexer( final String strIn )
         {
         _strIn = (strIn != null) ? strIn : "";
         }
@@ -75,26 +82,18 @@ public class StrLexer
         int iLast = _strIn.length();
 
         for ( int index = iOffset - 1; index >= 0; --index )
-            {
-            final int ch = _strIn.charAt( index );
-
-            if (ch < ' ')
+            if (_strIn.charAt( index ) < ' ')
                 {
                 iFirst = index + 1;
                 break;
                 }
-            }
 
         for ( int index = iOffset + 1; index < iLast; ++index )
-            {
-            final int ch = _strIn.charAt( index );
-
-            if (ch < ' ')
+            if (_strIn.charAt( index ) < ' ')
                 {
                 iLast = index;
                 break;
                 }
-            }
 
         return (iLast > iFirst)
                ? _strIn.substring( iFirst, iLast )
@@ -218,7 +217,9 @@ public class StrLexer
      * @return .T. if at end of the input; .F. if more data available.
      */
     public boolean atEnd()
-        { return (_iNext >= _strIn.length()); }
+        {
+        return (_iNext >= _strIn.length());
+        }
 
     /**
      * Gets the current column number.
@@ -226,7 +227,9 @@ public class StrLexer
      * @return Column number, which starts at 1.
      */
     public int getColumn()
-        { return _iColumn; }
+        {
+        return _iColumn;
+        }
 
     /**
      * Gets the offset of the last character read in.
@@ -234,5 +237,7 @@ public class StrLexer
      * @return Offset, or -1 if no characters read in yet.
      */
     public int getOffset()
-        { return (_index < _iNext) ? _index : -1; }
+        {
+        return (_index < _iNext) ? _index : -1;
+        }
     }   /* end of class StrLexer */

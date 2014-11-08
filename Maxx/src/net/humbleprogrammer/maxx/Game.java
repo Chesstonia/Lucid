@@ -46,6 +46,7 @@ public class Game
     private final Map<String, String> _tags = new HashMap<>();
     /** Main line. */
     private final Variation           _pv   = new Variation();
+
     //  -----------------------------------------------------------------------
     //	CTOR
     //	-----------------------------------------------------------------------

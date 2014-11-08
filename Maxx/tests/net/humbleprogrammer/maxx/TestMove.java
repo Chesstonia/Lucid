@@ -46,13 +46,13 @@ public class TestMove extends net.humbleprogrammer.TestBase
     @Test
     public void t_constants()
         {
-        assertEquals( Move.Type.NORMAL, (Move.Type.NORMAL & Move.Type.MASK) );
-        assertEquals( Move.Type.CASTLING, (Move.Type.CASTLING & Move.Type.MASK) );
-        assertEquals( Move.Type.EN_PASSANT, (Move.Type.EN_PASSANT & Move.Type.MASK) );
-        assertEquals( Move.Type.PAWN_PUSH, (Move.Type.PAWN_PUSH & Move.Type.MASK) );
-        assertEquals( Move.Type.PROMOTION, (Move.Type.PROMOTION & Move.Type.MASK) );
-        assertEquals( Move.Type.PROMOTE_BISHOP, (Move.Type.PROMOTE_BISHOP & Move.Type.MASK));
-        assertEquals( Move.Type.PROMOTE_KNIGHT, (Move.Type.PROMOTE_KNIGHT & Move.Type.MASK));
-        assertEquals( Move.Type.PROMOTE_ROOK, (Move.Type.PROMOTE_ROOK & Move.Type.MASK));
+        assertEquals( Move.Type.NORMAL, (Move.Type.NORMAL & Move.MASK_TYPE) );
+        assertEquals( Move.Type.CASTLING, (Move.Type.CASTLING & Move.MASK_TYPE) );
+        assertEquals( Move.Type.EN_PASSANT, (Move.Type.EN_PASSANT & Move.MASK_TYPE) );
+        assertEquals( Move.Type.PAWN_PUSH, (Move.Type.PAWN_PUSH & Move.MASK_TYPE) );
+        assertEquals( Move.Type.PROMOTION, (Move.Type.PROMOTION & Move.MASK_TYPE) );
+        assertEquals( Move.Type.PROMOTE_BISHOP, (Move.Type.PROMOTE_BISHOP & Move.MASK_TYPE));
+        assertEquals( Move.Type.PROMOTE_KNIGHT, (Move.Type.PROMOTE_KNIGHT & Move.MASK_TYPE));
+        assertEquals( Move.Type.PROMOTE_ROOK, (Move.Type.PROMOTE_ROOK & Move.MASK_TYPE));
         }
     }   /* end of class TestMove */

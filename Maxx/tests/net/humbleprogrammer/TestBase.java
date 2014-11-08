@@ -42,7 +42,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /** The {@link TestBase} class contains all of the test configuration information. */
-@SuppressWarnings("unused")
+@SuppressWarnings( "unused" )
 public abstract class TestBase
     {
 

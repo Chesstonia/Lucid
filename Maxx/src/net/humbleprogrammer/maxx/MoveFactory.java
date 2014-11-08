@@ -68,8 +68,7 @@ public class MoveFactory
         /*
         **  CODE
         */
-        int player = bd.getMovingPlayer();
-        MoveInfo info = new MoveInfo( strSAN, player );
+        final MoveInfo info = new MoveInfo( strSAN, bd.getMovingPlayer() );
 
         if (info.iLength <= 0)
             return null;
@@ -96,12 +95,12 @@ public class MoveFactory
         if (bbCandidates == 0L)
             return null;
         //
-        //  Look for a matching move.  In a majority of cases (99.99% in over a million
-        //  legal games) only a single move will be returns.  THe only exception is
-        //  promotions, which have to be searched to find the matching piece type.
+        //  Look for a matching move.  In a majority of cases (99.99% in over a million legal games)
+        //  only a single move will be returned.  THe only exception is promotions, which have to
+        //  be searched to find the matching piece type.
         //
         Move moveFound = null;
-        MoveList moves = new MoveList( bd, bbCandidates, iSqTo );
+        MoveList moves = new MoveList( bd ).generate( bbCandidates, iSqTo );
 
         if (moves.size() == 1)
             moveFound = moves.getAt( 0 );
@@ -379,7 +378,8 @@ public class MoveFactory
             //  this is really a promotion move.
             //
             if (iState == STATE_PROMOTION ||
-                (iState == STATE_SUFFIX && iPieceMoving == PAWN && (iRankTo == 0 || iRankTo == 7)))
+                (iState == STATE_SUFFIX && iPieceMoving == PAWN &&
+                 (iRankTo == 0 || iRankTo == 7)))
                 {
                 if (pt == QUEEN)
                     iType = Move.Type.PROMOTION;

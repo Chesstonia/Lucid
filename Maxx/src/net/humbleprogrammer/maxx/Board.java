@@ -554,7 +554,11 @@ public class Board
      * @return {@link MoveList} object.
      */
     public MoveList getLegalMoves()
-        { return new MoveList( this ); }
+        {
+        MoveList moves = new MoveList( this );
+        moves.generate();
+        return moves;
+        }
 
     /**
      * Gets the current move number.
@@ -622,9 +626,9 @@ public class Board
      *
      * @return Bitboard of pieces.
      */
-    long getCandidates( final int iSqTo, final int pt )
+    long getCandidates( int iSqTo, int pt )
         {
-        if ((iSqTo & ~0x3F) != 0)
+        if (!Square.isValid(iSqTo))
             return 0L;
         /*
         **  CODE
@@ -640,16 +644,16 @@ public class Board
                 return _map[ MAP_W_KNIGHT + _player ] & Bitboards.knight[ iSqTo ];
 
             case BISHOP:
-                return _map[ MAP_W_BISHOP + _player ] & Bitboards.bishop[ iSqTo ];
+                return _map[ MAP_W_BISHOP + _player ] & Bitboards.getAttackedBy(_map, iSqTo, _player);
 
             case ROOK:
-                return _map[ MAP_W_ROOK + _player ] & Bitboards.rook[ iSqTo ];
+                return _map[ MAP_W_ROOK + _player ] & Bitboards.getAttackedBy(_map, iSqTo, _player);
 
             case QUEEN:
-                return _map[ MAP_W_QUEEN + _player ] &
-                       (Bitboards.bishop[ iSqTo ] | Bitboards.rook[ iSqTo ]);
+                return _map[ MAP_W_QUEEN + _player ] & Bitboards.getAttackedBy(_map, iSqTo, _player);
 
             case KING:
+                //  Don't mask against Bitboards.king[] because that excludes castling moves.
                 return _map[ MAP_W_KING + _player ];
             }
 

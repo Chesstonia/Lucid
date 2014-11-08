@@ -61,7 +61,7 @@ public class MoveList implements Iterable<Move>
     /** Square occupied by the moving player's King. */
     private final int         _iSqKing;
     /** Bitboard of all pieces. */
-    private final long _bbAll;
+    private final long        _bbAll;
     /** Bitboard of opposing pieces. */
     private final long        _bbOpponent;
     /** Bitboard of moving pieces. */
@@ -77,6 +77,8 @@ public class MoveList implements Iterable<Move>
     private int  _iCount;
     /** Bitboard of pieces threatening the moving player's King. */
     private long _bbCheckers;
+    /** Bitboard of potential "From" squares. */
+    private long _bbFromSq;
     /** Bitboard of all pinned pieces. */
     private long _bbPinned;
     /** Bitboard of potential "To" squares. */
@@ -111,50 +113,54 @@ public class MoveList implements Iterable<Move>
         _bbPlayer = _state.map[ _player ];
         _bbAll = _bbPlayer | _bbOpponent;
 
-        generateAllMoves( _bbPlayer, ~_bbPlayer );
+        initBitboards( _bbPlayer, ~_bbPlayer );
         }
 
+    //  -----------------------------------------------------------------------
+    //	PUBLIC METHODS
+    //	-----------------------------------------------------------------------
 
     /**
-     * Alternate CTOR.
+     * Generates all legal moves for the current position.
      *
-     * @param bd
-     *     Board to generate moves for.
-     * @param bbCandidates
-     *     Bitboard of candidate pieces.
-     * @param iSqTo
-     *     Target square.
-     *
-     * @throws java.lang.IllegalArgumentException
-     *     if board is <code>null</code>.
+     * @return Move list.
      */
-    MoveList( Board bd, long bbCandidates, int iSqTo )
+    public MoveList generate()
         {
-        DBC.requireNotNull( bd, "bd" );
+        generateAllMoves( _bbPlayer, ~_bbPlayer );
+        return this;
+        }
+
+    /**
+     * Generate a subset of legal moves.
+     *
+     * @param bbCandidates
+     *     Bitboard of moving pieces.
+     * @param iSqTo
+     *     Target square, in 8x8 format.
+     *
+     * @return Move list.
+     */
+    public MoveList generate( long bbCandidates, int iSqTo )
+        {
+        if (bbCandidates == 0 || !Square.isValid( iSqTo ))
+            return this;
         /*
         **  CODE
         */
-        _state = bd.getState();
-
-        _player = _state.player;
-        _opponent = _player ^ 1;
-        _iSqKing = bd.getKingSquare( _player );
-
-        _bbOpponent = _state.map[ _opponent ];
-        _bbPlayer = _state.map[ _player ];
-        _bbAll = _bbPlayer | _bbOpponent;
-
-        generateAllMoves( bbCandidates, (1L << iSqTo) );
+        generateAllMoves( (bbCandidates & _bbFromSq), (1L << iSqTo) );
         //
         //  Take out all moves that don't reach the "To" square.  Do this by copying the last
         //  move on top of the "bad" move.  The current index is decremented so that the next
         //  iteration of the loop will test the copied move, which is now in the same element.
         //
-        final int iToMask = Move.pack( 0, iSqTo );
+        int iToMask = Move.pack( 0, iSqTo );
 
         for ( int index = 0; index < _iCount; ++index )
-            if ((_moves[ index ] & 0xFF0000) != iToMask && --_iCount > index)
+            if ((_moves[ index ] & Move.MASK_TO_SQ) != iToMask && --_iCount > index)
                 _moves[ index-- ] = _moves[ _iCount ];
+
+        return this;
         }
 
     //  -----------------------------------------------------------------------
@@ -182,7 +188,9 @@ public class MoveList implements Iterable<Move>
      * @return <code>.T.</code> if no legal moves available; <code>.F.</code> otherwise.
      */
     public boolean hasLegalMove()
-        { return (_iCount > 0); }
+        {
+        return (_iCount > 0);
+        }
 
     /**
      * Gets the number of legal moves found.
@@ -190,7 +198,9 @@ public class MoveList implements Iterable<Move>
      * @return Move count.
      */
     public int size()
-        { return _iCount; }
+        {
+        return _iCount;
+        }
     //  -----------------------------------------------------------------------
     //	METHODS
     //	-----------------------------------------------------------------------
@@ -210,10 +220,10 @@ public class MoveList implements Iterable<Move>
         boolean bLegal = true;
 
         if (iType == Move.Type.EN_PASSANT || iSqFrom == _iSqKing)
-            bLegal = testMove(iSqFrom, iSqTo, iType);
+            bLegal = testMove( iSqFrom, iSqTo, iType );
 
         else if (_bbCheckers != 0L || (_bbPinned & (1L << iSqFrom)) != 0L)
-            bLegal = testMove(iSqFrom, iSqTo, iType);
+            bLegal = testMove( iSqFrom, iSqTo, iType );
 
         if (bLegal)
             {
@@ -245,7 +255,7 @@ public class MoveList implements Iterable<Move>
         {
         int iSqTo;
 
-        for (bbTo &= _bbToSq; bbTo != 0L; bbTo ^= (1L << iSqTo))
+        for ( bbTo &= _bbToSq; bbTo != 0L; bbTo ^= (1L << iSqTo) )
             {
             iSqTo = BitUtil.first( bbTo );
             addMove( iSqFrom, iSqTo, iType );
@@ -267,13 +277,11 @@ public class MoveList implements Iterable<Move>
         /*
         **  CODE
         */
-        long bbPieces = initBitboards( bbFromSq, bbToSq );
+        int iSq;
 
-        while ( bbPieces != 0L )
+        for ( long bbPieces = bbFromSq; bbPieces != 0L; bbPieces ^= (1L << iSq) )
             {
-            int iSq = BitUtil.first( bbPieces );
-
-            bbPieces ^= 1L << iSq;
+            iSq = BitUtil.first( bbPieces );
 
             switch (_state.sq[ iSq ])
                 {
@@ -313,11 +321,10 @@ public class MoveList implements Iterable<Move>
                     break;
 
                 case MAP_W_KING:
-                    generateKingMovesWhite( iSq );
-                    break;
-
                 case MAP_B_KING:
-                    generateKingMovesBlack( iSq );
+                    addMoves( iSq,
+                              Bitboards.king[ iSq ],
+                              Move.Type.NORMAL );
                     break;
 
                 default:
@@ -325,8 +332,66 @@ public class MoveList implements Iterable<Move>
                 }
             }
 
+        if (_bbCheckers == 0 && _state.castling != Board.CastlingFlags.NONE)
+            generateCastlingMoves( _state.castling, bbFromSq );
+
         if (Square.isValid( _state.iSqEP ))
             generateEnPassantCaptures( _state.iSqEP, bbFromSq );
+        }
+
+    /**
+     * Generate all legal castling moves.
+     *
+     * @param castling
+     *     Castling flags.
+     */
+    private void generateCastlingMoves( int castling, long bbFromSq )
+        {
+        assert castling != Board.CastlingFlags.NONE;
+        /*
+        **  CODE
+        */
+        if (_player == WHITE &&
+            (castling & Board.CastlingFlags.WHITE_BOTH) != 0 &&
+            (_state.map[ MAP_W_KING ] & bbFromSq & Square.E1_MASK) != 0)
+            {
+            if ((castling & Board.CastlingFlags.WHITE_SHORT) != 0 &&
+                (_bbAll & Board.CastlingFlags.WHITE_SHORT_MASK) == 0 &&
+                !Bitboards.isAttackedByBlack( _state.map, Square.F1 ))
+                {
+                // White O-O
+                addMoves( Square.E1, Square.G1_MASK, Move.Type.CASTLING );
+                }
+
+            if ((castling & Board.CastlingFlags.WHITE_LONG) != 0 &&
+                (_bbAll & Board.CastlingFlags.WHITE_LONG_MASK) == 0 &&
+                !Bitboards.isAttackedByBlack( _state.map, Square.D1 ))
+                {
+                // White O-O-O
+                addMoves( Square.E1, Square.C1_MASK, Move.Type.CASTLING );
+                }
+            }
+
+        if (_player == BLACK &&
+            (castling & Board.CastlingFlags.BLACK_BOTH) != 0 &&
+            (_state.map[ MAP_B_KING ] & bbFromSq & Square.E8_MASK) != 0)
+            {
+            if ((castling & Board.CastlingFlags.BLACK_SHORT) != 0 &&
+                (_bbAll & Board.CastlingFlags.BLACK_SHORT_MASK) == 0 &&
+                !Bitboards.isAttackedByWhite( _state.map, Square.F8 ))
+                {
+                // Black  O-O
+                addMoves( Square.E8, Square.G8_MASK, Move.Type.CASTLING );
+                }
+
+            if ((castling & Board.CastlingFlags.BLACK_LONG) != 0 &&
+                (_bbAll & Board.CastlingFlags.BLACK_LONG_MASK) == 0 &&
+                !Bitboards.isAttackedByWhite( _state.map, Square.D8 ))
+                {
+                // Black O-O-O
+                addMoves( Square.E8, Square.C8_MASK, Move.Type.CASTLING );
+                }
+            }
         }
 
     /**
@@ -334,99 +399,25 @@ public class MoveList implements Iterable<Move>
      *
      * @param iSqEP
      *     En passant square in 8x8 format.
-     * @param bbFromSq
-     *     Bitboard of pawns that can move.
      */
-    private void generateEnPassantCaptures( final int iSqEP, final long bbFromSq )
+    private void generateEnPassantCaptures( int iSqEP, long bbFromSq )
         {
         assert Square.isValid( iSqEP );
         /*
         **  CODE
         */
+        int iSq;
         long bbPawns = (_player == WHITE)
-                       ? (bbFromSq & Bitboards.pawnDownwards[ iSqEP ] & _state.map[ MAP_W_PAWN ])
-                       : (bbFromSq & Bitboards.pawnUpwards[ iSqEP ] & _state.map[ MAP_B_PAWN ]);
+                       ? (Bitboards.pawnDownwards[ iSqEP ] & _state.map[ MAP_W_PAWN ])
+                       : (Bitboards.pawnUpwards[ iSqEP ] & _state.map[ MAP_B_PAWN ]);
 
-        while ( bbPawns != 0L )
+        for ( bbPawns &= bbFromSq; bbPawns != 0L; bbPawns ^= (1L << iSq) )
             {
-            final int iSqFrom = BitUtil.first( bbPawns );
-
-            bbPawns ^= 1L << iSqFrom;
-            addMove( iSqFrom, iSqEP, Move.Type.EN_PASSANT );
+            iSq = BitUtil.first( bbPawns );
+            addMove( iSq, iSqEP, Move.Type.EN_PASSANT );
             }
         }
 
-    /**
-     * Generate all moves for a Black King on a given square.
-     *
-     * @param iSqFrom
-     *     "From" square in 8x8 format.
-     */
-    private void generateKingMovesBlack( final int iSqFrom )
-        {
-        assert _state.sq[ iSqFrom ] == Piece.B_KING;
-        /*
-        **  CODE
-        */
-        addMoves( iSqFrom,
-                  Bitboards.king[ iSqFrom ],
-                  Move.Type.NORMAL );
-
-        if (iSqFrom == Square.E8 && _bbCheckers == 0L)
-            {
-            // Black  O-O
-            if ((_state.castling & Board.CastlingFlags.BLACK_SHORT) != 0 &&
-                (_bbAll & Board.CastlingFlags.BLACK_SHORT_MASK) == 0L &&
-                !Bitboards.isAttackedByWhite( _state.map, Square.F8 ))
-                {
-                addMoves( Square.E8, Square.G8_MASK, Move.Type.CASTLING );
-                }
-
-            // Black O-O-O
-            if ((_state.castling & Board.CastlingFlags.BLACK_LONG) != 0 &&
-                (_bbAll & Board.CastlingFlags.BLACK_LONG_MASK) == 0L &&
-                !Bitboards.isAttackedByWhite( _state.map, Square.D8 ))
-                {
-                addMoves( Square.E8, Square.C8_MASK, Move.Type.CASTLING );
-                }
-            }
-        }
-
-    /**
-     * Generate all moves for a White King on a given square.
-     *
-     * @param iSqFrom
-     *     "From" square in 8x8 format.
-     */
-    private void generateKingMovesWhite( final int iSqFrom )
-        {
-        assert _state.sq[ iSqFrom ] == Piece.W_KING;
-        /*
-        **  CODE
-        */
-        addMoves( iSqFrom,
-                  Bitboards.king[ iSqFrom ],
-                  Move.Type.NORMAL );
-
-        if (iSqFrom == Square.E1 && _bbCheckers == 0L)
-            {
-            // White O-O
-            if ((_state.castling & Board.CastlingFlags.WHITE_SHORT) != 0 &&
-                (_bbAll & Board.CastlingFlags.WHITE_SHORT_MASK) == 0L &&
-                !Bitboards.isAttackedByBlack( _state.map, Square.F1 ))
-                {
-                addMoves( Square.E1, Square.G1_MASK, Move.Type.CASTLING );
-                }
-
-            // White O-O-O
-            if ((_state.castling & Board.CastlingFlags.WHITE_LONG) != 0 &&
-                (_bbAll & Board.CastlingFlags.WHITE_LONG_MASK) == 0L &&
-                !Bitboards.isAttackedByBlack( _state.map, Square.D1 ))
-                {
-                addMoves( Square.E1, Square.C1_MASK, Move.Type.CASTLING );
-                }
-            }
-        }
 
     /**
      * Generate all moves for a Black pawn on a given square.
@@ -506,18 +497,17 @@ public class MoveList implements Iterable<Move>
      *     Bitboard of candidate pieces.
      * @param bbToSq
      *     Bitboard of target squares.
-     *
-     * @return Bitboard of candidate pieces.
      */
-    private long initBitboards( long bbFromSq, long bbToSq )
+    private void initBitboards( long bbFromSq, long bbToSq )
         {
-        if ((_iSqKing & ~0x3F) != 0)
-            return 0L;
+        if (!Square.isValid( _iSqKing ))
+            return;
         /*
         **  CODE
         */
         _bbCheckers = Bitboards.getAttackedBy( _state.map, _iSqKing, _opponent );
         _bbPinned = 0L;
+        _bbFromSq = bbFromSq & _bbPlayer;
         _bbToSq = bbToSq & ~_bbPlayer;
         //
         //  The moving player is NOT in check.
@@ -528,20 +518,23 @@ public class MoveList implements Iterable<Move>
             //  Find pinned pieces.  This is done by finding all of the opposing pieces that
             //  could attack the King if the moving player's pieces were removed.
             //
-            long bbQueen = _state.map[ MAP_W_QUEEN + _opponent ];
             long bbDiagonal = Bitboards.bishop[ _iSqKing ] &
-                              (bbQueen | _state.map[ MAP_W_BISHOP + _opponent ]);
-            long bbLateral = Bitboards.rook[ _iSqKing ] &
-                             (bbQueen | _state.map[ MAP_W_ROOK + _opponent ]);
+                              (_state.map[ MAP_W_QUEEN + _opponent ] |
+                               _state.map[ MAP_W_BISHOP + _opponent ]);
 
             if (bbDiagonal != 0L)
                 bbDiagonal &= Bitboards.getBishopAttacks( _iSqKing, _bbOpponent );
 
+            long bbLateral = Bitboards.rook[ _iSqKing ] &
+                             (_state.map[ MAP_W_QUEEN + _opponent ] |
+                              _state.map[ MAP_W_ROOK + _opponent ]);
+
             if (bbLateral != 0L)
                 bbLateral &= Bitboards.getRookAttacks( _iSqKing, _bbOpponent );
             //
-            //  Now check if there is one (and only one) moving piece that lies on the path
-            //  between a threatening piece and the King, then it is pinned.
+            //  Now see if there is one (and only one) moving piece that lies on the path between
+            //  a threatening piece and the King, then it is pinned.  Pinned pieces may still be
+            //  able to move (except for Knights) but need to test for check when they do so.
             //
             long bbPinners = (bbDiagonal | bbLateral) & ~Bitboards.king[ _iSqKing ];
 
@@ -575,7 +568,7 @@ public class MoveList implements Iterable<Move>
                 _bbToSq &= (_bbCheckers | bbXRays | Bitboards.king[ _iSqKing ]);
             else
                 {
-                bbFromSq &= ((1L << _iSqKing) | Bitboards.all[ iSqChecker ]);
+                _bbFromSq &= ((1L << _iSqKing) | Bitboards.all[ iSqChecker ]);
                 _bbToSq &= (_bbCheckers | Bitboards.king[ _iSqKing ]);
                 }
             }
@@ -586,10 +579,8 @@ public class MoveList implements Iterable<Move>
         else
             {
             _bbToSq &= Bitboards.king[ _iSqKing ];
-            bbFromSq &= (1L << _iSqKing);
+            _bbFromSq &= (1L << _iSqKing);
             }
-
-        return bbFromSq & _bbPlayer;
         }
 
     /**
@@ -629,7 +620,6 @@ public class MoveList implements Iterable<Move>
                               ? (Square.H1_MASK | Square.F1_MASK)
                               : (Square.A1_MASK | Square.D1_MASK);
 
-
                 _map[ MAP_W_ALL ] ^= bbMask;
                 _map[ MAP_W_ROOK ] ^= bbMask;
                 }
@@ -661,16 +651,19 @@ public class MoveList implements Iterable<Move>
                                         _opponent );
         }
 
-//  -----------------------------------------------------------------------
-//	INTERFACE: Iterable<Move>
-//	-----------------------------------------------------------------------
+    //  -----------------------------------------------------------------------
+    //	INTERFACE: Iterable<Move>
+    //	-----------------------------------------------------------------------
 
-    @Override public Iterator<Move> iterator()
-        { return new MoveListIterator(); }
+    @Override
+    public Iterator<Move> iterator()
+        {
+        return new MoveListIterator();
+        }
 
-//  -----------------------------------------------------------------------
-//	NESTED CLASS: MoveListIterator
-//	-----------------------------------------------------------------------
+    //  -----------------------------------------------------------------------
+    //	NESTED CLASS: MoveListIterator
+    //	-----------------------------------------------------------------------
 
     private class MoveListIterator implements Iterator<Move>
         {
@@ -684,7 +677,9 @@ public class MoveList implements Iterable<Move>
          */
         @Override
         public boolean hasNext()
-            { return _iNext < _iCount; }
+            {
+            return _iNext < _iCount;
+            }
 
         /**
          * Returns the next move in the move list.
@@ -704,7 +699,9 @@ public class MoveList implements Iterable<Move>
 
         @Override
         public void remove()
-            { throw new sun.reflect.generics.reflectiveObjects.NotImplementedException(); }
+            {
+            throw new sun.reflect.generics.reflectiveObjects.NotImplementedException();
+            }
         }   /* end of nested class MoveListIterator */
 
     }   /* end of class MoveList */

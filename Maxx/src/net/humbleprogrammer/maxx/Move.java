@@ -32,21 +32,18 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import net.humbleprogrammer.humble.DBC;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static net.humbleprogrammer.maxx.Constants.*;
 
 public class Move
     {
-
     //  -----------------------------------------------------------------------
-    //	STATIC DECLARATIONS
+    //	CONSTANTS
     //	-----------------------------------------------------------------------
 
-    /** Logger */
-    private static final Logger s_log = LoggerFactory.getLogger( Move.class );
+    static final int MASK_FROM_SQ = 0x003F00;
+    static final int MASK_TO_SQ   = 0x3F0000;
+    static final int MASK_TYPE    = 0x000007;
+    static final int MASK_ALL     = MASK_FROM_SQ | MASK_TO_SQ | MASK_TYPE;
 
     //  -----------------------------------------------------------------------
     //	DECLARATIONS
@@ -75,7 +72,7 @@ public class Move
      * @param state
      *     Board state prior to the move being made.
      */
-    Move( final int iPacked, final Board.State state )
+    Move( int iPacked, final Board.State state )
         {
         assert state != null;
         /*
@@ -83,7 +80,7 @@ public class Move
         */
         iSqFrom = (iPacked >>> 8) & 0x3F;
         iSqTo = (iPacked >>> 16) & 0x3F;
-        iType = iPacked & Type.MASK;
+        iType = iPacked & MASK_TYPE;
 
         this.state = state;
         }
@@ -104,7 +101,9 @@ public class Move
      */
 
     static int pack( int iSqFrom, int iSqTo )
-        { return (iSqTo << 16) | (iSqFrom << 8); }
+        {
+        return ((iSqTo << 16) | (iSqFrom << 8)) & MASK_ALL;
+        }
 
     /**
      * Packs the "From" square, "To" square, and move type into a 32-bit integer.
@@ -119,7 +118,9 @@ public class Move
      * @return packed move.
      */
     static int pack( int iSqFrom, int iSqTo, int iMoveType )
-        { return (iSqTo << 16) | (iSqFrom << 8) | (iMoveType & Type.MASK); }
+        {
+        return ((iSqTo << 16) | (iSqFrom << 8) | iMoveType) & MASK_ALL;
+        }
 
     //  -----------------------------------------------------------------------
     //	OVERRIDES
@@ -169,9 +170,6 @@ public class Move
         public static final int PROMOTE_BISHOP = 6;
         /** Under-promote to a Knight. */
         public static final int PROMOTE_KNIGHT = 7;
-
-        /** Mask for viable bits. */
-        static final int MASK = 0x07;
         }   /* end of nested class Type */
 
     }   /* end of class Move */

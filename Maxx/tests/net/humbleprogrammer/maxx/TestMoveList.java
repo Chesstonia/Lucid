@@ -37,6 +37,7 @@ import net.humbleprogrammer.humble.Stopwatch;
 import net.humbleprogrammer.humble.TimeUtil;
 import org.junit.*;
 
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static net.humbleprogrammer.maxx.Constants.*;
@@ -61,8 +62,10 @@ public class TestMoveList extends TestBase
     @Test
     public void t_ctor_blank()
         {
-        final MoveList moves = new MoveList( BoardFactory.createBlank() );
+        final Board bd = BoardFactory.createBlank();
+        final MoveList moves = new MoveList( bd ).generate();
 
+        assertEquals( 0, moves.size() );
         assertFalse( moves.hasLegalMove() );
         }
 
@@ -147,32 +150,14 @@ public class TestMoveList extends TestBase
     @Test
     public void t_perft()
         {
-        int iMaxDepth = 0;
+        int iDepth = DURATION.ordinal() + 3;
 
         for ( TestPosition position : s_positions )
-            iMaxDepth = Math.max( iMaxDepth, position._lExpected.length );
-
-        for ( int iDepth = 0; iDepth < iMaxDepth; ++iDepth )
-            {
-            for ( TestPosition position : s_positions )
-                if (position.test( iDepth, WHITE ) >= s_lMaxNanosecs ||
-                    position.test( iDepth, BLACK ) >= s_lMaxNanosecs)
-                    {
-                    return;
-                    }
-
-            if (s_log.isInfoEnabled() &&
-                s_lNetNanosecs >= TimeUnit.SECONDS.toNanos( 15L ))
+            if (position.test( iDepth, WHITE ) >= s_lMaxNanosecs ||
+                position.test( iDepth, BLACK ) >= s_lMaxNanosecs)
                 {
-                final long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
-
-                s_log.info( String.format( "Depth %d: generated %,d moves in %s (%,d mps)",
-                                           iDepth,
-                                           s_lNetMoves,
-                                           TimeUtil.formatMillisecs( lMillisecs, true ),
-                                           (s_lNetMoves * 1000L) / lMillisecs ) );
+                return;
                 }
-            }
         }
 //  -----------------------------------------------------------------------
 //	METHODS
@@ -187,7 +172,13 @@ public class TestMoveList extends TestBase
      * @return Count of moves available.
      */
     private static int countMoves( final String strFEN )
-        { return new MoveList( BoardFactory.createFromFEN( strFEN ) ).size(); }
+        {
+        Board bd = BoardFactory.createFromFEN( strFEN );
+
+        return (bd != null)
+               ? new MoveList( bd ).generate().size()
+               : 0;
+        }
 
     @AfterClass
     public static void displayResults()
@@ -219,6 +210,7 @@ public class TestMoveList extends TestBase
         {
         private final Board  _board;
         private final Board  _boardMirror;
+        private final long[] _lActual;
         private final long[] _lExpected;
 
         TestPosition( String strFEN, long[] lExpected )
@@ -227,51 +219,57 @@ public class TestMoveList extends TestBase
             _boardMirror = BoardFactory.createMirror( _board );
 
             _lExpected = lExpected;
+            _lActual = new long[ _lExpected.length ];
             }
 
-        private static long perft( final Board bd, int iDepth )
+        private void perft( final Board bd, int iDepth, int iMaxDepth )
             {
             assert bd != null;
-            assert (iDepth >= 0 && iDepth < Byte.MAX_VALUE);
+            assert (iDepth >= 0 && iDepth <= iMaxDepth);
+            assert (iMaxDepth >= 0 && iMaxDepth < Byte.MAX_VALUE);
             /*
             **  CODE
             */
-            long lCount;
-            final MoveList moves = new MoveList( bd );
+            MoveList moves = new MoveList( bd ).generate();
 
-            if (iDepth-- <= 0)
-                lCount = moves.size();
-            else
+            _lActual[ iDepth ] += moves.size();
+
+            if (moves.hasLegalMove() && iDepth < iMaxDepth)
                 {
-                lCount = 0L;
-
                 for ( Move mv : moves )
                     {
                     bd.makeMove( mv );
-                    lCount += perft( bd, iDepth );
+                    perft( bd, (iDepth + 1), iMaxDepth );
                     bd.undoMove( mv );
                     }
                 }
-
-            return lCount;
             }
 
-        long test( int iDepth, int player )
+        long test( int iMaxDepth, int player )
             {
-            if (iDepth < 0 || iDepth >= _lExpected.length)
-                return s_lNetNanosecs;
-
+            assert iMaxDepth >= 0;
             assert (player == WHITE || player == BLACK);
             /*
             **  CODE
             */
-            final Stopwatch swatch = Stopwatch.startNew();
-            final long lActual = perft( ((player == WHITE) ? _board : _boardMirror), iDepth );
+            int iDepth = Math.min( iMaxDepth, _lExpected.length );
+            Board bd = (player == WHITE) ? _board : _boardMirror;
 
-            s_lNetNanosecs += swatch.getElapsed();
-            s_lNetMoves += lActual;
+            Arrays.fill( _lActual, 0L );
 
-            assertEquals( _lExpected[ iDepth ], lActual );
+            if (bd != null)
+                {
+                Stopwatch swatch = Stopwatch.startNew();
+                perft( bd, 0, iDepth );
+                s_lNetNanosecs += swatch.getElapsed();
+
+                for ( int idx = 0; idx <= iDepth; ++idx )
+                    {
+                    s_lNetMoves += _lActual[ idx ];
+                    assertEquals( String.format( "'%s' => depth %d", bd.toString(), idx ),
+                                  _lExpected[ idx ], _lActual[ idx ] );
+                    }
+                }
 
             return s_lNetNanosecs;
             }
@@ -570,7 +568,9 @@ public class TestMoveList extends TestBase
             //
             //  Assorted positions from my own testing
             //
-
+            // checking pawn on f6 can be captured via e.p.
+            new TestPosition( "3r1rk1/6pp/4n3/ppbNPp2/3nKP2/7P/PB6/2RR1B2 w - f6 0 1",
+                              new long[]{ 3L, 98L, 2838L, 92186L, 2764109L, 92969197L, 2892953940L } ),
             // 3 pinned pieces
             new TestPosition( "rQ3rk1/p2pq1pp/6Q1/bbpnp3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ -",
                               new long[]{ 35L, 1892L, 64973L, 3321449L, 120745830L, 5966580991L, 225409779045L } ),
