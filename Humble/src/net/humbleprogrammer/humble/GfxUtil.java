@@ -50,9 +50,56 @@ public class GfxUtil
 	/** Narrow margin, measured in pixels. */
 	public static final int MARGIN_THIN  = 4;
 
+	/** Minimum font size, in points. */
+	public static final float MIN_FONT_SIZE = 6F;
+
 	//  -----------------------------------------------------------------------
 	//	PUBLIC METHODS
 	//	-----------------------------------------------------------------------
+
+	/**
+	 * Adjusts inner rectangle so that it is centered in the outer rectangle.
+	 *
+	 * @param rInner
+	 * 	Inner rectangle.
+	 * @param rOuter
+	 * 	Outer rectangle.
+	 */
+	public static void centerRectangle( Rectangle rInner, final Rectangle rOuter )
+		{
+		double dOffsetX = (rOuter.width - rInner.width) / 2.0;
+		double dOffsetY = (rOuter.height - rInner.height) / 2.0;
+
+		rInner.setLocation( (int) (rOuter.getMinX() + dOffsetX),
+							(int) (rOuter.getMinY() + dOffsetY) );
+		}
+
+	/**
+	 * Draws a character centered inside a rectangle.
+	 *
+	 * @param gfx
+	 * 	Graphics context to draw into.
+	 * @param rBounds
+	 * 	Bounding rectangle.
+	 * @param ch
+	 * 	Character to draw.
+	 */
+	public static void drawCentered( Graphics2D gfx, final Rectangle rBounds, char ch )
+		{
+		DBC.requireNotNull( gfx, "Graphics" );
+		DBC.requireNotNull( rBounds, "Bounds" );
+		DBC.requireGreaterThanZero( ch, "Character" );
+		/*
+		**	CODE
+		*/
+		final FontMetrics fm = gfx.getFontMetrics();
+		final String strText = String.valueOf( ch );
+
+		int iOffsetX = (rBounds.width - fm.stringWidth( strText )) / 2;
+		int iOffsetY = ((rBounds.height - fm.getHeight()) / 2) + fm.getAscent();
+
+		gfx.drawString( strText, (rBounds.x + iOffsetX), (rBounds.y + iOffsetY) );
+		}
 
 	/**
 	 * Resizes an image.
