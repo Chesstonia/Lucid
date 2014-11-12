@@ -32,19 +32,62 @@
  ******************************************************************************/
 package net.humbleprogrammer.humble;
 
-@SuppressWarnings("unused")
+import java.awt.*;
+import java.awt.image.BufferedImage;
+
+@SuppressWarnings( "unused" )
 public class GfxUtil
-    {
+	{
 
-    //  -----------------------------------------------------------------------
-    //	CONSTANTS
-    //	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	CONSTANTS
+	//	-----------------------------------------------------------------------
 
-    /** Normal margin, measured in pixels. */
-    public static final int MARGIN       = 8;
-    /** Wide margin, measured in pixels. */
-    public static final int MARGIN_THICK = 12;
-    /** Narrow margin, measured in pixels. */
-    public static final int MARGIN_THIN  = 4;
+	/** Normal margin, measured in pixels. */
+	public static final int MARGIN       = 8;
+	/** Wide margin, measured in pixels. */
+	public static final int MARGIN_THICK = 12;
+	/** Narrow margin, measured in pixels. */
+	public static final int MARGIN_THIN  = 4;
 
-    }   /* end of class GfxUtil */
+	//  -----------------------------------------------------------------------
+	//	PUBLIC METHODS
+	//	-----------------------------------------------------------------------
+
+	/**
+	 * Resizes an image.
+	 *
+	 * @param image
+	 * 	Image to resize.
+	 * @param dim
+	 * 	New size.
+	 */
+	public static BufferedImage scaleImage( BufferedImage image, final Dimension dim )
+		{
+		DBC.requireNotNull( image, "Image" );
+		DBC.requireNotNull( dim, "Dimension" );
+
+		assert dim.height > 0;
+		assert dim.width > 0;
+		/*
+		**  CODE
+        */
+		BufferedImage imgResized = new BufferedImage( dim.width, dim.height,
+													  BufferedImage.TRANSLUCENT );
+		Graphics2D gfx = imgResized.createGraphics();
+
+		try
+			{
+			gfx.addRenderingHints( new RenderingHints( RenderingHints.KEY_RENDERING,
+													   RenderingHints.VALUE_RENDER_QUALITY ) );
+			gfx.drawImage( image, 0, 0, dim.width, dim.height, null );
+			}
+		finally
+			{
+			gfx.dispose();
+			}
+
+		return imgResized;
+		}
+
+	}   /* end of class GfxUtil */
