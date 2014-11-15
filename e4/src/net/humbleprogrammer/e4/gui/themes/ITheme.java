@@ -63,4 +63,15 @@ public interface ITheme
 	 * @return Light square color.
 	 */
 	Color getLightSquareColor();
+
+	/**
+	 * Gets the piece set, scaled to a square size.
+	 *
+	 * @param iSqDim
+	 * 	Desired square size, in pixels.
+	 *
+	 * @return Scaled piece set image.
+	 */
+	Image getPieceSet( int iSqDim );
+
 	}	/* end of interface ITheme */

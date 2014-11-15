@@ -41,8 +41,11 @@ import javax.swing.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.humbleprogrammer.e4.documents.GameDocument;
 import net.humbleprogrammer.e4.gui.MainFrame;
 import net.humbleprogrammer.e4.gui.dialogs.DialogManager;
+import net.humbleprogrammer.e4.gui.helpers.Command;
+import net.humbleprogrammer.e4.gui.helpers.ResourceManager;
 import net.humbleprogrammer.humble.DBC;
 
 @SuppressWarnings( "unused" )
@@ -65,6 +68,8 @@ public class App implements Runnable
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
+	/** Current document. */
+	private final GameDocument             _document = new GameDocument();
 	/** Commands. */
 	private final Map<Command.ID, Command> _commands = new EnumMap<>( Command.ID.class );
 
@@ -156,6 +161,28 @@ public class App implements Runnable
 	//	PUBLIC GETTERS & SETTERS
 	//	-----------------------------------------------------------------------
 
+
+	/**
+	 * Adds a global command to the application.
+	 *
+	 * @param id
+	 * 	Command ID
+	 * @param cmd
+	 * 	Command
+	 */
+	public static void addCommand( Command.ID id, Command cmd )
+		{
+		DBC.requireNotNull( id, "Command ID" );
+		DBC.requireNotNull( cmd, "Command" );
+		/*
+		**  CODE
+        */
+		assert !s_self._commands.containsKey( id );
+		assert !s_self._commands.containsValue( cmd );
+
+		s_self._commands.put( id, cmd );
+		}
+
 	/**
 	 * Exposes all of the command objects.
 	 *
@@ -184,24 +211,13 @@ public class App implements Runnable
 		}
 
 	/**
-	 * Adds a global command to the application.
+	 * Gets the document.
 	 *
-	 * @param id
-	 * 	Command ID
-	 * @param cmd
-	 * 	Command
+	 * @return Document object.
 	 */
-	public static void setCommand( Command.ID id, Command cmd )
+	public static GameDocument getDocument()
 		{
-		DBC.requireNotNull( id, "Command ID" );
-		DBC.requireNotNull( cmd, "Command" );
-		/*
-		**  CODE
-        */
-		assert !s_self._commands.containsKey( id );
-		assert !s_self._commands.containsValue( cmd );
-
-		s_self._commands.put( id, cmd );
+		return s_self._document;
 		}
 
 	/**
@@ -292,6 +308,10 @@ public class App implements Runnable
 	private boolean initGUI()
 		{
 		_frame = new MainFrame();
+		//
+		//	Wire up the document to the views.
+		//
+		_frame.getBoardView().setDocument( _document );
 
 		return true;
 		}
@@ -354,7 +374,7 @@ public class App implements Runnable
 
 			Image img = ResourceManager.getImage( "Black-16x16.png" );
 			if (img != null)
-				putValue( SMALL_ICON, new ImageIcon(img) );
+				putValue( SMALL_ICON, new ImageIcon( img ) );
 			}
 
 		@Override
@@ -381,7 +401,7 @@ public class App implements Runnable
 
 			Image img = ResourceManager.getImage( "Random-16x16.png" );
 			if (img != null)
-				putValue( SMALL_ICON, new ImageIcon(img) );
+				putValue( SMALL_ICON, new ImageIcon( img ) );
 			}
 
 		@Override
@@ -408,7 +428,7 @@ public class App implements Runnable
 
 			Image img = ResourceManager.getImage( "White-16x16.png" );
 			if (img != null)
-				putValue( SMALL_ICON, new ImageIcon(img) );
+				putValue( SMALL_ICON, new ImageIcon( img ) );
 			}
 
 		@Override

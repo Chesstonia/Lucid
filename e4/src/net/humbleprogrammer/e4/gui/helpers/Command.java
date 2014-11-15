@@ -30,100 +30,115 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.e4;
+package net.humbleprogrammer.e4.gui.helpers;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.net.URL;
-import javax.imageio.ImageIO;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.swing.*;
 
 import net.humbleprogrammer.humble.DBC;
-import net.humbleprogrammer.humble.GfxUtil;
 
 @SuppressWarnings( "unused" )
-public class ResourceManager
+public abstract class Command extends javax.swing.AbstractAction implements Runnable
 	{
 
 	//  -----------------------------------------------------------------------
-	//	STATIC DECLARATIONS
+	//	CONSTANTS
 	//	-----------------------------------------------------------------------
 
-	/** Logger */
-	private static final Logger s_log = LoggerFactory.getLogger( ResourceManager.class );
+	public enum ID
+		{
+			EXIT_APP,
+			QUICK_GAME_BLACK,
+			QUICK_GAME_RANDOM,
+			QUICK_GAME_WHITE
+		}
+
+	//  -----------------------------------------------------------------------
+	//	DECLARATIONS
+	//	-----------------------------------------------------------------------
+
+	/** Optional menu item created for the command. */
+	protected JMenuItem _item;
 
 	//  -----------------------------------------------------------------------
 	//	PUBLIC METHODS
 	//	-----------------------------------------------------------------------
 
 	/**
-	 * Loads an image resource.
+	 * Creates a menu item for the command.
 	 *
-	 * @param strName
-	 * 	Image name.
-	 *
-	 * @return Image if loaded; null on error.
+	 * @return JMenuItem.
 	 */
-	public static BufferedImage getImage( final String strName )
+	public JMenuItem createMenuItem( boolean bCheckable )
 		{
-		DBC.requireNotNull( strName, "Icon Name" );
+		if (_item != null)
+			return _item;
 		/*
-		**	CODE
-		*/
-		String strPath = "resources/images/" + strName;
+		**  CODE
+        */
+		Object obj;
 
-		try
-			{
-			URL url = ClassLoader.getSystemClassLoader().getResource( strPath );
+		_item = bCheckable
+				? new JCheckBoxMenuItem( this )
+				: new JMenuItem( this );
 
-			if (url != null)
-				return ImageIO.read( url );
-			}
-		catch (Exception ex)
-			{
-			s_log.warn( String.format( "Failed to load image resource '%s'.", strName ), ex );
-			}
+		// Add the optional icon
+		if ((obj = getValue( SMALL_ICON )) != null)
+			_item.setIcon( (Icon) obj );
 
-		return null;
+		// Add the accelerator key
+		if ((obj = getValue( MNEMONIC_KEY )) != null)
+			_item.setMnemonic( (int) obj );
+
+		// Add the optional tool tip text
+		if ((obj = getValue( LONG_DESCRIPTION )) != null)
+			_item.setToolTipText( (String) obj );
+
+		update();    // let the command update it's initial state.
+
+		return _item;
 		}
 
 	/**
-	 * Loads an image resource.
-	 *
-	 * @param strName
-	 * 	Image name.
-	 * @param dim
-	 * 	Desired size of image.
-	 *
-	 * @return Image if loaded; null on error.
+	 * Undoes the command.
 	 */
-	public static BufferedImage getScaledImage( final String strName, final Dimension dim )
+	public void undo()
 		{
-		DBC.requireNotNull( strName, "Image Name" );
-		DBC.requireNotNull( dim, "Image Size" );
-		/*
-		**	CODE
-		*/
-		BufferedImage image;
-		String strPath = "resources/images/" + strName;
-
-		try
-			{
-			URL url = ClassLoader.getSystemClassLoader().getResource( strPath );
-
-			if (url != null &&
-				(image = ImageIO.read( url )) != null)
-				{
-				return GfxUtil.scaleImage( image, dim );
-				}
-			}
-		catch (Exception ex)
-			{
-			s_log.warn( String.format( "Failed to load image resource '%s'.", strName ), ex );
-			}
-
-		return null;
+		throw new sun.reflect.generics.reflectiveObjects.NotImplementedException();
 		}
-	}   /* end of class ResourceManager */
+
+	/**
+	 * Updates the current state of the command.
+	 */
+	public void update()
+		{
+		/*
+		**  STUB METHOD
+        */
+		}
+
+	//  -----------------------------------------------------------------------
+	//	INTERFACE: AbstractAction
+	//	-----------------------------------------------------------------------
+
+	/**
+	 * Invokes the command.
+	 *
+	 * @param ae
+	 * 	Event arguments.
+	 */
+	@Override
+	public void actionPerformed( java.awt.event.ActionEvent ae )
+		{
+		run();
+		}
+
+	//  -----------------------------------------------------------------------
+	//	INTERFACE: Runnable
+	//	-----------------------------------------------------------------------
+
+	/**
+	 * Performs the command.
+	 */
+	public abstract void run();
+
+	}   /* end of class Command */

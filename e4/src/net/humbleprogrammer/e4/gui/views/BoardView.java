@@ -33,22 +33,28 @@
 package net.humbleprogrammer.e4.gui.views;
 
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.geom.GeneralPath;
+import java.util.Observable;
+import java.util.Observer;
 import javax.swing.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.humbleprogrammer.e4.Command;
-import net.humbleprogrammer.e4.ResourceManager;
+import net.humbleprogrammer.e4.documents.GameDocument;
+import net.humbleprogrammer.e4.gui.helpers.Command;
+import net.humbleprogrammer.e4.gui.helpers.ResourceManager;
 import net.humbleprogrammer.e4.gui.themes.ITheme;
 import net.humbleprogrammer.e4.gui.themes.ThemeManager;
 import net.humbleprogrammer.humble.DBC;
 import net.humbleprogrammer.humble.GfxUtil;
+import net.humbleprogrammer.maxx.Board;
 import net.humbleprogrammer.maxx.Square;
 
+import static net.humbleprogrammer.maxx.Constants.*;
+
 public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPanel
+	implements Observer
 	{
 
 	//  -----------------------------------------------------------------------
@@ -83,8 +89,11 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 	/** .T. to display rank/file labels; .F. to hide them. */
 	private boolean _bShowLabels = true;
 	/** Dimension of squares, measured in pixels. */
-	private int _iSqDim;
-
+	private int     _iSqDim      = -1;
+	/** Game document. */
+	private GameDocument _doc;
+	/** Current piece set. */
+	private Image        _imgPieces;
 	//  -----------------------------------------------------------------------
 	//	CTOR
 	//	-----------------------------------------------------------------------
@@ -114,21 +123,111 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 	public void render( Graphics2D gfx, Rectangle rClip )
 		{
 		DBC.requireNotNull( gfx, "Graphics" );
+		/*
+		**	CODE
+		*/
+		final ITheme theme = ThemeManager.getCurrentTheme();
 
-		if (_rOuter.isEmpty())
+		adjustLayout();
+
+		drawBoard( gfx, theme, rClip );
+		drawLabels( gfx, theme, rClip );
+
+		if (_doc != null)
+			{
+			final Board bd = _doc.getPosition();
+
+			drawMoveIndicator( gfx, theme, rClip, (bd.getMovingPlayer() == WHITE) );
+			drawPieces( gfx, theme, rClip, bd );
+			}
+		}
+
+	//  -----------------------------------------------------------------------
+	//	PUBLIC GETTERS & SETTERS
+	//	-----------------------------------------------------------------------
+
+	/**
+	 * Sets the document for this view.
+	 *
+	 * @param doc
+	 * 	Document.
+	 */
+	public void setDocument( GameDocument doc )
+		{
+		if (doc == _doc)
 			return;
 		/*
 		**	CODE
 		*/
-		ITheme theme = ThemeManager.getCurrentTheme();
+		if (_doc != null)
+			_doc.deleteObserver( this );
 
-		drawBoard( gfx, theme, rClip );
-		drawLabels( gfx, theme, rClip );
+		_doc = doc;
+		_doc.addObserver( this );
+
+		repaint();
 		}
 
 	//  -----------------------------------------------------------------------
+	//	INTERFACE: Observer
+	//	-----------------------------------------------------------------------
+
+	/**
+	 * Called when the document object is updated.
+	 *
+	 * @param obj
+	 * 	Document object.
+	 * @param arg
+	 * 	(not used)
+	 */
+	public void update( Observable obj, Object arg )
+		{
+		assert obj != null;
+		/*
+		**	CODE
+		*/
+		if (obj == _doc)
+			repaint();
+		}
+	//  -----------------------------------------------------------------------
 	//	IMPLEMENTATION
 	//	-----------------------------------------------------------------------
+
+	/**
+	 * Resizes all the squares.
+	 */
+	private void adjustLayout()
+		{
+		final int iHeight = getHeight() - GfxUtil.MARGIN_THICK;
+		final int iWidth = getWidth() - GfxUtil.MARGIN_THICK;
+		final int iSqDim = Math.max( MIN_SQ_DIM, Math.min( iHeight, iWidth ) / 9 );
+
+		if (iSqDim == _iSqDim)
+			return;
+
+		// s_log.debug( "BoardView => square size is {} pixels.", iSqDim );
+
+		_iSqDim = iSqDim;
+		_imgPieces = null;
+
+		_rOuter.setSize( (iSqDim * 9), (iSqDim * 9) );
+		GfxUtil.centerRectangle( _rOuter, getBounds() );
+
+		_rInner.height = _rInner.width = iSqDim * 8;
+		GfxUtil.centerRectangle( _rInner, _rOuter );
+		//
+		//	Compute of all the squares.
+		//
+		final int iX = (int) _rInner.getMinX();
+		final int iY = (int) _rInner.getMinY();
+
+		for ( int iSq = 0; iSq < 64; ++iSq )
+			{
+			_rSq[ iSq ].x = iX + (iSqDim * getDisplayFile( Square.getFile( iSq ) ));
+			_rSq[ iSq ].y = iY + (iSqDim * getDisplayRank( Square.getRank( iSq ) ));
+			_rSq[ iSq ].width = _rSq[ iSq ].height = iSqDim;
+			}
+		}
 
 	/**
 	 * Draws the board.
@@ -145,6 +244,9 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 		assert gfx != null;
 		assert theme != null;
 		assert rClip != null;
+
+		if (rClip.isEmpty())
+			return;
 		/*
 		**	CODE
 		*/
@@ -178,7 +280,7 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 	 * @param gfx
 	 * 	Graphics context to draw into.
 	 * @param theme
-	 * 	Theme.
+	 * 	Current theme.
 	 * @param rClip
 	 * 	Clip rectangle.
 	 */
@@ -188,49 +290,192 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 		assert theme != null;
 		assert rClip != null;
 
-		if (!_bShowLabels)
+		if (!_bShowLabels || rClip.isEmpty())
 			return;
 		/*
 		**	CODE
 		*/
-		final float fFontSize = (float) (0.65 * (_iSqDim / 2));
+		final int iHalfSq = _iSqDim / 2;
+		final float fFontSize = (float) (0.65 * iHalfSq);
 
 		if (fFontSize < GfxUtil.MIN_FONT_SIZE)
 			return;
 
 		final Font fontOld = gfx.getFont();
 		final Font font = theme.getLabelFont().deriveFont( fFontSize );
-		final Rectangle rFile = new Rectangle( _iSqDim, (_iSqDim / 2) );
-		final Rectangle rRank = new Rectangle( (_iSqDim / 2), _iSqDim );
 
-		gfx.setFont( font );
-		gfx.setColor( theme.getLabelColor() );
-
-		for ( int idx = 0; idx < 8; ++idx )
+		try
 			{
-			final char cFile = (char) ('a' + getDisplayFile( idx ));
-			final char cRank = (char) ('1' + getDisplayRank( idx ));
+			final Rectangle rFile = new Rectangle( _iSqDim, iHalfSq );
+			final Rectangle rRank = new Rectangle( iHalfSq, _iSqDim );
 
-			// File label along top
-			rFile.x = (int) (_rInner.getMinX() + (idx * _iSqDim));
-			rFile.y = (int) _rOuter.getMinY();
-			GfxUtil.drawCentered( gfx, rFile, cFile );
+			gfx.setFont( font );
+			gfx.setColor( theme.getLabelColor() );
 
-			// File label along bottom
-			rFile.y = (int) _rInner.getMaxY();
-			GfxUtil.drawCentered( gfx, rFile, cFile );
+			for ( int idx = 0; idx < 8; ++idx )
+				{
+				final char cFile = (char) ('a' + getDisplayFile( idx ));
+				final char cRank = (char) ('1' + getDisplayRank( idx ));
 
-			// Rank label along left
-			rRank.x = (int) _rOuter.getMinX();
-			rRank.y = (int) (_rInner.getMinY() + (idx * _iSqDim));
-			GfxUtil.drawCentered( gfx, rRank, cRank );
+				// File label along top
+				rFile.x = (int) _rInner.getMinX() + (idx * _iSqDim);
+				rFile.y = (int) _rOuter.getMinY();
+				if (rClip.intersects( rFile ))
+					GfxUtil.drawCentered( gfx, rFile, cFile );
 
-			// Rank label along right
-			rRank.x = (int) _rInner.getMaxX();
-			GfxUtil.drawCentered( gfx, rRank, cRank );
+				// File label along bottom
+				rFile.y = (int) _rInner.getMaxY();
+				if (rClip.intersects( rFile ))
+					GfxUtil.drawCentered( gfx, rFile, cFile );
+
+				// Rank label along left
+				rRank.x = (int) _rOuter.getMinX();
+				rRank.y = (int) _rInner.getMinY() + (idx * _iSqDim);
+				if (rClip.intersects( rRank ))
+					GfxUtil.drawCentered( gfx, rRank, cRank );
+
+				// Rank label along right
+				rRank.x = (int) _rInner.getMaxX();
+				if (rClip.intersects( rRank ))
+					GfxUtil.drawCentered( gfx, rRank, cRank );
+				}
+			}
+		finally
+			{
+			gfx.setFont( fontOld );
+			}
+		}
+
+	/**
+	 * Draws the move indicator.
+	 *
+	 * @param gfx
+	 * 	Graphics context to draw into.
+	 * @param theme
+	 * 	Theme.
+	 * @param rClip
+	 * 	Clip rectangle.
+	 * @param bWhiteToMove
+	 * 	.T. if the White player is moving; .F. if Black player.
+	 */
+	private void drawMoveIndicator( Graphics2D gfx, final ITheme theme, final Rectangle rClip,
+									boolean bWhiteToMove )
+		{
+		assert gfx != null;
+		assert theme != null;
+		assert rClip != null;
+
+		if (rClip.isEmpty())
+			return;
+		/*
+		**	CODE
+		*/
+		final boolean bAtTop = bWhiteToMove ^ _bBlackOnTop;
+		final Rectangle rCorner = new Rectangle( (_iSqDim / 2), (_iSqDim / 2) );
+		final Rectangle rMarker = new Rectangle( (int) (0.75 * rCorner.width),
+												 (int) (0.90 * rCorner.height) );
+
+		rCorner.x = (int) _rInner.getMaxX();
+		rCorner.y = (int) (bAtTop ? _rOuter.getMinY() : _rInner.getMaxY());
+
+		GfxUtil.centerRectangle( rMarker, rCorner );
+
+		if (rMarker.isEmpty() || !rClip.intersects( rMarker ))
+			return;
+		//
+		//	Draw a "home plate" shaped indicator.
+		//
+		final int iT = (int) rMarker.getMinY();    // top
+		final int iL = (int) rMarker.getMinX();    // left
+		final int iB = (int) rMarker.getMaxY();    // bottom
+		final int iR = (int) rMarker.getMaxX();    // right
+
+		final int iMidX = rMarker.width / 2;
+		final int iMidY = rMarker.height / 2;
+
+		GeneralPath path = new GeneralPath();
+
+		if (bAtTop)
+			{
+			path.moveTo( iL + iMidX, iB );
+			path.lineTo( iL, iB - iMidY );
+			path.lineTo( iL, iT );
+			path.lineTo( iR, iT );
+			path.lineTo( iR, iB - iMidY );
+			path.lineTo( iL + iMidX, iB );
+			}
+		else
+			{
+			path.moveTo( iL + iMidX, iT );
+			path.lineTo( iR, iT + iMidY );
+			path.lineTo( iR, iB );
+			path.lineTo( iL, iB );
+			path.lineTo( iL, iT + iMidY );
+			path.lineTo( iL + iMidX, iT );
 			}
 
-		gfx.setFont( fontOld );
+		path.closePath();
+
+		if (bWhiteToMove)
+			gfx.setColor( Color.WHITE );
+		else
+			gfx.setColor( Color.BLACK );
+
+		gfx.fill( path );
+		gfx.setColor( Color.DARK_GRAY );
+		gfx.draw( path );
+		}
+
+	/**
+	 * Draws the move indicator.
+	 *
+	 * @param gfx
+	 * 	Graphics context to draw into.
+	 * @param theme
+	 * 	Theme.
+	 * @param rClip
+	 * 	Clip rectangle.
+	 * @param bd
+	 * 	Board object.
+	 */
+	private void drawPieces( Graphics2D gfx, final ITheme theme, final Rectangle rClip,
+							 final Board bd )
+		{
+		assert gfx != null;
+		assert theme != null;
+		assert rClip != null;
+		assert bd != null;
+		/*
+		**	CODE
+		*/
+		if (_imgPieces == null)
+			_imgPieces = theme.getPieceSet( _iSqDim );
+
+		if (_imgPieces == null || rClip.isEmpty())
+			return;
+
+		for ( int iSq = 0; iSq < 64; ++iSq )
+			{
+			final int piece = bd.get( iSq );
+			final Rectangle rSq = new Rectangle( _rSq[ iSq ] );
+
+			if (piece != EMPTY && rClip.intersects( rSq ))
+				{
+				//
+				//	Compute the offset into the piece bitmap, which expects the White pieces on the top
+				//	row, and the Black pieces on the bottom row.  Each row then has the pieces ordered
+				//	Pawn, Knight, Bishop, Rook, Queen, King.
+				//
+				Point ptSrc = new Point( _iSqDim * ((piece - MAP_W_PAWN) >> 1),
+										 _iSqDim * (piece & 1) );
+
+				gfx.drawImage( _imgPieces,
+							   rSq.x, rSq.y, rSq.x + _iSqDim, rSq.y + _iSqDim,
+							   ptSrc.x, ptSrc.y, ptSrc.x + _iSqDim, ptSrc.y + _iSqDim,
+							   null );
+
+				}
+			}
 		}
 
 	/**
@@ -238,11 +483,10 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 	 */
 	private void initGUI()
 		{
-		addComponentListener( new ResizeListener() );
-
-		setMinimumSize( new Dimension( (MIN_SQ_DIM * 9), (MIN_SQ_DIM * 9) ) );
-		setPreferredSize( new Dimension( (DEFAULT_SQ_DIM * 9) + GfxUtil.MARGIN_THICK,
-										 (DEFAULT_SQ_DIM * 9) + GfxUtil.MARGIN_THICK ) );
+		setMinimumSize( new Dimension( GfxUtil.MARGIN_THICK + (MIN_SQ_DIM * 9),
+									   GfxUtil.MARGIN_THICK + (MIN_SQ_DIM * 9) ) );
+		setPreferredSize( new Dimension( GfxUtil.MARGIN_THICK + (DEFAULT_SQ_DIM * 9),
+										 GfxUtil.MARGIN_THICK + (DEFAULT_SQ_DIM * 9) ) );
 		//
 		//	Context Menu
 		//
@@ -284,9 +528,9 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 			   : iRank;
 		}
 
-	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: FlipBoardCommand
-	//	-----------------------------------------------------------------------
+//  -----------------------------------------------------------------------
+//	NESTED CLASS: FlipBoardCommand
+//	-----------------------------------------------------------------------
 
 	class FlipBoardCommand extends Command
 		{
@@ -308,15 +552,17 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 			**  CODE
             */
 			_bBlackOnTop = !_bBlackOnTop;
+			_iSqDim = -1;    // force recalculation of all the squares.
 
 			update();
+			adjustLayout();
 			repaint();
 			}
 		}
 
-	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: ShowLabelsCommand
-	//	-----------------------------------------------------------------------
+//  -----------------------------------------------------------------------
+//	NESTED CLASS: ShowLabelsCommand
+//	-----------------------------------------------------------------------
 
 	class ShowLabelsCommand extends Command
 		{
@@ -344,57 +590,6 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 			{
 			if (_item != null)
 				_item.setSelected( _bShowLabels );
-			}
-		}
-
-	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: ResizeListener
-	//	-----------------------------------------------------------------------
-
-	class ResizeListener extends ComponentAdapter
-		{
-		public void componentResized( ComponentEvent ce )
-			{
-			assert ce != null;
-
-			if (getBounds().isEmpty())
-				return;
-			/*
-			**	CODE
-			*/
-			final int iHeight = getHeight() - GfxUtil.MARGIN_THICK;
-			final int iWidth = getWidth() - GfxUtil.MARGIN_THICK;
-			final int iSqDim = Math.max( MIN_SQ_DIM, Math.min( iHeight, iWidth ) / 9 );
-
-			Rectangle rOuter = new Rectangle( (iSqDim * 9), (iSqDim * 9) );
-			GfxUtil.centerRectangle( rOuter, getBounds() );
-
-			if (rOuter.equals( _rOuter ))
-				return;    // nothing changed.
-
-			_iSqDim = iSqDim;
-
-			_rOuter.x = rOuter.x;
-			_rOuter.y = rOuter.y;
-			_rOuter.height = rOuter.height;
-			_rOuter.width = rOuter.width;
-
-			_rInner.height = _rInner.width = iSqDim * 8;
-			GfxUtil.centerRectangle( _rInner, _rOuter );
-			//
-			//	Compute of all the squares.
-			//
-			final int iX = (int) _rInner.getMinX();
-			final int iY = (int) _rInner.getMinY();
-
-			for ( int iSq = 0; iSq < 64; ++iSq )
-				{
-				_rSq[ iSq ].x = iX + (iSqDim * getDisplayFile( Square.getFile( iSq ) ));
-				_rSq[ iSq ].y = iY + (iSqDim * getDisplayRank( Square.getRank( iSq ) ));
-				_rSq[ iSq ].width = _rSq[ iSq ].height = iSqDim;
-				}
-
-			//	s_log.debug( "BoardView resized squares to {} pixels.", iSqDim );
 			}
 		}
 	}	/* end of class BoardView */

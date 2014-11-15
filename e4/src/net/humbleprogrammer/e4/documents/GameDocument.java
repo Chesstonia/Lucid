@@ -30,76 +30,33 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.e4.gui.controls;
+package net.humbleprogrammer.e4.documents;
 
-import java.awt.*;
-import javax.swing.*;
+import java.util.Observable;
 
-import net.humbleprogrammer.humble.DBC;
+import net.humbleprogrammer.maxx.Board;
+import net.humbleprogrammer.maxx.factories.BoardFactory;
 
-public abstract class EnhancedPanel extends JPanel
+public class GameDocument extends Observable
 	{
 
 	//  -----------------------------------------------------------------------
-	//	STATIC DECLARATIONS
+	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
-	/** Controls the rendering quality */
-	protected static final RenderingHints s_hints;
+	private Board _board = BoardFactory.createInitial();
 
 	//  -----------------------------------------------------------------------
-	//	CTOR
-	//	-----------------------------------------------------------------------
-
-	static
-		{
-		s_hints = new RenderingHints( RenderingHints.KEY_ANTIALIASING,
-									  RenderingHints.VALUE_ANTIALIAS_ON );
-		s_hints.put( RenderingHints.KEY_INTERPOLATION,
-					 RenderingHints.VALUE_INTERPOLATION_BILINEAR );
-		s_hints.put( RenderingHints.KEY_TEXT_ANTIALIASING,
-					 RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
-		}
-
-	//  -----------------------------------------------------------------------
-	//	PUBLIC METHODS
+	//	PUBLIC GETTERS & SETTERS
 	//	-----------------------------------------------------------------------
 
 	/**
-	 * Renders the panel content.
+	 * Gets the current position.
 	 *
-	 * @param gfx
-	 * 	Graphics context to draw into.
+	 * @return Board object.
 	 */
-	@Override
-	protected void paintComponent( Graphics gfx )
+	public Board getPosition()
 		{
-		DBC.requireNotNull( gfx, "Graphics" );
-		/*
-		**	CODE
-		*/
-		final Graphics2D gfx2 = (Graphics2D) gfx.create();
-
-		try
-			{
-			// super.paintComponent( gfx );
-
-			gfx2.setRenderingHints( s_hints );
-			render( gfx2, gfx.getClipBounds() );
-			}
-		finally
-			{
-			gfx2.dispose();
-			}
+		return _board;
 		}
-
-	/**
-	 * Renders the content.
-	 *
-	 * @param gfx
-	 * 	Graphics context.
-	 * @param rClip
-	 * 	Clipping rectangle.
-	 */
-	public abstract void render( Graphics2D gfx, Rectangle rClip );
-	}	/* end of class EnhancedPanel() */
+	}	/* end of class GameDocument */

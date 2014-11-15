@@ -33,14 +33,15 @@
 package net.humbleprogrammer.e4.gui;
 
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import javax.swing.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.humbleprogrammer.e4.*;
+import net.humbleprogrammer.e4.App;
+import net.humbleprogrammer.e4.gui.helpers.Command;
+import net.humbleprogrammer.e4.gui.helpers.ResourceManager;
 import net.humbleprogrammer.e4.gui.views.BoardView;
 
 public class MainFrame extends JFrame
@@ -66,6 +67,9 @@ public class MainFrame extends JFrame
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
+	/** Board view. */
+	private BoardView _viewBoard;
+
 	//  -----------------------------------------------------------------------
 	//	CTOR
 	//	-----------------------------------------------------------------------
@@ -84,6 +88,19 @@ public class MainFrame extends JFrame
 		}
 
 	//  -----------------------------------------------------------------------
+	//	PUBLIC GETTERS & SETTERS
+	//	-----------------------------------------------------------------------
+
+	/**
+	 * Exposes the board view.
+	 *
+	 * @return BoardView object.
+	 */
+	public BoardView getBoardView()
+		{
+		return _viewBoard;
+		}
+	//  -----------------------------------------------------------------------
 	//	IMPLEMENTATION
 	//	-----------------------------------------------------------------------
 
@@ -100,11 +117,11 @@ public class MainFrame extends JFrame
 		//  File menu
 		//
 		JMenu menu = new JMenu( "File" );
-		menu.setMnemonic( 'F' );
+		menu.setMnemonic( KeyEvent.VK_F );
 
 		//	Quick Game sub-menu
 		JMenu menuSub = new JMenu( "Quick Game" );
-		menuSub.setMnemonic( 'Q' );
+		menuSub.setMnemonic( KeyEvent.VK_Q );
 		menuSub.add( App.getCommand( Command.ID.QUICK_GAME_WHITE ).createMenuItem( false ) );
 		menuSub.add( App.getCommand( Command.ID.QUICK_GAME_BLACK ).createMenuItem( false ) );
 		menuSub.add( App.getCommand( Command.ID.QUICK_GAME_RANDOM ).createMenuItem( false ) );
@@ -114,7 +131,30 @@ public class MainFrame extends JFrame
 		menu.add( App.getCommand( Command.ID.EXIT_APP ).createMenuItem( false ) );
 
 		menuBar.add( menu );
+		//
+		//	Edit menu
+		//
+		menu = new JMenu( "Edit" );
+		menu.setMnemonic( KeyEvent.VK_E );
 
+		menu.add( new DummyCommand( "Undo", KeyEvent.VK_U ).createMenuItem( false ) );
+		menu.add( new DummyCommand( "Redo", KeyEvent.VK_R ).createMenuItem( false ) );
+		menu.addSeparator();
+		menu.add( new DummyCommand( "Cut", KeyEvent.VK_T ).createMenuItem( false ) );
+		menu.add( new DummyCommand( "Copy", KeyEvent.VK_C ).createMenuItem( false ) );
+		menu.add( new DummyCommand( "Paste", KeyEvent.VK_P ).createMenuItem( false ) );
+		menu.add( new DummyCommand( "Delete", KeyEvent.VK_DELETE ).createMenuItem( false ) );
+
+		menuBar.add( menu );
+		//
+		//	Tools menu
+		//
+		menu = new JMenu( "Tools" );
+		menu.setMnemonic( KeyEvent.VK_T );
+
+		menu.add( new DummyCommand( "Benchmarks", KeyEvent.VK_B ).createMenuItem( false ) );
+
+		menuBar.add( menu );
 		return menuBar;
 		}
 
@@ -147,7 +187,8 @@ public class MainFrame extends JFrame
 		setJMenuBar( createMenuBar() );
 		content.add( createToolBar(), BorderLayout.NORTH );
 
-		content.add( new BoardView(), BorderLayout.CENTER );
+		_viewBoard = new BoardView();
+		content.add( _viewBoard, BorderLayout.CENTER );
 
 		setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
 		setMinimumSize( new Dimension( MIN_WIDTH, MIN_HEIGHT ) );
@@ -176,6 +217,27 @@ public class MainFrame extends JFrame
 			}
 
 		} );
+		}
+
+	//  -----------------------------------------------------------------------
+	//	NESTED CLASS: DummyCommand
+	//	-----------------------------------------------------------------------
+	public class DummyCommand extends Command
+		{
+		DummyCommand( String strLabel, int iHotKey )
+			{
+			putValue( NAME, strLabel );
+			if (iHotKey > 0)
+				putValue( MNEMONIC_KEY, iHotKey );
+
+			setEnabled( false );
+			}
+
+		@Override
+		public void run()
+			{
+			throw new sun.reflect.generics.reflectiveObjects.NotImplementedException();
+			}
 		}
 
 	}   /* end of class MainFrame */
