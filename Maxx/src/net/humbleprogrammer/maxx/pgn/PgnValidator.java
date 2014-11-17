@@ -33,6 +33,7 @@
 package net.humbleprogrammer.maxx.pgn;
 
 import net.humbleprogrammer.maxx.*;
+import net.humbleprogrammer.maxx.factories.MoveFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

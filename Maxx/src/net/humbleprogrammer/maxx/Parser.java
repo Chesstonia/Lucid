@@ -32,200 +32,220 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import net.humbleprogrammer.humble.StrUtil;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import net.humbleprogrammer.humble.StrUtil;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
 public class Parser
-    {
+	{
 
-    //  -----------------------------------------------------------------------
-    //	CONSTANTS
-    //	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	CONSTANTS
+	//	-----------------------------------------------------------------------
 
-    /** CR/LF seqquence. */
-    public static final String  STR_CRLF      = System.getProperty( "line.separator" );
+	/** CR/LF seqquence. */
+	public static final String STR_CRLF = System.getProperty( "line.separator" );
+	/** Placeholder in EPD/FEN strings. */
+	public static final String STR_DASH = "-";
 
-    /** Castling Queen-side, AKA "castling long". */
-    static final           String STR_CASTLE_LONG  = "O-O-O";
-    /** Castling King-side, AKA "castling short". */
-    static final           String STR_CASTLE_SHORT = "O-O";
-    /** Placeholder in EPD/FEN strings. */
-    static final           String STR_DASH         = "-";
+	/** Castling Queen-side, AKA "castling long". */
+	public static final String STR_CASTLE_LONG  = "O-O-O";
+	/** Castling King-side, AKA "castling short". */
+	public static final String STR_CASTLE_SHORT = "O-O";
 
-    /** Characters allowed in a move. */
-    protected static final String STR_MOVE         = "abcdefgh12345678BKNQRx:=O-";
+	/** Characters allowed in a move. */
+	protected static final String STR_MOVE = "abcdefgh12345678BKNQRx:=O-";
 
-    /** Regular expresion for whitespace or end of string. */
-    private static final String RX_EOS = "(?:\\z|\\s+)";
-    /** Regular expresion for an EPD string. */
-    private static final String RX_EPD =
-        // group[1] -- position
-        "([BbKkNnQqRr1-8]{1,8}(?:/[BbKkNnPpQqRr1-8]{1,8}){6}/[BbKkNnQqRr1-8]{1,8})" +
-        // group[2] -- player
-        "\\s+(w|b)" +
-        // group[3] -- castling flags
-        "\\s+(-|[KkQq]{1,4})" +
-        // group[4] -- e.p. square
-        "\\s+(-|[a-h][36])";
+	/** Regular expresion for whitespace or end of string. */
+	private static final String RX_EOS = "(?:\\z|\\s+)";
+	/** Regular expresion for an EPD string. */
+	private static final String RX_EPD =
+		// group[1] -- position
+		"([BbKkNnQqRr1-8]{1,8}(?:/[BbKkNnPpQqRr1-8]{1,8}){6}/[BbKkNnQqRr1-8]{1,8})" +
+		// group[2] -- player
+		"\\s+(w|b)" +
+		// group[3] -- castling flags
+		"\\s+(-|[KkQq]{1,4})" +
+		// group[4] -- e.p. square
+		"\\s+(-|[a-h][36])";
 
-    /** FEN string pattern. */
-    private static final Pattern s_rxFEN = Pattern.compile
-        (
-            RX_EPD +
-            // group[5] -- half move clock
-            "\\s+(0|[1-9]\\d*)" +
-            // group[6] -- full move clock
-            "\\s+([1-9]\\d*)" +
-            // End of string or white space
-            RX_EOS
-        );
+	/** FEN string pattern. */
+	private static final Pattern s_rxFEN = Pattern.compile
+		(
+			RX_EPD +
+			// group[5] -- half move clock
+			"\\s+(0|[1-9]\\d*)" +
+			// group[6] -- full move clock
+			"\\s+([1-9]\\d*)" +
+			// End of string or white space
+			RX_EOS
+		);
 
-    /** Piece glyphs */
-    private static final String PIECE_GLYPHS  = "PpNnBbRrQqKk";
-    /** Player glyphs */
-    private static final String PLAYER_GLYPHS = "wb";
+	/** Piece glyphs */
+	private static final String PIECE_GLYPHS  = "PpNnBbRrQqKk";
+	/** Player glyphs */
+	private static final String PLAYER_GLYPHS = "wb";
 
-    //  -----------------------------------------------------------------------
-    //	STATIC DECLARATIONS
-    //	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	STATIC DECLARATIONS
+	//	-----------------------------------------------------------------------
 
-    /** Last error encountered. */
-    protected static String s_strError;
+	/** Last error encountered. */
+	protected static String s_strError;
 
-    //  -----------------------------------------------------------------------
-    //	PUBLIC METHODS
-    //	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	PUBLIC METHODS
+	//	-----------------------------------------------------------------------
 
-    /**
-     * Searches a string for a valid FEN string.
-     *
-     * @param strFEN
-     *     String to search.
-     *
-     * @return {@link java.util.regex.Matcher} if found; null otherwise.
-     */
-    public static Matcher matchFEN( final String strFEN )
-        {
-        if (StrUtil.isBlank( strFEN ))
-            return null;
-        /*
-        **  CODE
+	/**
+	 * Searches a string for a valid FEN string.
+	 *
+	 * @param strFEN
+	 * 	String to search.
+	 *
+	 * @return {@link java.util.regex.Matcher} if found; null otherwise.
+	 */
+	public static Matcher matchFEN( final String strFEN )
+		{
+		if (StrUtil.isBlank( strFEN ))
+			return null;
+		/*
+		**  CODE
         */
-        Matcher match = s_rxFEN.matcher( strFEN );
+		Matcher match = s_rxFEN.matcher( strFEN );
 
-        return match.lookingAt() ? match : null;
-        }
+		return match.lookingAt() ? match : null;
+		}
 
-    /**
-     * Gets the piece represented by a single character.
-     *
-     * @param ch
-     *     Character (code point)
-     *
-     * @return {@link net.humbleprogrammer.maxx.Piece} if recognized; <c>EMPTY</c> otherwise.
-     */
-    static int pieceFromGlyph( int ch )
-        {
-        int iPos = PIECE_GLYPHS.indexOf( ch );
+	/**
+	 * Gets the piece represented by a single character.
+	 *
+	 * @param ch
+	 * 	Character (code point)
+	 *
+	 * @return {@link net.humbleprogrammer.maxx.Piece} if recognized; <c>EMPTY</c> otherwise.
+	 */
+	public static int pieceFromGlyph( int ch )
+		{
+		int iPos = PIECE_GLYPHS.indexOf( ch );
 
-        return (iPos >= 0)
-               ? (iPos + MAP_W_PAWN)
-               : EMPTY;
-        }
+		return (iPos >= 0)
+			   ? (iPos + MAP_W_PAWN)
+			   : EMPTY;
+		}
 
-    /**
-     * Gets the character representing a piece.
-     *
-     * @param piece
-     *     Piece.
-     *
-     * @return Character, or zero if piece is invalid.
-     */
-    static char pieceToGlyph( int piece )
-        {
-        return (piece >= MAP_W_PAWN && piece <= MAP_B_KING)
-               ? PIECE_GLYPHS.charAt( piece - MAP_W_PAWN )
-               : '\0';
-        }
+	/**
+	 * Gets the character representing a piece.
+	 *
+	 * @param piece
+	 * 	Piece.
+	 *
+	 * @return Character, or zero if piece is invalid.
+	 */
+	public static char pieceToGlyph( int piece )
+		{
+		return (piece >= MAP_W_PAWN && piece <= MAP_B_KING)
+			   ? PIECE_GLYPHS.charAt( piece - MAP_W_PAWN )
+			   : '\0';
+		}
 
-    /**
-     * Gets the piece type represented by a single character.
-     *
-     * @param ch
-     *     Character (code point)
-     *
-     * @return Piece type [PAWN..KING] if recognized; <c>INVALID</c> otherwise.
-     */
-    @SuppressWarnings( "unused" )
-    public static int pieceTypeFromGlyph( int ch )
-        {
-        int iPos = PIECE_GLYPHS.indexOf( ch );
+	/**
+	 * Gets the piece type represented by a single character.
+	 *
+	 * @param ch
+	 * 	Character (code point)
+	 *
+	 * @return Piece type [PAWN..KING] if recognized; <c>INVALID</c> otherwise.
+	 */
+	public static int pieceTypeFromGlyph( int ch )
+		{
+		int iPos = PIECE_GLYPHS.indexOf( ch );
 
-        return (iPos >= 0)
-               ? ((iPos + MAP_W_PAWN) >> 1)
-               : INVALID;
-        }
+		return (iPos >= 0)
+			   ? ((iPos + MAP_W_PAWN) >> 1)
+			   : INVALID;
+		}
 
-    /**
-     * Gets the piece type represented by a single character.
-     *
-     * @param pt
-     *     Piece type [PAWN..KING]
-     *
-     * @return Character representing the piece.
-     */
-    public static char pieceTypeToGlyph( int pt )
-        {
-        return (pt >= PAWN && pt <= KING)
-               ? PIECE_GLYPHS.charAt( pt << 1 )
-               : 0;
-        }
+	/**
+	 * Gets the piece type represented by a single character.
+	 *
+	 * @param pt
+	 * 	Piece type [PAWN..KING]
+	 *
+	 * @return Character representing the piece.
+	 */
+	public static char pieceTypeToGlyph( int pt )
+		{
+		return (pt >= PAWN && pt <= KING)
+			   ? PIECE_GLYPHS.charAt( pt << 1 )
+			   : 0;
+		}
 
-    /**
-     * Gets the player represented by a single character.
-     *
-     * @param ch
-     *     Character (code point)
-     *
-     * @return [WHITE|BLACK] if recognized; <c>INVALID</c> otherwise.
-     */
-    static int playerFromGlyph( final int ch )
-        {
-        int iPos = PLAYER_GLYPHS.indexOf( ch );
+	/**
+	 * Gets the player represented by a single character.
+	 *
+	 * @param ch
+	 * 	Character (code point)
+	 *
+	 * @return [WHITE|BLACK] if recognized; <c>INVALID</c> otherwise.
+	 */
+	public static int playerFromGlyph( final int ch )
+		{
+		int iPos = PLAYER_GLYPHS.indexOf( ch );
 
-        return (iPos >= 0) ? iPos : INVALID;
-        }
+		return (iPos >= 0) ? iPos : INVALID;
+		}
 
-    /**
-     * Gets the glyph for a player color.
-     *
-     * @param player
-     *     Player color [WHITE|BLACK]
-     *
-     * @return Single character if recognized; zero otherwise.
-     */
-    static char playerToGlyph( int player )
-        {
-        return (player == WHITE || player == BLACK)
-               ? PLAYER_GLYPHS.charAt( player )
-               : '\0';
-        }
+	/**
+	 * Gets the glyph for a player color.
+	 *
+	 * @param player
+	 * 	Player color [WHITE|BLACK]
+	 *
+	 * @return Single character if recognized; zero otherwise.
+	 */
+	public static char playerToGlyph( int player )
+		{
+		return (player == WHITE || player == BLACK)
+			   ? PLAYER_GLYPHS.charAt( player )
+			   : '\0';
+		}
 
-    //  -----------------------------------------------------------------------
-    //	PUBLIC GETTERS & SETTERS
-    //	-----------------------------------------------------------------------
+	/**
+	 * Gets the label for a player color.
+	 *
+	 * @param player
+	 * 	Player color [WHITE|BLACK]
+	 *
+	 * @return String if recognized; null otherwise.
+	 */
+	public static String playerToString( int player )
+		{
+		if (player == WHITE)
+			return "White";
 
-    /**
-     * Gets the language setting for the parser.
-     *
-     * @return Language code.
-     */
-    @SuppressWarnings( "SameReturnValue" )
-    public static String getLanguage()
-        { return "en-US"; }
+		if (player == BLACK)
+			return "Black";
 
-    }   /* end of class Parser */
+		return null;
+		}
+
+	//  -----------------------------------------------------------------------
+	//	PUBLIC GETTERS & SETTERS
+	//	-----------------------------------------------------------------------
+
+	/**
+	 * Gets the language setting for the parser.
+	 *
+	 * @return Language code.
+	 */
+	@SuppressWarnings( "SameReturnValue" )
+	public static String getLanguage()
+		{
+		return "en-US";
+		}
+
+	}   /* end of class Parser */

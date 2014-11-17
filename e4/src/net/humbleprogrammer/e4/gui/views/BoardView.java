@@ -41,11 +41,12 @@ import javax.swing.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.humbleprogrammer.e4.documents.GameDocument;
+import net.humbleprogrammer.e4.App;
 import net.humbleprogrammer.e4.gui.helpers.Command;
 import net.humbleprogrammer.e4.gui.helpers.ResourceManager;
 import net.humbleprogrammer.e4.gui.themes.ITheme;
 import net.humbleprogrammer.e4.gui.themes.ThemeManager;
+import net.humbleprogrammer.e4.interfaces.IBoardController;
 import net.humbleprogrammer.humble.DBC;
 import net.humbleprogrammer.humble.GfxUtil;
 import net.humbleprogrammer.maxx.Board;
@@ -77,6 +78,8 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
+	/** Board controller. */
+	private final IBoardController _controller;
 	/** Rectangle between board labels and squares. */
 	private final Rectangle   _rInner = new Rectangle();
 	/** Rectangle around outside edge of board labels. */
@@ -84,16 +87,14 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 	/** Array of square rectangles. */
 	private final Rectangle[] _rSq    = new Rectangle[ 64 ];
 
-	/** .T. if black is at top of board; .F. if black is at bottom. */
+	/** .T. of Black player is on top; .F. if White. */
 	private boolean _bBlackOnTop = true;
 	/** .T. to display rank/file labels; .F. to hide them. */
 	private boolean _bShowLabels = true;
 	/** Dimension of squares, measured in pixels. */
 	private int     _iSqDim      = -1;
-	/** Game document. */
-	private GameDocument _doc;
 	/** Current piece set. */
-	private Image        _imgPieces;
+	private Image _imgPieces;
 	//  -----------------------------------------------------------------------
 	//	CTOR
 	//	-----------------------------------------------------------------------
@@ -101,8 +102,18 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 	/**
 	 * Default CTOR.
 	 */
-	public BoardView()
+	public BoardView( IBoardController controller )
 		{
+		DBC.requireNotNull( controller, "Board Controller" );
+		/*
+		**	CODE
+		*/
+		App.addCommand( Command.ID.BLACK_ON_TOP, new BlackOnTopCommand() );
+		App.addCommand( Command.ID.WHITE_ON_TOP, new WhiteOnTopCommand() );
+
+		_controller = controller;
+		_controller.registerObserver( this );
+
 		for ( int iSq = 0; iSq < 64; ++iSq )
 			_rSq[ iSq ] = new Rectangle();
 
@@ -126,46 +137,15 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 		/*
 		**	CODE
 		*/
+		final Board bd = _controller.getPosition();
 		final ITheme theme = ThemeManager.getCurrentTheme();
 
 		adjustLayout();
 
 		drawBoard( gfx, theme, rClip );
 		drawLabels( gfx, theme, rClip );
-
-		if (_doc != null)
-			{
-			final Board bd = _doc.getPosition();
-
-			drawMoveIndicator( gfx, theme, rClip, (bd.getMovingPlayer() == WHITE) );
-			drawPieces( gfx, theme, rClip, bd );
-			}
-		}
-
-	//  -----------------------------------------------------------------------
-	//	PUBLIC GETTERS & SETTERS
-	//	-----------------------------------------------------------------------
-
-	/**
-	 * Sets the document for this view.
-	 *
-	 * @param doc
-	 * 	Document.
-	 */
-	public void setDocument( GameDocument doc )
-		{
-		if (doc == _doc)
-			return;
-		/*
-		**	CODE
-		*/
-		if (_doc != null)
-			_doc.deleteObserver( this );
-
-		_doc = doc;
-		_doc.addObserver( this );
-
-		repaint();
+		drawMoveIndicator( gfx, theme, rClip, (bd.getMovingPlayer() == WHITE) );
+		drawPieces( gfx, theme, rClip, bd );
 		}
 
 	//  -----------------------------------------------------------------------
@@ -180,14 +160,14 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 	 * @param arg
 	 * 	(not used)
 	 */
+	@Override
 	public void update( Observable obj, Object arg )
 		{
-		assert obj != null;
+		assert obj == _controller;
 		/*
 		**	CODE
 		*/
-		if (obj == _doc)
-			repaint();
+		repaint();
 		}
 	//  -----------------------------------------------------------------------
 	//	IMPLEMENTATION
@@ -262,12 +242,11 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 
 			gfx.setColor( Square.isDark( iSq ) ? clrDarkSq : clrLightSq );
 			gfx.fillRect( rSq.x, rSq.y, rSq.width, rSq.height );
-/*
+
 			rSq.grow( -GfxUtil.MARGIN_THIN, -GfxUtil.MARGIN_THIN );
 
-			gfx.setColor( Color.black );
+			gfx.setColor( Color.gray );
 			gfx.drawString( Square.toString( iSq ), (int) rSq.getMinX(), (int) rSq.getMaxY() );
-*/
 			}
 
 		gfx.setColor( Color.black );
@@ -492,8 +471,8 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 		//
 		JPopupMenu popMenu = new JPopupMenu();
 
-		popMenu.add( new FlipBoardCommand().createMenuItem( false ) );
-		popMenu.add( new ShowLabelsCommand().createMenuItem( true ) );
+		popMenu.add( new ToggleOnTopCommand().createMenuItem( false ) );
+		popMenu.add( _cmdShowLabels.createMenuItem( true ) );
 
 		setComponentPopupMenu( popMenu );
 		}
@@ -508,9 +487,7 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 	 */
 	private int getDisplayFile( int iFile )
 		{
-		return _bBlackOnTop
-			   ? iFile
-			   : 7 - iFile;
+		return _bBlackOnTop ? iFile : (7 - iFile);
 		}
 
 	/**
@@ -523,18 +500,42 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 	 */
 	private int getDisplayRank( int iRank )
 		{
-		return _bBlackOnTop
-			   ? 7 - iRank
-			   : iRank;
+		return _bBlackOnTop ? (7 - iRank) : iRank;
 		}
 
-//  -----------------------------------------------------------------------
-//	NESTED CLASS: FlipBoardCommand
-//	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	NESTED CLASS: BlackOnTopCommand
+	//	-----------------------------------------------------------------------
 
-	class FlipBoardCommand extends Command
+	class BlackOnTopCommand extends Command
 		{
-		public FlipBoardCommand()
+		public BlackOnTopCommand()
+			{
+			putValue( NAME, "Black Top" );
+			putValue( LONG_DESCRIPTION, "Places the Black player at the top of the board." );
+			}
+
+		@Override
+		public void run()
+			{
+			s_log.debug( "BlackOnTopCommand" );
+			/*
+			**  CODE
+            */
+			_bBlackOnTop = true;
+			_iSqDim = -1;    // force recalculation of all the squares.
+
+			repaint();
+			}
+		}
+
+	//  -----------------------------------------------------------------------
+	//	NESTED CLASS: ToggleOnTopCommand
+	//	-----------------------------------------------------------------------
+
+	class ToggleOnTopCommand extends Command
+		{
+		public ToggleOnTopCommand()
 			{
 			putValue( NAME, "Flip Board" );
 			putValue( LONG_DESCRIPTION, "Flips the board." );
@@ -547,22 +548,48 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 		@Override
 		public void run()
 			{
-			s_log.debug( "FlipBoardCommand" );
+			s_log.debug( "ToggleOnTopCommand" );
 			/*
 			**  CODE
             */
 			_bBlackOnTop = !_bBlackOnTop;
 			_iSqDim = -1;    // force recalculation of all the squares.
 
-			update();
-			adjustLayout();
 			repaint();
 			}
 		}
 
-//  -----------------------------------------------------------------------
-//	NESTED CLASS: ShowLabelsCommand
-//	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	NESTED CLASS: WhiteOnTopCommand
+	//	-----------------------------------------------------------------------
+
+	class WhiteOnTopCommand extends Command
+		{
+		public WhiteOnTopCommand()
+			{
+			putValue( NAME, "White Top" );
+			putValue( LONG_DESCRIPTION, "Places the White player at the top of the board." );
+			}
+
+		@Override
+		public void run()
+			{
+			s_log.debug( "WhiteOnTopCommand" );
+			/*
+			**  CODE
+            */
+			_bBlackOnTop = false;
+			_iSqDim = -1;    // force recalculation of all the squares.
+
+			repaint();
+			}
+		}
+
+	//  -----------------------------------------------------------------------
+	//	NESTED CLASS: ShowLabelsCommand
+	//	-----------------------------------------------------------------------
+
+	private final ShowLabelsCommand _cmdShowLabels = new ShowLabelsCommand();
 
 	class ShowLabelsCommand extends Command
 		{
@@ -570,6 +597,7 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 			{
 			putValue( NAME, "Show Labels" );
 			putValue( LONG_DESCRIPTION, "Shows or hides the rank/file labels." );
+			setChecked( _bShowLabels );
 			}
 
 		@Override
@@ -581,15 +609,9 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
             */
 			_bShowLabels = !_bShowLabels;
 
-			update();
 			repaint();
+			setChecked( _bShowLabels );
 			}
 
-		@Override
-		public void update()
-			{
-			if (_item != null)
-				_item.setSelected( _bShowLabels );
-			}
 		}
 	}	/* end of class BoardView */

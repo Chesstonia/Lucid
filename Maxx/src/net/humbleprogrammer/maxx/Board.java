@@ -34,6 +34,7 @@ package net.humbleprogrammer.maxx;
 
 import net.humbleprogrammer.humble.BitUtil;
 import net.humbleprogrammer.humble.DBC;
+import net.humbleprogrammer.maxx.factories.BoardFactory;
 
 import java.util.Arrays;
 
@@ -118,11 +119,8 @@ public class Board
 
     /**
      * Default CTOR for the {@link Board} class.
-     *
-     * This CTOR is package local to force callers to use one of the factory methods ({@link
-     * BoardFactory}) to instantiate board objects.
      */
-    Board()
+    public Board()
         {
         /*
         **  EMPTY CTOR
@@ -135,7 +133,7 @@ public class Board
      * @param src
      *     Board to copy from.
      */
-    Board( Board src )
+    public Board( Board src )
         {
         assert src != null;
         assert src != this;
@@ -184,7 +182,9 @@ public class Board
      */
     @Override
     public String toString()
-        { return BoardFactory.toString( this ); }
+        {
+        return BoardFactory.toString( this );
+        }
 
     //  -----------------------------------------------------------------------
     //	PUBLIC METHODS
@@ -273,7 +273,9 @@ public class Board
      * @return <code>.T.</code> if move is legal; <code>.F.</code> otherwise.
      */
     public boolean isLegalMove( final Move move )
-        { return (move != null && move.state.hashFull == _hashFull); }
+        {
+        return (move != null && move.state.hashFull == _hashFull);
+        }
 
     /**
      * Makes a move on the board.
@@ -396,7 +398,9 @@ public class Board
      * @return Piece on square, or <c>EMPTY</c> if square is empty.
      */
     public int get( final int iSq )
-        { return Square.isValid( iSq ) ? _sq[ iSq ] : EMPTY; }
+        {
+        return Square.isValid( iSq ) ? _sq[ iSq ] : EMPTY;
+        }
 
     /**
      * Sets the piece on a square.
@@ -408,7 +412,6 @@ public class Board
      *
      * @return .T. on success, .F. on failure.
      */
-    @SuppressWarnings( "unused" )
     public boolean set( final int iSq, final int piece )
         {
         if (!Square.isValid( iSq ) || piece < MAP_W_PAWN || piece > MAP_B_KING)
@@ -431,12 +434,63 @@ public class Board
         }
 
     /**
+     * Gets all pieces for a given type that can move to a target square.
+     *
+     * @param iSqTo
+     *     Target square, in 8x8 format.
+     * @param pt
+     *     Piece type [PAWN|KNIGHT|BISHOP|ROOK|QUEEN|KING].
+     *
+     * @return Bitboard of pieces.
+     */
+    public long getCandidates( int iSqTo, int pt )
+        {
+        if (!Square.isValid( iSqTo ))
+            return 0L;
+        /*
+        **  CODE
+        */
+        switch (pt)
+            {
+            case PAWN:
+                return (_player == WHITE)
+                       ? (_map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] |
+                                                Bitboards.fileMask[ iSqTo & 0x07 ]))
+                       : (_map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] |
+                                                Bitboards.fileMask[ iSqTo & 0x07 ]));
+
+            case KNIGHT:
+                return _map[ MAP_W_KNIGHT + _player ] & Bitboards.knight[ iSqTo ];
+
+            case BISHOP:
+                return _map[ MAP_W_BISHOP + _player ] &
+                       Bitboards.getAttackedBy( _map, iSqTo, _player );
+
+            case ROOK:
+                return _map[ MAP_W_ROOK + _player ] &
+                       Bitboards.getAttackedBy( _map, iSqTo, _player );
+
+            case QUEEN:
+                return _map[ MAP_W_QUEEN + _player ] &
+                       Bitboards.getAttackedBy( _map, iSqTo, _player );
+
+            case KING:
+                //  Don't mask against Bitboards.king[] because that excludes castling moves.
+                return _map[ MAP_W_KING + _player ];
+            }
+
+        return 0L;
+        }
+
+    /**
      * Gets the current castling privileges.
      *
      * @return Set of <c>CastlingFlags.*</c> values.
      */
     public int getCastlingFlags()
-        { return _castling; }
+        {
+        return _castling;
+        }
 
     /**
      * Sets the castling flags.
@@ -485,7 +539,9 @@ public class Board
      * @return e.p. square index, in 8x8 format.
      */
     public int getEnPassantSquare()
-        { return _iSqEP; }
+        {
+        return _iSqEP;
+        }
 
     /**
      * Sets the current En Passant square.
@@ -524,7 +580,9 @@ public class Board
      * @return Number of plies since last capture or pawn move.
      */
     public int getHalfMoveClock()
-        { return _iHalfMoves; }
+        {
+        return _iHalfMoves;
+        }
 
     /**
      * Sets the current 'half move clock'.
@@ -533,7 +591,9 @@ public class Board
      *     Number of pliece since last capture or pawn move, which must be .GE. zero.
      */
     public void setHalfMoveClock( int iNumber )
-        { _iHalfMoves = Math.max( iNumber, 0 ); }
+        {
+        _iHalfMoves = Math.max( iNumber, 0 );
+        }
 
     /**
      * Gets the square occupied by a player's King.
@@ -566,7 +626,9 @@ public class Board
      * @return Move number.
      */
     public int getMoveNumber()
-        { return _iFullMoves; }
+        {
+        return _iFullMoves;
+        }
 
     /**
      * Sets the current mvoe number.
@@ -575,7 +637,9 @@ public class Board
      *     Move number, which must be .GT. zero.
      */
     public void setMoveNumber( int iNumber )
-        { _iFullMoves = Math.max( iNumber, 1 ); }
+        {
+        _iFullMoves = Math.max( iNumber, 1 );
+        }
 
     /**
      * Gets the player currently "on the move".
@@ -583,7 +647,9 @@ public class Board
      * @return [WHITE|BLACK].
      */
     public int getMovingPlayer()
-        { return _player; }
+        {
+        return _player;
+        }
 
     /**
      * Sets the color of the player currently "on the move".
@@ -610,55 +676,13 @@ public class Board
      * @return 64-bit hash value.
      */
     public long getZobristHash()
-        { return _hashFull; }
+        {
+        return _hashFull;
+        }
 
     //  -----------------------------------------------------------------------
     //	GETTERS & SETTERS
     //	-----------------------------------------------------------------------
-
-    /**
-     * Gets all pieces for a given type that can move to a target square.
-     *
-     * @param iSqTo
-     *     Target square, in 8x8 format.
-     * @param pt
-     *     Piece type [PAWN|KNIGHT|BISHOP|ROOK|QUEEN|KING].
-     *
-     * @return Bitboard of pieces.
-     */
-    long getCandidates( int iSqTo, int pt )
-        {
-        if (!Square.isValid(iSqTo))
-            return 0L;
-        /*
-        **  CODE
-        */
-        switch (pt)
-            {
-            case PAWN:
-                return (_player == WHITE)
-                       ? (_map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]))
-                       : (_map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]));
-
-            case KNIGHT:
-                return _map[ MAP_W_KNIGHT + _player ] & Bitboards.knight[ iSqTo ];
-
-            case BISHOP:
-                return _map[ MAP_W_BISHOP + _player ] & Bitboards.getAttackedBy(_map, iSqTo, _player);
-
-            case ROOK:
-                return _map[ MAP_W_ROOK + _player ] & Bitboards.getAttackedBy(_map, iSqTo, _player);
-
-            case QUEEN:
-                return _map[ MAP_W_QUEEN + _player ] & Bitboards.getAttackedBy(_map, iSqTo, _player);
-
-            case KING:
-                //  Don't mask against Bitboards.king[] because that excludes castling moves.
-                return _map[ MAP_W_KING + _player ];
-            }
-
-        return 0L;
-        }
 
     /**
      * Collects the internal board state.
@@ -666,7 +690,9 @@ public class Board
      * @return Board state.
      */
     State getState()
-        { return new State( this ); }
+        {
+        return new State( this );
+        }
 
     /**
      * Restores the board to a previously saved state.

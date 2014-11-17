@@ -44,8 +44,7 @@ import static net.humbleprogrammer.maxx.Constants.*;
  * Portions derived from Carballo Chess by Alonso Ruibal. Downloaded from
  * http://sourceforge.net/p/carballo/code/HEAD/tree/core/src/main/java/com/alonsoruibal/chess/
  */
-@SuppressWarnings( "unused" )
-class Bitboards
+public class Bitboards
     {
 
     //  -----------------------------------------------------------------------
@@ -159,7 +158,7 @@ class Bitboards
         };
 
     /** Bitboard masks for individual ranks. */
-    static final long[] rankMask = new long[]
+    private static final long[] rankMask = new long[]
         {
             0x00000000000000FFL,
             0x000000000000FF00L,
@@ -259,11 +258,11 @@ class Bitboards
             for ( int idx = 0; idx < bishopPositions; idx++ )
                 {
                 long pieces = generatePieces( idx,
-                                                    bishopShiftBits[ iSq ],
-                                                    bishopMask[ iSq ] );
+                                              bishopShiftBits[ iSq ],
+                                              bishopMask[ iSq ] );
                 int index = magicTransform( pieces,
-                                                  bishopMagicNumber[ iSq ],
-                                                  bishopShiftBits[ iSq ] );
+                                            bishopMagicNumber[ iSq ],
+                                            bishopShiftBits[ iSq ] );
                 bishopMagic[ iSq ][ index ] = getBishopShiftAttacks( bbMask, pieces );
                 }
             //
@@ -277,11 +276,11 @@ class Bitboards
             for ( int idx = 0; idx < rookPositions; ++idx )
                 {
                 long pieces = generatePieces( idx,
-                                                    rookShiftBits[ iSq ],
-                                                    rookMask[ iSq ] );
+                                              rookShiftBits[ iSq ],
+                                              rookMask[ iSq ] );
                 int index = magicTransform( pieces,
-                                                  rookMagicNumber[ iSq ],
-                                                  rookShiftBits[ iSq ] );
+                                            rookMagicNumber[ iSq ],
+                                            rookShiftBits[ iSq ] );
                 rookMagic[ iSq ][ index ] = getRookShiftAttacks( bbMask, pieces );
                 }
             //
@@ -319,6 +318,36 @@ class Bitboards
     //  -----------------------------------------------------------------------
     //	PUBLIC METHODS
     //	-----------------------------------------------------------------------
+
+    /**
+     * Gets the mask for a given file.
+     *
+     * @param iFile
+     *     Square.
+     *
+     * @return Rank mask.
+     */
+    public static long getFileMask( int iFile )
+        {
+        return ((iFile & ~0x07) == 0)
+               ? fileMask[ iFile ]
+               : 0L;
+        }
+
+    /**
+     * Gets the mask for a given rank.
+     *
+     * @param iRank
+     *     Square.
+     *
+     * @return Rank mask.
+     */
+    public static long getRankMask( int iRank )
+        {
+        return ((iRank & ~0x07) == 0)
+               ? rankMask[ iRank ]
+               : 0L;
+        }
 
     /**
      * Gets a bitboard of pieces that attack a given square.
@@ -380,6 +409,29 @@ class Bitboards
         }
 
     /**
+     * Computes all laterally-reachable squares from a given square.
+     *
+     * @param iSq
+     *     Origin square, in 8x8 format.
+     * @param bbAll
+     *     Bitboard of potential attackers on the board.
+     *
+     * @return Bitboard of all squares that can reach the origin square.
+     */
+    static long getRookAttacks( int iSq, long bbAll )
+        {
+        if ((iSq & ~0x3F) != 0)
+            return 0L;
+        /*
+        **  CODE
+        */
+        int idx = magicTransform( bbAll & rookMask[ iSq ],
+                                  rookMagicNumber[ iSq ],
+                                  rookShiftBits[ iSq ] );
+        return rookMagic[ iSq ][ idx ];
+        }
+
+    /**
      * Computes all squares reachable by a queen from a given square.
      *
      * @param iSq
@@ -404,29 +456,6 @@ class Bitboards
                                        rookShiftBits[ iSq ] );
 
         return bishopMagic[ iSq ][ iDiagonal ] | rookMagic[ iSq ][ iLateral ];
-        }
-
-    /**
-     * Computes all laterally-reachable squares from a given square.
-     *
-     * @param iSq
-     *     Origin square, in 8x8 format.
-     * @param bbAll
-     *     Bitboard of potential attackers on the board.
-     *
-     * @return Bitboard of all squares that can reach the origin square.
-     */
-    static long getRookAttacks( int iSq, long bbAll )
-        {
-        if ((iSq & ~0x3F) != 0)
-            return 0L;
-        /*
-        **  CODE
-        */
-        int idx = magicTransform( bbAll & rookMask[ iSq ],
-                                  rookMagicNumber[ iSq ],
-                                  rookShiftBits[ iSq ] );
-        return rookMagic[ iSq ][ idx ];
         }
 
     /**
@@ -613,7 +642,9 @@ class Bitboards
         }
 
     private static int magicTransform( long bb, long magic, int iBits )
-        { return (int) ((bb * magic) >>> (64 - iBits)); }
+        {
+        return (int) ((bb * magic) >>> (64 - iBits));
+        }
 
     private static long squareAttacked( long bbSqMask, int iShift, long bbBorder )
         {

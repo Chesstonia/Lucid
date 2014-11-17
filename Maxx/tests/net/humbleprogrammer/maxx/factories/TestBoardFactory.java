@@ -30,10 +30,12 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx;
+package net.humbleprogrammer.maxx.factories;
 
 import net.humbleprogrammer.TestBase;
 import net.humbleprogrammer.humble.Stopwatch;
+import net.humbleprogrammer.maxx.*;
+import net.humbleprogrammer.maxx.factories.BoardFactory;
 import org.junit.Test;
 
 import java.util.*;

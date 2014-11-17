@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.humbleprogrammer.e4.App;
+import net.humbleprogrammer.e4.Workspace;
 import net.humbleprogrammer.e4.gui.helpers.Command;
 import net.humbleprogrammer.e4.gui.helpers.ResourceManager;
 import net.humbleprogrammer.e4.gui.views.BoardView;
@@ -67,9 +68,6 @@ public class MainFrame extends JFrame
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
-	/** Board view. */
-	private BoardView _viewBoard;
-
 	//  -----------------------------------------------------------------------
 	//	CTOR
 	//	-----------------------------------------------------------------------
@@ -79,27 +77,15 @@ public class MainFrame extends JFrame
 	 */
 	public MainFrame()
 		{
-		s_log.debug( "MainFrame::ctor" );
+		s_log.debug( "MainFrame()" );
 		/*
 		**  CODE
         */
 		createUI( getContentPane() );
+
 		pack();
 		}
 
-	//  -----------------------------------------------------------------------
-	//	PUBLIC GETTERS & SETTERS
-	//	-----------------------------------------------------------------------
-
-	/**
-	 * Exposes the board view.
-	 *
-	 * @return BoardView object.
-	 */
-	public BoardView getBoardView()
-		{
-		return _viewBoard;
-		}
 	//  -----------------------------------------------------------------------
 	//	IMPLEMENTATION
 	//	-----------------------------------------------------------------------
@@ -111,7 +97,6 @@ public class MainFrame extends JFrame
 	 */
 	private JMenuBar createMenuBar()
 		{
-		/* Menu bar. */
 		JMenuBar menuBar = new JMenuBar();
 		//
 		//  File menu
@@ -184,11 +169,14 @@ public class MainFrame extends JFrame
 		/*
 		**  CODE
         */
+		BoardView viewBoard = new BoardView( App.getWorkspace() );
+
+		content.add( viewBoard, BorderLayout.CENTER );
+		//
+		//	Menu bar
+		//
 		setJMenuBar( createMenuBar() );
 		content.add( createToolBar(), BorderLayout.NORTH );
-
-		_viewBoard = new BoardView();
-		content.add( _viewBoard, BorderLayout.CENTER );
 
 		setDefaultCloseOperation( JFrame.DO_NOTHING_ON_CLOSE );
 		setMinimumSize( new Dimension( MIN_WIDTH, MIN_HEIGHT ) );

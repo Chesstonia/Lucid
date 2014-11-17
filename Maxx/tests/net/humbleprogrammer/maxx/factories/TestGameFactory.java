@@ -30,9 +30,11 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx;
+package net.humbleprogrammer.maxx.factories;
 
 import net.humbleprogrammer.TestBase;
+import net.humbleprogrammer.maxx.Game;
+import net.humbleprogrammer.maxx.factories.GameFactory;
 import org.junit.Test;
 
 import static net.humbleprogrammer.maxx.Constants.HASH_INITIAL;

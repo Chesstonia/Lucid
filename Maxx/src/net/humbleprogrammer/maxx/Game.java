@@ -32,6 +32,8 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
+import net.humbleprogrammer.maxx.factories.GameFactory;
+
 import java.util.*;
 
 @SuppressWarnings( "unused" )
@@ -51,7 +53,7 @@ public class Game
     //	CTOR
     //	-----------------------------------------------------------------------
 
-    Game()
+    public Game()
         {
         /*
         **  EMPTY CTOR.

@@ -35,6 +35,7 @@ package net.humbleprogrammer.maxx;
 import net.humbleprogrammer.TestBase;
 import net.humbleprogrammer.humble.Stopwatch;
 import net.humbleprogrammer.humble.TimeUtil;
+import net.humbleprogrammer.maxx.factories.BoardFactory;
 import org.junit.*;
 
 import java.util.Arrays;

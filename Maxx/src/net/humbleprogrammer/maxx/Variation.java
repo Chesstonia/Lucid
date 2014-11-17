@@ -32,6 +32,9 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
+import net.humbleprogrammer.maxx.factories.BoardFactory;
+import net.humbleprogrammer.maxx.factories.MoveFactory;
+
 import java.util.*;
 
 /**

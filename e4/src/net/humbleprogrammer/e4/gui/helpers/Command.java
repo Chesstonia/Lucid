@@ -34,8 +34,6 @@ package net.humbleprogrammer.e4.gui.helpers;
 
 import javax.swing.*;
 
-import net.humbleprogrammer.humble.DBC;
-
 @SuppressWarnings( "unused" )
 public abstract class Command extends javax.swing.AbstractAction implements Runnable
 	{
@@ -46,6 +44,9 @@ public abstract class Command extends javax.swing.AbstractAction implements Runn
 
 	public enum ID
 		{
+			BLACK_ON_TOP,
+			WHITE_ON_TOP,
+			TOGGLE_ON_TOP,
 			EXIT_APP,
 			QUICK_GAME_BLACK,
 			QUICK_GAME_RANDOM,
@@ -112,10 +113,19 @@ public abstract class Command extends javax.swing.AbstractAction implements Runn
 	public void update()
 		{
 		/*
-		**  STUB METHOD
-        */
+		**	STUB METHOD
+		*/
 		}
 
+	protected void setChecked( boolean bChecked )
+		{
+		if (_item != null &&
+			_item.getClass() == JCheckBoxMenuItem.class)
+			{
+			_item.setSelected( bChecked );
+			}
+
+		}
 	//  -----------------------------------------------------------------------
 	//	INTERFACE: AbstractAction
 	//	-----------------------------------------------------------------------

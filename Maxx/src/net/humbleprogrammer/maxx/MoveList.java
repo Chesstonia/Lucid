@@ -97,7 +97,7 @@ public class MoveList implements Iterable<Move>
      * @throws java.lang.IllegalArgumentException
      *     if board is <code>null</code>.
      */
-    MoveList( Board bd )
+    public MoveList( Board bd )
         {
         DBC.requireNotNull( bd, "bd" );
         /*

@@ -30,10 +30,11 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx;
+package net.humbleprogrammer.maxx.factories;
 
 import net.humbleprogrammer.humble.DBC;
 import net.humbleprogrammer.humble.StrUtil;
+import net.humbleprogrammer.maxx.*;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
@@ -58,7 +59,7 @@ public class BoardFactory extends Parser
         for ( int idx = MAP_W_PAWN; idx < s_pieceMirrored.length; idx += 2 )
             {
             s_pieceMirrored[ idx ] = idx + 1;
-            s_pieceMirrored[ idx + 1] = idx;
+            s_pieceMirrored[ idx + 1 ] = idx;
             }
         }
 
@@ -72,7 +73,9 @@ public class BoardFactory extends Parser
      * @return Board object.
      */
     public static Board createBlank()
-        { return new Board(); }
+        {
+        return new Board();
+        }
 
     /**
      * Creates a copy of an existing board.
@@ -116,7 +119,9 @@ public class BoardFactory extends Parser
      * @return Board object.
      */
     public static Board createInitial()
-        { return new Board( s_bdInitial ); }
+        {
+        return new Board( s_bdInitial );
+        }
 
     /**
      * Creates a mirror of an existing board.
@@ -138,7 +143,7 @@ public class BoardFactory extends Parser
         // Invert the board.
         for ( int iSq = 0; iSq < 64; ++iSq )
             if ((piece = src.get( iSq )) != EMPTY)
-                bd.placePiece( Square.toMirror( iSq ), s_pieceMirrored[ piece ] );
+                bd.set( Square.toMirror( iSq ), s_pieceMirrored[ piece ] );
 
         // Invert the castling flags.
         int castlingSrc = src.getCastlingFlags();
@@ -164,8 +169,102 @@ public class BoardFactory extends Parser
         return bd;
         }
 
+    /**
+     * Converts a board to it's string equivalent.
+     *
+     * @param bd
+     *     Board to convert.
+     *
+     * @return FEN string.
+     */
+    public static String toString( Board bd )
+        {
+        DBC.requireNotNull( bd, "Board" );
+        /*
+        **  CODE
+        */
+        StringBuilder sb = new StringBuilder();
+
+        for ( int iRank = 7; iRank >= 0; --iRank )
+            {
+            int iSkip = 0;
+
+            for ( int iFile = 0; iFile < 8; ++iFile )
+                {
+                int piece = bd.get( Square.toIndex( iRank, iFile ) );
+
+                if (piece == EMPTY)
+                    iSkip++;
+                else
+                    {
+                    if (iSkip > 0)
+                        {
+                        sb.append( iSkip );
+                        iSkip = 0;
+                        }
+
+                    sb.append( pieceToGlyph( piece ) );
+                    }
+                }
+
+            if (iSkip > 0)
+                sb.append( iSkip );
+
+            if (iRank > 0)
+                sb.append( '/' );
+            }
+        //
+        //	Export the player on the move.  If the board has been cleared,
+        //	then the MovingPlayer will be PieceColor.None, which is changed
+        //	to White.
+        //
+        sb.append( ' ' );
+        sb.append( playerToGlyph( bd.getMovingPlayer() ) );
+        //
+        //	Export the castling flags
+        //
+        int castling = bd.getCastlingFlags();
+
+        sb.append( ' ' );
+        if (castling == Board.CastlingFlags.NONE)
+            sb.append( STR_DASH );
+        else
+            {
+            if ((castling & Board.CastlingFlags.WHITE_SHORT) != 0)
+                sb.append( pieceToGlyph( Piece.W_KING ) );
+            if ((castling & Board.CastlingFlags.WHITE_LONG) != 0)
+                sb.append( pieceToGlyph( Piece.W_QUEEN ) );
+            if ((castling & Board.CastlingFlags.BLACK_SHORT) != 0)
+                sb.append( pieceToGlyph( Piece.B_KING ) );
+            if ((castling & Board.CastlingFlags.BLACK_LONG) != 0)
+                sb.append( pieceToGlyph( Piece.B_QUEEN ) );
+            }
+        //
+        //	Export the e.p. square.
+        //
+        int iSqEP = bd.getEnPassantSquare();
+
+        sb.append( ' ' );
+        if (Square.isValid( iSqEP ))
+            sb.append( Square.toString( iSqEP ) );
+        else
+            sb.append( STR_DASH );
+        //
+        //	Export the Half Move clock
+        //
+        sb.append( ' ' );
+        sb.append( bd.getHalfMoveClock() );
+        //
+        //	Export the Full Move clock
+        //
+        sb.append( ' ' );
+        sb.append( bd.getMoveNumber() );
+
+        return sb.toString();
+        }
+
     //  -----------------------------------------------------------------------
-    //	METHODS
+    //	IMPLEMENTATION
     //	-----------------------------------------------------------------------
 
     /**
@@ -428,100 +527,6 @@ public class BoardFactory extends Parser
             }
 
         return (iRank == 0 && iFile == 8);
-        }
-
-    /**
-     * Converts a board to it's string equivalent.
-     *
-     * @param bd
-     *     Board to convert.
-     *
-     * @return FEN string.
-     */
-    static String toString( Board bd )
-        {
-        DBC.requireNotNull( bd, "Board" );
-        /*
-        **  CODE
-        */
-        StringBuilder sb = new StringBuilder();
-
-        for ( int iRank = 7; iRank >= 0; --iRank )
-            {
-            int iSkip = 0;
-
-            for ( int iFile = 0; iFile < 8; ++iFile )
-                {
-                int piece = bd.get( Square.toIndex( iRank, iFile ) );
-
-                if (piece == EMPTY)
-                    iSkip++;
-                else
-                    {
-                    if (iSkip > 0)
-                        {
-                        sb.append( iSkip );
-                        iSkip = 0;
-                        }
-
-                    sb.append( pieceToGlyph( piece ) );
-                    }
-                }
-
-            if (iSkip > 0)
-                sb.append( iSkip );
-
-            if (iRank > 0)
-                sb.append( '/' );
-            }
-        //
-        //	Export the player on the move.  If the board has been cleared,
-        //	then the MovingPlayer will be PieceColor.None, which is changed
-        //	to White.
-        //
-        sb.append( ' ' );
-        sb.append( playerToGlyph( bd.getMovingPlayer() ) );
-        //
-        //	Export the castling flags
-        //
-        int castling = bd.getCastlingFlags();
-
-        sb.append( ' ' );
-        if (castling == Board.CastlingFlags.NONE)
-            sb.append( STR_DASH );
-        else
-            {
-            if ((castling & Board.CastlingFlags.WHITE_SHORT) != 0)
-                sb.append( pieceToGlyph( Piece.W_KING ) );
-            if ((castling & Board.CastlingFlags.WHITE_LONG) != 0)
-                sb.append( pieceToGlyph( Piece.W_QUEEN ) );
-            if ((castling & Board.CastlingFlags.BLACK_SHORT) != 0)
-                sb.append( pieceToGlyph( Piece.B_KING ) );
-            if ((castling & Board.CastlingFlags.BLACK_LONG) != 0)
-                sb.append( pieceToGlyph( Piece.B_QUEEN ) );
-            }
-        //
-        //	Export the e.p. square.
-        //
-        int iSqEP = bd.getEnPassantSquare();
-
-        sb.append( ' ' );
-        if (Square.isValid( iSqEP ))
-            sb.append( Square.toString( iSqEP ) );
-        else
-            sb.append( STR_DASH );
-        //
-        //	Export the Half Move clock
-        //
-        sb.append( ' ' );
-        sb.append( bd.getHalfMoveClock() );
-        //
-        //	Export the Full Move clock
-        //
-        sb.append( ' ' );
-        sb.append( bd.getMoveNumber() );
-
-        return sb.toString();
         }
 
     }   /* end of class BoardFactory */

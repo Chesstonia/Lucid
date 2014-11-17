@@ -161,25 +161,6 @@ public class Square
     //	PUBLIC METHODS
     //	-----------------------------------------------------------------------
 
-    /**
-     * Exports a square in algebraic format.
-     *
-     * @param iSq
-     *     Square index in 8x8 format.
-     *
-     * @return String, or <c>null</c> if index isn't valid.
-     */
-    public static String toString( final int iSq )
-        {
-        if ((iSq & ~0x3F) != 0)
-            return null;
-        /*
-        **  CODE
-        */
-        return String.format( "%c%c",
-                              (char) ('a' + (iSq & 0x07)),
-                              (char) ('1' + (iSq >>> 3)) );
-        }
 
     /**
      * Imports a square in algebraic format.
@@ -234,7 +215,9 @@ public class Square
      * @return .T. if square is dark; .F. if light or off the board.
      */
     public static boolean isDark( final int iSq )
-        { return ((iSq & ~0x3F) == 0 && ((iSq * 9) & 0x08) == 0); }
+        {
+        return ((iSq & ~0x3F) == 0 && ((iSq * 9) & 0x08) == 0);
+        }
 
     /**
      * Tests a square index for validity.
@@ -245,7 +228,9 @@ public class Square
      * @return .T. if index is on the board; .F. otherwise.
      */
     public static boolean isValid( final int index )
-        { return ((index & ~0x3F) == 0); }
+        {
+        return ((index & ~0x3F) == 0);
+        }
 
     /**
      * Tests a rank or file for validity.
@@ -256,50 +241,8 @@ public class Square
      * @return .T. if value is in the range [0..7]; .F. otherwise.
      */
     public static boolean isValidRankOrFile( final int index )
-        { return ((index & ~0x07) == 0); }
-
-    //  -----------------------------------------------------------------------
-    //	PUBLIC GETTERS & SETTERS
-    //	-----------------------------------------------------------------------
-
-    /**
-     * Extracts the file from a squard index.
-     *
-     * @param iSq
-     *     Square index in 8x8 format.
-     *
-     * @return File [0..7] if square is valid, INVALID otherwise.
-     */
-    public static int getFile( final int iSq )
-        { return ((iSq & ~0x3F) == 0) ? (iSq & 0x07) : INVALID; }
-
-    /**
-     * Extracts the rank from a squard index.
-     *
-     * @param iSq
-     *     Square index in 8x8 format.
-     *
-     * @return Rank [0..7] if square is valid, INVALID otherwise.
-     */
-    public static int getRank( final int iSq )
-        { return ((iSq & ~0x3F) == 0) ? (iSq >>> 3) : INVALID; }
-    //  -----------------------------------------------------------------------
-    //	METHODS
-    //	-----------------------------------------------------------------------
-
-    /**
-     * Converts a square to it's inverse.
-     *
-     * @param iSq
-     *     Square.
-     *
-     * @return Inverse.
-     */
-    static int toMirror( int iSq )
         {
-        return ((iSq & ~0x3F) == 0)
-               ? ((7 - (iSq >>> 3)) << 3) | (iSq & 0x07)
-               : INVALID;
+        return ((index & ~0x07) == 0);
         }
 
     /**
@@ -318,4 +261,74 @@ public class Square
                ? (iRank << 3) + iFile
                : INVALID;
         }
+
+    /**
+     * Converts a square to it's inverse.
+     *
+     * @param iSq
+     *     Square.
+     *
+     * @return Inverse.
+     */
+    public static int toMirror( int iSq )
+        {
+        return ((iSq & ~0x3F) == 0)
+               ? ((7 - (iSq >>> 3)) << 3) | (iSq & 0x07)
+               : INVALID;
+        }
+
+    /**
+     * Exports a square in algebraic format.
+     *
+     * @param iSq
+     *     Square index in 8x8 format.
+     *
+     * @return String, or <c>null</c> if index isn't valid.
+     */
+    public static String toString( final int iSq )
+        {
+        if ((iSq & ~0x3F) != 0)
+            return null;
+        /*
+        **  CODE
+        */
+        return String.format( "%c%c",
+                              (char) ('a' + (iSq & 0x07)),
+                              (char) ('1' + (iSq >>> 3)) );
+        }
+
+    //  -----------------------------------------------------------------------
+    //	PUBLIC GETTERS & SETTERS
+    //	-----------------------------------------------------------------------
+
+    /**
+     * Extracts the file from a squard index.
+     *
+     * @param iSq
+     *     Square index in 8x8 format.
+     *
+     * @return File [0..7] if square is valid, INVALID otherwise.
+     */
+    public static int getFile( final int iSq )
+        {
+        return ((iSq & ~0x3F) == 0) ? (iSq & 0x07) : INVALID;
+        }
+
+    /**
+     * Extracts the rank from a squard index.
+     *
+     * @param iSq
+     *     Square index in 8x8 format.
+     *
+     * @return Rank [0..7] if square is valid, INVALID otherwise.
+     */
+    public static int getRank( final int iSq )
+        {
+        return ((iSq & ~0x3F) == 0) ? (iSq >>> 3) : INVALID;
+        }
+
+    //  -----------------------------------------------------------------------
+    //	PUBLIC METHODS
+    //	-----------------------------------------------------------------------
+
     }   /* end of class Square */

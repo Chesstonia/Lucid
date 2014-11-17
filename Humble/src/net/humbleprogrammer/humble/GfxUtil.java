@@ -109,7 +109,7 @@ public class GfxUtil
 	 * @param dim
 	 * 	New size.
 	 */
-	public static BufferedImage scaleImage( BufferedImage image, final Dimension dim )
+	public static BufferedImage scaleImage( Image image, final Dimension dim )
 		{
 		DBC.requireNotNull( image, "Image" );
 		DBC.requireNotNull( dim, "Dimension" );
@@ -125,6 +125,8 @@ public class GfxUtil
 
 		try
 			{
+			gfx.addRenderingHints( new RenderingHints( RenderingHints.KEY_INTERPOLATION,
+													   RenderingHints.VALUE_INTERPOLATION_BICUBIC) );
 			gfx.addRenderingHints( new RenderingHints( RenderingHints.KEY_RENDERING,
 													   RenderingHints.VALUE_RENDER_QUALITY ) );
 			gfx.drawImage( image, 0, 0, dim.width, dim.height, null );

@@ -50,11 +50,12 @@ public class Move
     //	-----------------------------------------------------------------------
 
     /** "From" square iLength, in 8x8 format. */
-    final int         iSqFrom;
+    public final int iSqFrom;
     /** "To" square iLength, in 8x8 format. */
-    final int         iSqTo;
+    public final int iSqTo;
     /** Move type */
-    final int         iType;
+    public final int iType;
+
     /** Board state prior to the move being made. */
     final Board.State state;
     /** Zobrist hash AFTER move was made. */

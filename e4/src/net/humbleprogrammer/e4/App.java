@@ -41,11 +41,9 @@ import javax.swing.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.humbleprogrammer.e4.documents.GameDocument;
 import net.humbleprogrammer.e4.gui.MainFrame;
 import net.humbleprogrammer.e4.gui.dialogs.DialogManager;
 import net.humbleprogrammer.e4.gui.helpers.Command;
-import net.humbleprogrammer.e4.gui.helpers.ResourceManager;
 import net.humbleprogrammer.humble.DBC;
 
 @SuppressWarnings( "unused" )
@@ -68,10 +66,10 @@ public class App implements Runnable
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
-	/** Current document. */
-	private final GameDocument             _document = new GameDocument();
 	/** Commands. */
-	private final Map<Command.ID, Command> _commands = new EnumMap<>( Command.ID.class );
+	private final Map<Command.ID, Command> _commands;
+	/** Current document. */
+	private final Workspace                _workspace;
 
 	/** Top-level frame. */
 	private MainFrame _frame;
@@ -94,6 +92,9 @@ public class App implements Runnable
 		**  CODE
         */
 		s_self = this;
+
+		_commands = new EnumMap<>( Command.ID.class );
+		_workspace = new Workspace();
 		}
 
 	//  -----------------------------------------------------------------------
@@ -111,6 +112,8 @@ public class App implements Runnable
 		DBC.requireNotNull( id, "Comand ID" );
 
 		s_log.debug( "App::execute( {} )", id );
+
+		assert EventQueue.isDispatchThread();
 		/*
 		**  CODE
         */
@@ -211,13 +214,13 @@ public class App implements Runnable
 		}
 
 	/**
-	 * Gets the document.
+	 * Gets the workspace.
 	 *
-	 * @return Document object.
+	 * @return Workspace object.
 	 */
-	public static GameDocument getDocument()
+	public static Workspace getWorkspace()
 		{
-		return s_self._document;
+		return s_self._workspace;
 		}
 
 	/**
@@ -265,8 +268,11 @@ public class App implements Runnable
 			{
 			UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
 
-			if (initCommands() && initGUI() && initPlayers())
+			if (initCommands() && initGUI())
+				{
 				_frame.setVisible( true );
+				execute( Command.ID.QUICK_GAME_RANDOM );
+				}
 			else
 				{
 				DialogManager.warn( "Initialization failed." );
@@ -293,9 +299,6 @@ public class App implements Runnable
 	private boolean initCommands()
 		{
 		_commands.put( Command.ID.EXIT_APP, new ExitAppCommand() );
-		_commands.put( Command.ID.QUICK_GAME_RANDOM, new QuickGameRandomCommand() );
-		_commands.put( Command.ID.QUICK_GAME_WHITE, new QuickGameWhiteCommand() );
-		_commands.put( Command.ID.QUICK_GAME_BLACK, new QuickGameBlackCommand() );
 
 		return true;
 		}
@@ -308,21 +311,7 @@ public class App implements Runnable
 	private boolean initGUI()
 		{
 		_frame = new MainFrame();
-		//
-		//	Wire up the document to the views.
-		//
-		_frame.getBoardView().setDocument( _document );
 
-		return true;
-		}
-
-	/**
-	 * Initializes all of the players.
-	 *
-	 * @return .T. on success; .F. otherwise.
-	 */
-	private boolean initPlayers()
-		{
 		return true;
 		}
 
@@ -355,89 +344,10 @@ public class App implements Runnable
 				_frame.dispose();
 				}
 
+			_workspace.dispose();
+
 			//  And pull the plug.
 			s_signalExit.countDown();
-			}
-		}
-
-	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: QuickGameBlackCommand
-	//	-----------------------------------------------------------------------
-
-	public class QuickGameBlackCommand extends Command
-		{
-		public QuickGameBlackCommand()
-			{
-			putValue( NAME, "Play Black" );
-			putValue( LONG_DESCRIPTION, "Play black against the default engine." );
-			putValue( MNEMONIC_KEY, KeyEvent.VK_B );
-
-			Image img = ResourceManager.getImage( "Black-16x16.png" );
-			if (img != null)
-				putValue( SMALL_ICON, new ImageIcon( img ) );
-			}
-
-		@Override
-		public void run()
-			{
-			s_log.debug( "QuickGameBlackCommand" );
-			/*
-			**  CODE
-            */
-			}
-		}
-
-	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: QuickGameRandomCommand
-	//	-----------------------------------------------------------------------
-
-	public class QuickGameRandomCommand extends Command
-		{
-		public QuickGameRandomCommand()
-			{
-			putValue( NAME, "Play Random" );
-			putValue( LONG_DESCRIPTION, "Play a random side against the default engine." );
-			putValue( MNEMONIC_KEY, KeyEvent.VK_W );
-
-			Image img = ResourceManager.getImage( "Random-16x16.png" );
-			if (img != null)
-				putValue( SMALL_ICON, new ImageIcon( img ) );
-			}
-
-		@Override
-		public void run()
-			{
-			s_log.debug( "QuickGameRandomCommand" );
-			/*
-			**  CODE
-            */
-			}
-		}
-
-	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: QuickGameWhiteCommand
-	//	-----------------------------------------------------------------------
-
-	public class QuickGameWhiteCommand extends Command
-		{
-		public QuickGameWhiteCommand()
-			{
-			putValue( NAME, "Play White" );
-			putValue( LONG_DESCRIPTION, "Play white against the default engine." );
-			putValue( MNEMONIC_KEY, KeyEvent.VK_W );
-
-			Image img = ResourceManager.getImage( "White-16x16.png" );
-			if (img != null)
-				putValue( SMALL_ICON, new ImageIcon( img ) );
-			}
-
-		@Override
-		public void run()
-			{
-			s_log.debug( "QuickGameWhiteCommand" );
-			/*
-			**  CODE
-            */
 			}
 		}
 

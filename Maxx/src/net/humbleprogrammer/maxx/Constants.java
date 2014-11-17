@@ -37,7 +37,7 @@ public final class Constants
     {
 
     //  -----------------------------------------------------------------------
-    //	PUBLIC DECLARATIONS
+    //	STATIC DECLARATIONS
     //	-----------------------------------------------------------------------
 
     /** Square index/offset that is off the board. */
@@ -66,39 +66,37 @@ public final class Constants
     public static final int QUEEN   = 5;
     /** It's good to be the King! */
     public static final int KING    = 6;
-
-    //  -----------------------------------------------------------------------
-    //	DECLARATIONS
-    //	-----------------------------------------------------------------------
-
-    /** FEN string of blank board. */
-    static final String FEN_BLANK    = "8/8/8/8/8/8/8/8 w - - 0 1";
-    /** FEN string of starting position. */
-    static final String FEN_INITIAL  =
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     //
     //  Special Zobrist hash values
     //
     /** Zobrist hash for an empty board. */
-    static final long   HASH_BLANK   = 0L;
+    public static final long   HASH_BLANK   = 0L;
     /** Zobrist hash value of the initial (starting) position. */
-    static final long   HASH_INITIAL = 0xBEEDB0B2B9B67995L;
+    public static final long   HASH_INITIAL = 0xBEEDB0B2B9B67995L;
     /** Invalid Zobrist hash value (all ones). */
-    static final long   HASH_INVALID = ~0L;
+    public static final long   HASH_INVALID = ~0L;
+    //
+    //  Elements of the _map[] array
+    //
+    public static final int MAP_W_ALL    = 0;
+    public static final int MAP_B_ALL    = 1;
+    public static final int MAP_W_PAWN   = 2;
+    public static final int MAP_B_PAWN   = 3;
+    public static final int MAP_W_KNIGHT = 4;
+    public static final int MAP_B_KNIGHT = 5;
+    public static final int MAP_W_BISHOP = 6;
+    public static final int MAP_B_BISHOP = 7;
+    public static final int MAP_W_ROOK   = 8;
+    public static final int MAP_B_ROOK   = 9;
+    public static final int MAP_W_QUEEN  = 10;
+    public static final int MAP_B_QUEEN  = 11;
+    public static final int MAP_W_KING   = 12;
+    public static final int MAP_B_KING   = 13;
+    public static final int MAP_LENGTH   = 14;
 
-    static final int MAP_W_ALL    = 0;
-    static final int MAP_B_ALL    = 1;
-    static final int MAP_W_PAWN   = 2;
-    static final int MAP_B_PAWN   = 3;
-    static final int MAP_W_KNIGHT = 4;
-    static final int MAP_B_KNIGHT = 5;
-    static final int MAP_W_BISHOP = 6;
-    static final int MAP_B_BISHOP = 7;
-    static final int MAP_W_ROOK   = 8;
-    static final int MAP_B_ROOK   = 9;
-    static final int MAP_W_QUEEN  = 10;
-    static final int MAP_B_QUEEN  = 11;
-    static final int MAP_W_KING   = 12;
-    static final int MAP_B_KING   = 13;
-    static final int MAP_LENGTH   = 14;
+    /** FEN string of blank board. */
+    public static final String FEN_BLANK    = "8/8/8/8/8/8/8/8 w - - 0 1";
+    /** FEN string of starting position. */
+    public static final String FEN_INITIAL  =
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     }	/* end of class Constants */

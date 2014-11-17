@@ -30,8 +30,9 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx;
+package net.humbleprogrammer.maxx.factories;
 
+import net.humbleprogrammer.maxx.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,15 +83,15 @@ public class MoveFactory
         if (info.iPieceMoving == PAWN)
             {
             bbCandidates &= info.bCapture
-                            ? ~Bitboards.fileMask[ info.iFileTo ]
-                            : Bitboards.fileMask[ info.iFileTo ];
+                            ? ~Bitboards.getFileMask( info.iFileTo )
+                            : Bitboards.getFileMask( info.iFileTo );
             }
 
         if (Square.isValidRankOrFile( info.iFileFrom ))
-            bbCandidates &= Bitboards.fileMask[ info.iFileFrom ];
+            bbCandidates &= Bitboards.getFileMask( info.iFileFrom );
 
         if (Square.isValidRankOrFile( info.iRankFrom ))
-            bbCandidates &= Bitboards.rankMask[ info.iRankFrom ];
+            bbCandidates &= Bitboards.getRankMask( info.iRankFrom );
 
         if (bbCandidates == 0L)
             return null;

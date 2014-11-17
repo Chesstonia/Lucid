@@ -30,9 +30,12 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx;
+package net.humbleprogrammer.maxx.factories;
 
 import net.humbleprogrammer.TestBase;
+import net.humbleprogrammer.maxx.*;
+import net.humbleprogrammer.maxx.factories.BoardFactory;
+import net.humbleprogrammer.maxx.factories.MoveFactory;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

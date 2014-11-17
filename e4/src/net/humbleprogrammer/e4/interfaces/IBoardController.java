@@ -30,61 +30,35 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.e4.documents;
+package net.humbleprogrammer.e4.interfaces;
 
-import java.util.Observable;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Observer;
 
 import net.humbleprogrammer.maxx.Board;
-import net.humbleprogrammer.maxx.factories.BoardFactory;
 
-public class GameDocument extends Observable
+public interface IBoardController
 	{
-
-	//  -----------------------------------------------------------------------
-	//	STATIC DECLARATIONS
-	//	-----------------------------------------------------------------------
-
-	/** Used to generate sequence numbers. */
-	private static final AtomicInteger s_idNext = new AtomicInteger();
-	/** Logger */
-	private static final Logger        s_log    = LoggerFactory.getLogger( GameDocument.class );
-
-	//  -----------------------------------------------------------------------
-	//	DECLARATIONS
-	//	-----------------------------------------------------------------------
-
-	/** Sequence number. */
-	private final int   _id    = s_idNext.getAndIncrement();
-	/** Current position. */
-	private       Board _board = BoardFactory.createInitial();
-
-	//  -----------------------------------------------------------------------
-	//	CTOR
-	//	-----------------------------------------------------------------------
-
-	/**
-	 * Default CTOR.
-	 */
-	public GameDocument()
-		{
-		s_log.debug( "ctor({})", _id );
-		}
-
-	//  -----------------------------------------------------------------------
-	//	PUBLIC GETTERS & SETTERS
-	//	-----------------------------------------------------------------------
 
 	/**
 	 * Gets the current position.
 	 *
 	 * @return Board object.
 	 */
-	public Board getPosition()
-		{
-		return _board;
-		}
-	}	/* end of class GameDocument */
+	Board getPosition();
+
+	/**
+	 * Adds an observer.
+	 *
+	 * @param observer
+	 * 	Observer object to add.
+	 */
+	public void registerObserver( Observer observer );
+
+	/**
+	 * Removes an observer.
+	 *
+	 * @param observer
+	 * 	Observer object to remove.
+	 */
+	public void unregisterObserver( Observer observer );
+	}

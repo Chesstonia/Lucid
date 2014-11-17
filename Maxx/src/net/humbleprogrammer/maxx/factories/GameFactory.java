@@ -30,10 +30,12 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.maxx;
+package net.humbleprogrammer.maxx.factories;
 
 import net.humbleprogrammer.humble.DBC;
 import net.humbleprogrammer.humble.StrUtil;
+import net.humbleprogrammer.maxx.Game;
+import net.humbleprogrammer.maxx.Parser;
 import net.humbleprogrammer.maxx.pgn.PgnParser;
 
 import java.util.List;
