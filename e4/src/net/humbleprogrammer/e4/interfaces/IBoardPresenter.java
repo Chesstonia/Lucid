@@ -1,7 +1,49 @@
 /*****************************************************************************
  **
- ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
+ **
+ ******************************************************************************/
+package net.humbleprogrammer.e4.interfaces;
+
+import java.util.Observer;
+
+public interface IBoardPresenter extends Observer
+	{
+
+	/**
+	 * Enables squares.
+	 *
+	 * @param bbEnabled
+	 * 	Bitboard of squares to enable.
+	 */
+	void setEnabled( long bbEnabled );
+
+	/**
+	 * Selects squares.
+	 *
+	 * @param bbSelected
+	 * 	Bitboard of squares to select.
+	 */
+	void setSelection( long bbSelected );
+
+	/**
+	 * Sets the board controller.
+	 *
+	 * @param controller
+	 * 	Board controller.
+	 */
+	void setBoardController( IBoardController controller );
+
+	/**
+	 * Gets the "Show Legal Moves" flag.
+	 *
+	 * @return .T. if legal moves are displayed; .F. otherwise.
+	 */
+	boolean getShowLegalMoves();
+	} 	/* end of interface IBoardPresenter */
+/*****************************************************************************
+ **
+ ** @author Lee Neuse (coder@humbleprogrammer.net)
  **
  **	---------------------------- [License] ----------------------------------
  **	This work is licensed under the Creative Commons Attribution-NonCommercial-
@@ -30,48 +72,3 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.e4.gui.themes;
-
-import java.awt.*;
-
-public interface ITheme
-	{
-	/**
-	 * Gets the color used to fill dark squares.
-	 *
-	 * @return Dark square color.
-	 */
-	Color getDarkSquareColor();
-
-	/**
-	 * Gets the color used to draw rank/file labels.
-	 *
-	 * @return Label color.
-	 */
-	Color getLabelColor();
-
-	/**
-	 * Gest the font to use to draw rank/file labels.
-	 *
-	 * @return Font object.
-	 */
-	Font getLabelFont();
-
-	/**
-	 * Gets the color used to fill light squares.
-	 *
-	 * @return Light square color.
-	 */
-	Color getLightSquareColor();
-
-	/**
-	 * Gets the piece set, scaled to a square size.
-	 *
-	 * @param iSqDim
-	 * 	Desired square size, in pixels.
-	 *
-	 * @return Scaled piece set image.
-	 */
-	Image getPieceSet( int iSqDim );
-
-	}	/* end of interface ITheme */

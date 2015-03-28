@@ -3,59 +3,51 @@
  ** @since 1.0
  **
  ******************************************************************************/
-package net.humbleprogrammer.e4.gui.controls;
+package net.humbleprogrammer.e4.interfaces;
 
 import java.awt.*;
-import javax.swing.*;
 
-import net.humbleprogrammer.humble.DBC;
-import net.humbleprogrammer.humble.GfxUtil;
-
-public abstract class EnhancedPanel extends JPanel
+public interface ITheme
 	{
-
-	//  -----------------------------------------------------------------------
-	//	PUBLIC METHODS
-	//	-----------------------------------------------------------------------
+	/**
+	 * Gets the color used to fill dark squares.
+	 *
+	 * @return Dark square color.
+	 */
+	Color getDarkSquareColor();
 
 	/**
-	 * Renders the panel content.
+	 * Gets the color used to draw rank/file labels.
 	 *
-	 * @param gfx
-	 * 	Graphics context to draw into.
+	 * @return Label color.
 	 */
-	@Override
-	protected void paintComponent( Graphics gfx )
-		{
-		DBC.requireNotNull( gfx, "Graphics" );
-		/*
-		**	CODE
-		*/
-		final Graphics2D gfx2 = (Graphics2D) gfx.create();
-
-		try
-			{
-			super.paintComponent( gfx );
-
-			gfx2.setRenderingHints( GfxUtil.getQualityRenderingHints() );
-			render( gfx2, gfx.getClipBounds() );
-			}
-		finally
-			{
-			gfx2.dispose();
-			}
-		}
+	Color getLabelColor();
 
 	/**
-	 * Renders the content.
+	 * Gest the font to use to draw rank/file labels.
 	 *
-	 * @param gfx
-	 * 	Graphics context.
-	 * @param rClip
-	 * 	Clipping rectangle.
+	 * @return Font object.
 	 */
-	public abstract void render( Graphics2D gfx, Rectangle rClip );
-	}	/* end of class EnhancedPanel() */
+	Font getLabelFont();
+
+	/**
+	 * Gets the color used to fill light squares.
+	 *
+	 * @return Light square color.
+	 */
+	Color getLightSquareColor();
+
+	/**
+	 * Gets the piece set, scaled to a square size.
+	 *
+	 * @param iSqDim
+	 * 	Desired square size, in pixels.
+	 *
+	 * @return Scaled piece set image.
+	 */
+	Image getPieceSet( int iSqDim );
+
+	}	/* end of interface ITheme */
 /*****************************************************************************
  **
  ** @author Lee Neuse (coder@humbleprogrammer.net)

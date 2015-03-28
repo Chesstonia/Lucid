@@ -3,59 +3,118 @@
  ** @since 1.0
  **
  ******************************************************************************/
-package net.humbleprogrammer.e4.gui.controls;
+package net.humbleprogrammer.e4.gui.players;
 
-import java.awt.*;
-import javax.swing.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import net.humbleprogrammer.e4.interfaces.*;
 import net.humbleprogrammer.humble.DBC;
-import net.humbleprogrammer.humble.GfxUtil;
+import net.humbleprogrammer.maxx.*;
 
-public abstract class EnhancedPanel extends JPanel
+import static net.humbleprogrammer.maxx.Constants.*;
+
+public class PlayerHuman implements IBoardController, IPlayer
 	{
 
 	//  -----------------------------------------------------------------------
-	//	PUBLIC METHODS
+	//	STATIC DECLARATIONS
+	//	-----------------------------------------------------------------------
+
+	/** Logger */
+	private static final Logger s_log = LoggerFactory.getLogger( PlayerHuman.class );
+
+	//  -----------------------------------------------------------------------
+	//	DECLARATIONS
+	//	-----------------------------------------------------------------------
+
+	/** Color being played. */
+	private final int   _player;
+	/** Position */
+	private final Board _board;
+
+	/** Board presenter */
+	private IBoardPresenter _presenter;
+	/** Legal moves. */
+	private MoveList        _movesLegal;
+
+	//  -----------------------------------------------------------------------
+	//	CTOR
 	//	-----------------------------------------------------------------------
 
 	/**
-	 * Renders the panel content.
+	 * CTOR
 	 *
-	 * @param gfx
-	 * 	Graphics context to draw into.
+	 * @param player
+	 * 	[WHITE|BLACK]
+	 * @param bd
+	 * 	Board.
 	 */
-	@Override
-	protected void paintComponent( Graphics gfx )
+	public PlayerHuman( int player, Board bd )
 		{
-		DBC.requireNotNull( gfx, "Graphics" );
+		DBC.require( (player == WHITE || player == BLACK), "Invalid Player" );
+		DBC.requireNotNull( bd, "Board" );
+
+		s_log.debug( "{} ctor()", Parser.playerToString( player ) );
 		/*
 		**	CODE
 		*/
-		final Graphics2D gfx2 = (Graphics2D) gfx.create();
+		_board = bd;
+		_player = player;
+		}
 
-		try
-			{
-			super.paintComponent( gfx );
+	//  -----------------------------------------------------------------------
+	//	INTERFACE: IBoardController
+	//	-----------------------------------------------------------------------
 
-			gfx2.setRenderingHints( GfxUtil.getQualityRenderingHints() );
-			render( gfx2, gfx.getClipBounds() );
-			}
-		finally
-			{
-			gfx2.dispose();
-			}
+	/**
+	 * Gets the current position.
+	 *
+	 * @return Board object.
+	 */
+	@Override
+	public Board getPosition()
+		{
+		return _board;
 		}
 
 	/**
-	 * Renders the content.
+	 * Sets the board presenter.
 	 *
-	 * @param gfx
-	 * 	Graphics context.
-	 * @param rClip
-	 * 	Clipping rectangle.
+	 * @param presenter
+	 * 	Board presenter.
 	 */
-	public abstract void render( Graphics2D gfx, Rectangle rClip );
-	}	/* end of class EnhancedPanel() */
+	@Override
+	public void setBoardPresenter( IBoardPresenter presenter )
+		{
+		DBC.requireNotNull( presenter, "Board presenter" );
+		/*
+		**	CODE
+		*/
+		if ((_presenter = presenter) != null)
+			_presenter.setBoardController( this );
+		}
+
+	//  -----------------------------------------------------------------------
+	//	INTERFACE: IPlayer
+	//	-----------------------------------------------------------------------
+
+	/**
+	 * Tells the player to start thinking.
+	 */
+	@Override
+	public void startThinking()
+		{
+		s_log.debug( "{} start thinking.", Parser.playerToString( _player ) );
+
+		assert _presenter != null;
+		/*
+		**	CODE
+		*/
+		_movesLegal = new MoveList( _board ).generate();
+		}
+
+	}
 /*****************************************************************************
  **
  ** @author Lee Neuse (coder@humbleprogrammer.net)

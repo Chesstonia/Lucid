@@ -3,59 +3,50 @@
  ** @since 1.0
  **
  ******************************************************************************/
-package net.humbleprogrammer.e4.gui.controls;
+package net.humbleprogrammer.e4.gui;
 
 import java.awt.*;
-import javax.swing.*;
 
-import net.humbleprogrammer.humble.DBC;
-import net.humbleprogrammer.humble.GfxUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public abstract class EnhancedPanel extends JPanel
+@SuppressWarnings( "unused" )
+public final class SwingUtil
 	{
 
 	//  -----------------------------------------------------------------------
-	//	PUBLIC METHODS
+	//	STATIC DECLARATIONS
+	//	-----------------------------------------------------------------------
+
+	/** Logger */
+	private static final Logger    s_log      = LoggerFactory.getLogger( SwingUtil.class );
+	/** Bounds of the entire desktop. */
+	private static final Rectangle s_rDesktop = new Rectangle( 0, 0, 0, 0 );
+
+	//  -----------------------------------------------------------------------
+	//	PUBLIC GETTERS & SETTERS
 	//	-----------------------------------------------------------------------
 
 	/**
-	 * Renders the panel content.
+	 * Gets the bounds of the desktop region.
 	 *
-	 * @param gfx
-	 * 	Graphics context to draw into.
+	 * @return Bounding rectangle.
 	 */
-	@Override
-	protected void paintComponent( Graphics gfx )
+	public static Rectangle getDesktopBounds()
 		{
-		DBC.requireNotNull( gfx, "Graphics" );
-		/*
-		**	CODE
-		*/
-		final Graphics2D gfx2 = (Graphics2D) gfx.create();
-
-		try
+		if (s_rDesktop.isEmpty())
 			{
-			super.paintComponent( gfx );
+			GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
 
-			gfx2.setRenderingHints( GfxUtil.getQualityRenderingHints() );
-			render( gfx2, gfx.getClipBounds() );
+			for ( GraphicsDevice device : env.getScreenDevices() )
+				s_rDesktop.add( device.getDefaultConfiguration().getBounds() );
+
+			s_log.info( "Desktop bounds is {}.", s_rDesktop.toString() );
 			}
-		finally
-			{
-			gfx2.dispose();
-			}
+
+		return s_rDesktop;
 		}
-
-	/**
-	 * Renders the content.
-	 *
-	 * @param gfx
-	 * 	Graphics context.
-	 * @param rClip
-	 * 	Clipping rectangle.
-	 */
-	public abstract void render( Graphics2D gfx, Rectangle rClip );
-	}	/* end of class EnhancedPanel() */
+	}   /* end of class SwingUtil */
 /*****************************************************************************
  **
  ** @author Lee Neuse (coder@humbleprogrammer.net)

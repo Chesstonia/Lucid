@@ -1,7 +1,43 @@
 /*****************************************************************************
  **
- ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
+ **
+ ******************************************************************************/
+package net.humbleprogrammer.e4.gui.controls;
+
+import java.awt.*;
+import javax.swing.*;
+
+import net.humbleprogrammer.humble.DBC;
+import net.humbleprogrammer.humble.GfxUtil;
+
+public class EnhancedLabel extends JLabel
+	{
+
+	//  -----------------------------------------------------------------------
+	//	PUBLIC METHODS
+	//	-----------------------------------------------------------------------
+
+	/**
+	 * Renders the panel content.
+	 *
+	 * @param gfx
+	 * 	Graphics context to draw into.
+	 */
+	@Override
+	public void paintComponent( Graphics gfx )
+		{
+		DBC.requireNotNull( gfx, "Graphics" );
+		/*
+		**	CODE
+		*/
+		((Graphics2D) gfx).setRenderingHints( GfxUtil.getQualityRenderingHints() );
+		super.paintComponent( gfx );
+		}
+	}	/* end of class EnhancedLabel() */
+/*****************************************************************************
+ **
+ ** @author Lee Neuse (coder@humbleprogrammer.net)
  **
  **	---------------------------- [License] ----------------------------------
  **	This work is licensed under the Creative Commons Attribution-NonCommercial-
@@ -30,55 +66,3 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.e4.gui.controls;
-
-import java.awt.*;
-import javax.swing.*;
-
-import net.humbleprogrammer.humble.DBC;
-
-public class EnhancedLabel extends JLabel
-	{
-
-	//  -----------------------------------------------------------------------
-	//	STATIC DECLARATIONS
-	//	-----------------------------------------------------------------------
-
-	/** Controls the rendering quality */
-	protected static final RenderingHints s_hints;
-
-	//  -----------------------------------------------------------------------
-	//	CTOR
-	//	-----------------------------------------------------------------------
-
-	static
-		{
-		s_hints = new RenderingHints( RenderingHints.KEY_ANTIALIASING,
-									  RenderingHints.VALUE_ANTIALIAS_ON );
-		s_hints.put( RenderingHints.KEY_INTERPOLATION,
-					 RenderingHints.VALUE_INTERPOLATION_BICUBIC );
-		s_hints.put( RenderingHints.KEY_TEXT_ANTIALIASING,
-					 RenderingHints.VALUE_TEXT_ANTIALIAS_ON );
-		}
-
-	//  -----------------------------------------------------------------------
-	//	PUBLIC METHODS
-	//	-----------------------------------------------------------------------
-
-	/**
-	 * Renders the panel content.
-	 *
-	 * @param gfx
-	 * 	Graphics context to draw into.
-	 */
-	@Override
-	public void paintComponent( Graphics gfx )
-		{
-		DBC.requireNotNull( gfx, "Graphics" );
-		/*
-		**	CODE
-		*/
-		((Graphics2D) gfx).setRenderingHints( s_hints );
-		super.paintComponent( gfx );
-		}
-	}	/* end of class EnhancedLabel() */

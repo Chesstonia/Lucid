@@ -3,44 +3,35 @@
  ** @since 1.0
  **
  ******************************************************************************/
-package net.humbleprogrammer.e4;
+package net.humbleprogrammer.e4.gui.views;
 
+import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.concurrent.CountDownLatch;
 import javax.swing.*;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import net.humbleprogrammer.e4.gui.MainFrame;
-import net.humbleprogrammer.e4.gui.dialogs.DialogManager;
+import net.humbleprogrammer.e4.App;
+import net.humbleprogrammer.e4.gui.SwingUtil;
 import net.humbleprogrammer.e4.gui.helpers.Command;
+import net.humbleprogrammer.humble.GfxUtil;
 
-@SuppressWarnings( "unused" )
-public class App implements Runnable
+public class ConsoleView extends JDialog
 	{
 
 	//  -----------------------------------------------------------------------
-	//	STATIC DECLARATIONS
+	//	CONSTANTS
 	//	-----------------------------------------------------------------------
 
-	/** Countdown latch. */
-	static final CountDownLatch s_signalExit = new CountDownLatch( 1 );
-
-	/** Logger */
-	private static final Logger s_log = LoggerFactory.getLogger( App.class );
-	/** Singleton instance of the workspace. */
-	private static App s_self;
+	/** Minimum window height, in pixels. */
+	private static final int MIN_HEIGHT = 128;
+	/** Minimum window width, in pixels. */
+	private static final int MIN_WIDTH  = 196;
 
 	//  -----------------------------------------------------------------------
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
-	/** Current document. */
-	private final Workspace _workspace;
-
-	/** Top-level frame. */
-	private MainFrame _frame;
+	/** .T. if window location needs to be set; .F. otherwise. */
+	private boolean _bNeedLocation = true;
 
 	//  -----------------------------------------------------------------------
 	//	CTOR
@@ -49,153 +40,87 @@ public class App implements Runnable
 	/**
 	 * Default CTOR.
 	 *
-	 * @param strArgs
-	 * 	Command-line arguments.
+	 * @param owner
+	 * 	Frame that owns this view.
 	 */
-	private App( String[] strArgs )
+	public ConsoleView( Frame owner )
 		{
-		assert strArgs != null;
-		assert s_self == null;
+		super( owner );
 		/*
-		**  CODE
-        */
-		s_self = this;
+		**	CODE
+		*/
+		createUI( getContentPane() );
 
-		_workspace = new Workspace();
+		pack();
 		}
 
 	//  -----------------------------------------------------------------------
-	//	PUBLIC METHODS
+	//	IMPLEMENTATION
 	//	-----------------------------------------------------------------------
 
 	/**
-	 * Entry point for the application.
+	 * Creates all of the UI elements.
 	 *
-	 * @param strArgs
-	 * 	Command-line parameters.
+	 * @param content
+	 * 	Content pane that all the elements will be added to.
 	 */
-	public static void main( String[] strArgs )
+	private void createUI( Container content )
 		{
-		try
-			{
-			SwingUtilities.invokeLater( new App( strArgs ) );
-
-			s_signalExit.await();   // wait for the "all clear" from ExitAppCommand
-			}
-		catch (InterruptedException ex)
-			{
-			s_log.warn( "Timed out waiting for exit signal.", ex );
-			}
-		}
-
-	//  -----------------------------------------------------------------------
-	//	PUBLIC GETTERS & SETTERS
-	//	-----------------------------------------------------------------------
-
-
-	/**
-	 * Gets the workspace.
-	 *
-	 * @return Workspace object.
-	 */
-	public static Workspace getWorkspace()
-		{
-		return s_self._workspace;
-		}
-
-	/**
-	 * Gets the top-level frame.
-	 *
-	 * @return JFrame component.
-	 */
-	public static MainFrame getFrame()
-		{
-		return s_self._frame;
-		}
-
-	/**
-	 * Gets the singleton instance of the workspace.
-	 *
-	 * @return App.
-	 */
-	public static App getInstance()
-		{
-		return s_self;
-		}
-
-	/**
-	 * Gets the application name.
-	 *
-	 * @return Short name.
-	 */
-	public static String getName()
-		{
-		return "e4";
-		}
-
-	//  -----------------------------------------------------------------------
-	//	INTEFACE: Runnable
-	//	-----------------------------------------------------------------------
-
-	@Override
-	public void run()
-		{
-		s_log.debug( "App::run()" );
+		assert content != null;
 		/*
-		**  CODE
-        */
-		try
-			{
-			UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName() );
+		**	CODE
+		*/
+		setDefaultCloseOperation( JFrame.HIDE_ON_CLOSE );
+		setMinimumSize( new Dimension( MIN_WIDTH, MIN_HEIGHT ) );
+		setRootPaneCheckingEnabled( true );
+		setTitle( App.getName() + " Console" );
 
-			_frame = new MainFrame();
-			_frame.setVisible( true );
-			Command.execute( Command.ID.QUICK_GAME_RANDOM );
-
-			s_log.debug( "App::run() ended." );
-			}
-		catch (Exception ex)
-			{
-			s_log.error( "App::run() aborted.", ex );
-
-			DialogManager.warn( "Initialization failed." );
-			s_signalExit.countDown();
-			}
+		pack();
 		}
 
 	//  -----------------------------------------------------------------------
-	//	COMMAND: ExitApp
+	//	COMMAND: ToggleConsole
 	//	-----------------------------------------------------------------------
 
-	private final Command cmdExitApp = new Command( Command.ID.EXIT_APP,
-													"Exit",
-													"Exits the application.",
-													null,
-													KeyEvent.VK_X )
+	@SuppressWarnings( "unused" )
+	private final Command cmdToggleConsole = new Command( Command.ID.TOGGLE_CONSOLE,
+														  "Console Window",
+														  "Shows or hides the Console window.",
+														  null, KeyEvent.VK_C )
 	{
 	@Override
 	public void run()
 		{
-		s_log.debug( "cmdExitApp" );
+		s_log.debug( "cmdToggleConsole" );
 		/*
 		**	CODE
 		*/
-		if (!DialogManager.confirm( "Really exit?" ))
-			return;
+		boolean bShow = !isVisible();
 
-		if (_frame != null)
+		if (bShow && _bNeedLocation)
 			{
-			_frame.setVisible( false );
-			_frame.dispose();
+			Rectangle rFrame = App.getFrame().getBounds();
+
+			setBounds( (int) (rFrame.getMaxX() + GfxUtil.MARGIN_THICK),
+					   (int) rFrame.getMinY(),
+					   rFrame.width, (rFrame.height / 2) );
+
+			if (!SwingUtil.getDesktopBounds().contains( rFrame ))
+				setLocationByPlatform( true );
+
+			_bNeedLocation = false;
 			}
 
-		_workspace.dispose();
+		setVisible( bShow );
+		}
 
-		s_signalExit.countDown();    //  And pull the plug.
+	@Override
+	public void update()
+		{
+		setChecked( isVisible() );
 		}
 	};
-
-	}   /* end of class App */
+	}	/* end of class ConsoleView */
 /*****************************************************************************
  **
  ** @author Lee Neuse (coder@humbleprogrammer.net)

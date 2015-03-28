@@ -3,59 +3,16 @@
  ** @since 1.0
  **
  ******************************************************************************/
-package net.humbleprogrammer.e4.gui.controls;
+package net.humbleprogrammer.e4.interfaces;
 
-import java.awt.*;
-import javax.swing.*;
-
-import net.humbleprogrammer.humble.DBC;
-import net.humbleprogrammer.humble.GfxUtil;
-
-public abstract class EnhancedPanel extends JPanel
+public interface IPlayer
 	{
 
-	//  -----------------------------------------------------------------------
-	//	PUBLIC METHODS
-	//	-----------------------------------------------------------------------
-
 	/**
-	 * Renders the panel content.
-	 *
-	 * @param gfx
-	 * 	Graphics context to draw into.
+	 * Tells the player to start thinking.
 	 */
-	@Override
-	protected void paintComponent( Graphics gfx )
-		{
-		DBC.requireNotNull( gfx, "Graphics" );
-		/*
-		**	CODE
-		*/
-		final Graphics2D gfx2 = (Graphics2D) gfx.create();
-
-		try
-			{
-			super.paintComponent( gfx );
-
-			gfx2.setRenderingHints( GfxUtil.getQualityRenderingHints() );
-			render( gfx2, gfx.getClipBounds() );
-			}
-		finally
-			{
-			gfx2.dispose();
-			}
-		}
-
-	/**
-	 * Renders the content.
-	 *
-	 * @param gfx
-	 * 	Graphics context.
-	 * @param rClip
-	 * 	Clipping rectangle.
-	 */
-	public abstract void render( Graphics2D gfx, Rectangle rClip );
-	}	/* end of class EnhancedPanel() */
+	void startThinking();
+	}	/* end of interface IPlayer */
 /*****************************************************************************
  **
  ** @author Lee Neuse (coder@humbleprogrammer.net)

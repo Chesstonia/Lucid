@@ -1,7 +1,33 @@
 /*****************************************************************************
  **
- ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
+ **
+ ******************************************************************************/
+package net.humbleprogrammer.e4.interfaces;
+
+import net.humbleprogrammer.maxx.Board;
+
+public interface IBoardController
+	{
+
+	/**
+	 * Gets the current position.
+	 *
+	 * @return Board object.
+	 */
+	Board getPosition();
+
+	/**
+	 * Sets the board presenter.
+	 *
+	 * @param presenter
+	 * 	Board presenter.
+	 */
+	void setBoardPresenter( IBoardPresenter presenter );
+	}	/* end of interface IBoardController */
+/*****************************************************************************
+ **
+ ** @author Lee Neuse (coder@humbleprogrammer.net)
  **
  **	---------------------------- [License] ----------------------------------
  **	This work is licensed under the Creative Commons Attribution-NonCommercial-
@@ -30,35 +56,3 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.e4.interfaces;
-
-import java.util.Observer;
-
-import net.humbleprogrammer.maxx.Board;
-
-public interface IBoardController
-	{
-
-	/**
-	 * Gets the current position.
-	 *
-	 * @return Board object.
-	 */
-	Board getPosition();
-
-	/**
-	 * Adds an observer.
-	 *
-	 * @param observer
-	 * 	Observer object to add.
-	 */
-	public void registerObserver( Observer observer );
-
-	/**
-	 * Removes an observer.
-	 *
-	 * @param observer
-	 * 	Observer object to remove.
-	 */
-	public void unregisterObserver( Observer observer );
-	}

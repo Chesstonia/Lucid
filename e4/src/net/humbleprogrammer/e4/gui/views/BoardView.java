@@ -1,33 +1,6 @@
 /*****************************************************************************
  **
- ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
- **
- **	---------------------------- [License] ----------------------------------
- **	This work is licensed under the Creative Commons Attribution-NonCommercial-
- **	ShareAlike 3.0 Unported License. To view a copy of this license, visit
- **				http://creativecommons.org/licenses/by-nc-sa/3.0/
- **	or send a letter to Creative Commons, 444 Castro Street Suite 900, Mountain
- **	View, California, 94041, USA.
- **	--------------------- [Disclaimer of Warranty] --------------------------
- **	There is no warranty for the program, to the extent permitted by applicable
- **	law.  Except when otherwise stated in writing the copyright holders and/or
- **	other parties provide the program “as is” without warranty of any kind,
- **	either expressed or implied, including, but not limited to, the implied
- **	warranties of merchantability and fitness for a particular purpose.  The
- **	entire risk as to the quality and performance of the program is with you.
- **	Should the program prove defective, you assume the cost of all necessary
- **	servicing, repair or correction.
- **	-------------------- [Limitation of Liability] --------------------------
- **	In no event unless required by applicable law or agreed to in writing will
- **	any copyright holder, or any other party who modifies and/or conveys the
- **	program as permitted above, be liable to you for damages, including any
- **	general, special, incidental or consequential damages arising out of the
- **	use or inability to use the program (including but not limited to loss of
- **	data or data being rendered inaccurate or losses sustained by you or third
- **	parties or a failure of the program to operate with any other programs),
- **	even if such holder or other party has been advised of the possibility of
- **	such damages.
  **
  ******************************************************************************/
 package net.humbleprogrammer.e4.gui.views;
@@ -41,12 +14,9 @@ import javax.swing.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.humbleprogrammer.e4.App;
 import net.humbleprogrammer.e4.gui.helpers.Command;
-import net.humbleprogrammer.e4.gui.helpers.ResourceManager;
-import net.humbleprogrammer.e4.gui.themes.ITheme;
 import net.humbleprogrammer.e4.gui.themes.ThemeManager;
-import net.humbleprogrammer.e4.interfaces.IBoardController;
+import net.humbleprogrammer.e4.interfaces.*;
 import net.humbleprogrammer.humble.DBC;
 import net.humbleprogrammer.humble.GfxUtil;
 import net.humbleprogrammer.maxx.Board;
@@ -54,8 +24,9 @@ import net.humbleprogrammer.maxx.Square;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
-public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPanel
-	implements Observer
+public class BoardView
+	extends net.humbleprogrammer.e4.gui.controls.EnhancedPanel
+	implements IBoardPresenter, Observer
 	{
 
 	//  -----------------------------------------------------------------------
@@ -64,6 +35,8 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 
 	/** Default square size, measured in pixels. */
 	private static final int DEFAULT_SQ_DIM = 48;
+	/** Maximum square size, measured in pixels. */
+	private static final int MAX_SQ_DIM     = 256;
 	/** Minimum square size, measured in pixels. */
 	private static final int MIN_SQ_DIM     = 12;
 
@@ -78,8 +51,6 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
-	/** Board controller. */
-	private final IBoardController _controller;
 	/** Rectangle between board labels and squares. */
 	private final Rectangle   _rInner = new Rectangle();
 	/** Rectangle around outside edge of board labels. */
@@ -88,13 +59,22 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 	private final Rectangle[] _rSq    = new Rectangle[ 64 ];
 
 	/** .T. of Black player is on top; .F. if White. */
-	private boolean _bBlackOnTop = true;
+	private boolean _bBlackOnTop     = true;
 	/** .T. to display rank/file labels; .F. to hide them. */
-	private boolean _bShowLabels = true;
+	private boolean _bShowLabels     = true;
+	/** .T. to highlight legal moves; .F. otherwise. */
+	private boolean _bShowLegalMoves = true;
 	/** Dimension of squares, measured in pixels. */
-	private int     _iSqDim      = -1;
+	private int     _iSqDim          = -1;
+	/** Bitboard of enabled squares. */
+	private long             _bbEnabled;
+	/** Bitboard of selected squares. */
+	private long             _bbSelected;
+	/** Board controller. */
+	private IBoardController _controller;
 	/** Current piece set. */
-	private Image _imgPieces;
+	private Image            _imgPieces;
+
 	//  -----------------------------------------------------------------------
 	//	CTOR
 	//	-----------------------------------------------------------------------
@@ -102,22 +82,12 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 	/**
 	 * Default CTOR.
 	 */
-	public BoardView( IBoardController controller )
+	public BoardView()
 		{
-		DBC.requireNotNull( controller, "Board Controller" );
-		/*
-		**	CODE
-		*/
-		App.addCommand( Command.ID.BLACK_ON_TOP, new BlackOnTopCommand() );
-		App.addCommand( Command.ID.WHITE_ON_TOP, new WhiteOnTopCommand() );
-
-		_controller = controller;
-		_controller.registerObserver( this );
-
 		for ( int iSq = 0; iSq < 64; ++iSq )
 			_rSq[ iSq ] = new Rectangle();
 
-		initGUI();
+		createUI();
 		}
 
 	//  -----------------------------------------------------------------------
@@ -137,17 +107,89 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 		/*
 		**	CODE
 		*/
-		final Board bd = _controller.getPosition();
 		final ITheme theme = ThemeManager.getCurrentTheme();
 
 		adjustLayout();
 
 		drawBoard( gfx, theme, rClip );
 		drawLabels( gfx, theme, rClip );
-		drawMoveIndicator( gfx, theme, rClip, (bd.getMovingPlayer() == WHITE) );
-		drawPieces( gfx, theme, rClip, bd );
+
+		if (_controller != null)
+			{
+			final Board bd = _controller.getPosition();
+
+			drawMoveIndicator( gfx, theme, rClip, (bd.getMovingPlayer() == WHITE) );
+			drawPieces( gfx, theme, rClip, bd );
+			}
 		}
 
+	//  -----------------------------------------------------------------------
+	//	INTERFACE: IBoardPresenter
+	//	-----------------------------------------------------------------------
+
+	/**
+	 * Gets the "Show Legal Moves" flag.
+	 *
+	 * @return .T. if legal moves are displayed; .F. otherwise.
+	 */
+	@Override
+	public boolean getShowLegalMoves()
+		{
+		return _bShowLegalMoves;
+		}
+
+	/**
+	 * Sets the board controller.
+	 *
+	 * @param controller
+	 * 	Controller, or null for no control.
+	 */
+	@Override
+	public void setBoardController( IBoardController controller )
+		{
+		if (_controller == controller)
+			return;
+		/*
+		**	CODE
+		*/
+		if ((_controller = controller) != null)
+			_controller.setBoardPresenter( this );
+
+		_bbEnabled = _bbSelected = 0L;
+		repaint();
+		}
+
+	/**
+	 * Enables squares.
+	 *
+	 * @param bbEnabled
+	 * 	Bitboard of squares to enable.
+	 */
+	@Override
+	public void setEnabled( long bbEnabled )
+		{
+		if (bbEnabled != _bbEnabled)
+			{
+			_bbEnabled = bbEnabled;
+			repaint();
+			}
+		}
+
+	/**
+	 * Selects squares.
+	 *
+	 * @param bbSelected
+	 * 	Bitboard of squares to select.
+	 */
+	@Override
+	public void setSelection( long bbSelected )
+		{
+		if (bbSelected != _bbSelected)
+			{
+			_bbSelected = bbSelected;
+			repaint();
+			}
+		}
 	//  -----------------------------------------------------------------------
 	//	INTERFACE: Observer
 	//	-----------------------------------------------------------------------
@@ -169,6 +211,7 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 		*/
 		repaint();
 		}
+
 	//  -----------------------------------------------------------------------
 	//	IMPLEMENTATION
 	//	-----------------------------------------------------------------------
@@ -183,12 +226,20 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 		final int iSqDim = Math.max( MIN_SQ_DIM, Math.min( iHeight, iWidth ) / 9 );
 
 		if (iSqDim == _iSqDim)
-			return;
+			{
+			Rectangle rOuter = new Rectangle( (iSqDim * 9), (iSqDim * 9) );
+			GfxUtil.centerRectangle( rOuter, getBounds() );
 
-		// s_log.debug( "BoardView => square size is {} pixels.", iSqDim );
+			if (rOuter.equals( _rOuter ))
+				return;
+			}
+		else
+			{
+			_iSqDim = iSqDim;
+			_imgPieces = null;
 
-		_iSqDim = iSqDim;
-		_imgPieces = null;
+			s_log.debug( "BoardView => square size is {} pixels.", iSqDim );
+			}
 
 		_rOuter.setSize( (iSqDim * 9), (iSqDim * 9) );
 		GfxUtil.centerRectangle( _rOuter, getBounds() );
@@ -207,6 +258,29 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 			_rSq[ iSq ].y = iY + (iSqDim * getDisplayRank( Square.getRank( iSq ) ));
 			_rSq[ iSq ].width = _rSq[ iSq ].height = iSqDim;
 			}
+		}
+
+	/**
+	 * Creates all of the UI elements.
+	 */
+	private void createUI()
+		{
+		setMaximumSize( new Dimension( GfxUtil.MARGIN_THICK + (MAX_SQ_DIM * 9),
+									   GfxUtil.MARGIN_THICK + (MAX_SQ_DIM * 9) ) );
+		setMinimumSize( new Dimension( GfxUtil.MARGIN_THICK + (MIN_SQ_DIM * 9),
+									   GfxUtil.MARGIN_THICK + (MIN_SQ_DIM * 9) ) );
+		setPreferredSize( new Dimension( GfxUtil.MARGIN_THICK + (DEFAULT_SQ_DIM * 9),
+										 GfxUtil.MARGIN_THICK + (DEFAULT_SQ_DIM * 9) ) );
+		//
+		//	Context Menu
+		//
+		JPopupMenu popMenu = new JPopupMenu();
+
+		popMenu.add( cmdToggleOnTop.createMenuItem() );
+		popMenu.add( cmdShowLabels.createCheckedMenuItem() );
+		popMenu.add( cmdShowLegalMoves.createCheckedMenuItem() );
+
+		setComponentPopupMenu( popMenu );
 		}
 
 	/**
@@ -234,20 +308,11 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 		final Color clrLightSq = theme.getLightSquareColor();
 
 		for ( int iSq = 0; iSq < 64; ++iSq )
-			{
-			final Rectangle rSq = new Rectangle( _rSq[ iSq ] );
-
-			if (!rClip.intersects( rSq ))
-				continue;    // don't draw obscured squares
-
-			gfx.setColor( Square.isDark( iSq ) ? clrDarkSq : clrLightSq );
-			gfx.fillRect( rSq.x, rSq.y, rSq.width, rSq.height );
-
-			rSq.grow( -GfxUtil.MARGIN_THIN, -GfxUtil.MARGIN_THIN );
-
-			gfx.setColor( Color.gray );
-			gfx.drawString( Square.toString( iSq ), (int) rSq.getMinX(), (int) rSq.getMaxY() );
-			}
+			if (rClip.intersects( _rSq[ iSq ] ))
+				{
+				gfx.setColor( Square.isDark( iSq ) ? clrDarkSq : clrLightSq );
+				gfx.fillRect( _rSq[ iSq ].x, _rSq[ iSq ].y, _iSqDim, _iSqDim );
+				}
 
 		gfx.setColor( Color.black );
 		gfx.drawRect( _rInner.x, _rInner.y, _rInner.width, _rInner.height );
@@ -281,14 +346,13 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 			return;
 
 		final Font fontOld = gfx.getFont();
-		final Font font = theme.getLabelFont().deriveFont( fFontSize );
 
 		try
 			{
 			final Rectangle rFile = new Rectangle( _iSqDim, iHalfSq );
 			final Rectangle rRank = new Rectangle( iHalfSq, _iSqDim );
 
-			gfx.setFont( font );
+			gfx.setFont( theme.getLabelFont().deriveFont( fFontSize ) );
 			gfx.setColor( theme.getLabelColor() );
 
 			for ( int idx = 0; idx < 8; ++idx )
@@ -458,26 +522,6 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 		}
 
 	/**
-	 * Creates all of the UI elements.
-	 */
-	private void initGUI()
-		{
-		setMinimumSize( new Dimension( GfxUtil.MARGIN_THICK + (MIN_SQ_DIM * 9),
-									   GfxUtil.MARGIN_THICK + (MIN_SQ_DIM * 9) ) );
-		setPreferredSize( new Dimension( GfxUtil.MARGIN_THICK + (DEFAULT_SQ_DIM * 9),
-										 GfxUtil.MARGIN_THICK + (DEFAULT_SQ_DIM * 9) ) );
-		//
-		//	Context Menu
-		//
-		JPopupMenu popMenu = new JPopupMenu();
-
-		popMenu.add( new ToggleOnTopCommand().createMenuItem( false ) );
-		popMenu.add( _cmdShowLabels.createMenuItem( true ) );
-
-		setComponentPopupMenu( popMenu );
-		}
-
-	/**
 	 * Converts a file to it's display file, which respects the "Black on Top" flag.
 	 *
 	 * @param iFile
@@ -504,114 +548,158 @@ public class BoardView extends net.humbleprogrammer.e4.gui.controls.EnhancedPane
 		}
 
 	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: BlackOnTopCommand
+	//	COMMAND: BlackOnTopCommand
 	//	-----------------------------------------------------------------------
 
-	class BlackOnTopCommand extends Command
+	@SuppressWarnings( "unused" )
+	private final Command cmdBlackOnTop = new Command( Command.ID.BLACK_ON_TOP,
+													   "Black on Top",
+													   "Places the Black player at the top of the board." )
+	{
+	@Override
+	public void run()
 		{
-		public BlackOnTopCommand()
-			{
-			putValue( NAME, "Black Top" );
-			putValue( LONG_DESCRIPTION, "Places the Black player at the top of the board." );
-			}
+		s_log.debug( "cmdBlackOnTop" );
+		/*
+		**	CODE
+		*/
+		_bBlackOnTop = true;
+		_iSqDim = -1;    // force recalculation of all the squares.
 
-		@Override
-		public void run()
-			{
-			s_log.debug( "BlackOnTopCommand" );
-			/*
-			**  CODE
-            */
-			_bBlackOnTop = true;
-			_iSqDim = -1;    // force recalculation of all the squares.
-
-			repaint();
-			}
+		repaint();
 		}
+	};
 
 	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: ToggleOnTopCommand
+	//	COMMAND: ToggleOnTopCommand
 	//	-----------------------------------------------------------------------
 
-	class ToggleOnTopCommand extends Command
+	private final Command cmdToggleOnTop = new Command( Command.ID.TOGGLE_ON_TOP,
+														"Flip Board",
+														"Switches the top and bottom players.",
+														"FlipBoard-16x16.png" )
+	{
+	@Override
+	public void run()
 		{
-		public ToggleOnTopCommand()
-			{
-			putValue( NAME, "Flip Board" );
-			putValue( LONG_DESCRIPTION, "Flips the board." );
+		s_log.debug( "cmdToggleOnTop" );
+		/*
+		**	CODE
+		*/
+		_bBlackOnTop = !_bBlackOnTop;
+		_iSqDim = -1;    // force recalculation of all the squares.
 
-			Image img = ResourceManager.getImage( "FlipBoard-16x16.png" );
-			if (img != null)
-				putValue( SMALL_ICON, new ImageIcon( img ) );
-			}
-
-		@Override
-		public void run()
-			{
-			s_log.debug( "ToggleOnTopCommand" );
-			/*
-			**  CODE
-            */
-			_bBlackOnTop = !_bBlackOnTop;
-			_iSqDim = -1;    // force recalculation of all the squares.
-
-			repaint();
-			}
+		repaint();
 		}
+	};
 
 	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: WhiteOnTopCommand
+	//	COMMAND: WhiteOnTopCommand
 	//	-----------------------------------------------------------------------
 
-	class WhiteOnTopCommand extends Command
+	@SuppressWarnings( "unused" )
+	private final Command cmdWhiteOnTop = new Command( Command.ID.WHITE_ON_TOP,
+													   "White on Top",
+													   "Places the White player at the top of the board." )
+	{
+	@Override
+	public void run()
 		{
-		public WhiteOnTopCommand()
-			{
-			putValue( NAME, "White Top" );
-			putValue( LONG_DESCRIPTION, "Places the White player at the top of the board." );
-			}
+		s_log.debug( "cmdWhiteOnTop" );
+		/*
+		**	CODE
+		*/
+		_bBlackOnTop = false;
+		_iSqDim = -1;    // force recalculation of all the squares.
 
-		@Override
-		public void run()
-			{
-			s_log.debug( "WhiteOnTopCommand" );
-			/*
-			**  CODE
-            */
-			_bBlackOnTop = false;
-			_iSqDim = -1;    // force recalculation of all the squares.
-
-			repaint();
-			}
+		repaint();
 		}
+	};
 
 	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: ShowLabelsCommand
+	//	COMMAND: ShowLabelsCommand
 	//	-----------------------------------------------------------------------
 
-	private final ShowLabelsCommand _cmdShowLabels = new ShowLabelsCommand();
-
-	class ShowLabelsCommand extends Command
+	private final Command cmdShowLabels = new Command( null,
+													   "Show Labels",
+													   "Shows or hides the rank & file labels." )
+	{
+	@Override
+	public void run()
 		{
-		public ShowLabelsCommand()
-			{
-			putValue( NAME, "Show Labels" );
-			putValue( LONG_DESCRIPTION, "Shows or hides the rank/file labels." );
-			setChecked( _bShowLabels );
-			}
+		s_log.debug( "cmdShowLabels" );
+		/*
+		**	CODE
+		*/
+		_bShowLabels = !_bShowLabels;
 
-		@Override
-		public void run()
-			{
-			s_log.debug( "ShowLabelsCommand" );
-			/*
-			**  CODE
-            */
-			_bShowLabels = !_bShowLabels;
-
-			repaint();
-			setChecked( _bShowLabels );
-			}
-
+		repaint();
+		update();
 		}
+
+	@Override
+	public void update()
+		{
+		setChecked( _bShowLabels );
+		}
+	};
+
+	//  -----------------------------------------------------------------------
+	//	COMMAND: ShowLegalMovesCommand
+	//	-----------------------------------------------------------------------
+
+	private final Command cmdShowLegalMoves = new Command( null,
+														   "Show Legal Moves",
+														   "Shows all legal moves for a selected piece." )
+	{
+	@Override
+	public void run()
+		{
+		s_log.debug( "cmdSHowLegalMoves" );
+		/*
+		**	CODE
+		*/
+		_bShowLegalMoves = !_bShowLegalMoves;
+
+		repaint();
+		update();
+		}
+
+	@Override
+	public void update()
+		{
+		setChecked( _bShowLegalMoves );
+		}
+	};
 	}	/* end of class BoardView */
+/*****************************************************************************
+ **
+ ** @author Lee Neuse (coder@humbleprogrammer.net)
+ **
+ **	---------------------------- [License] ----------------------------------
+ **	This work is licensed under the Creative Commons Attribution-NonCommercial-
+ **	ShareAlike 3.0 Unported License. To view a copy of this license, visit
+ **				http://creativecommons.org/licenses/by-nc-sa/3.0/
+ **	or send a letter to Creative Commons, 444 Castro Street Suite 900, Mountain
+ **	View, California, 94041, USA.
+ **	--------------------- [Disclaimer of Warranty] --------------------------
+ **	There is no warranty for the program, to the extent permitted by applicable
+ **	law.  Except when otherwise stated in writing the copyright holders and/or
+ **	other parties provide the program “as is” without warranty of any kind,
+ **	either expressed or implied, including, but not limited to, the implied
+ **	warranties of merchantability and fitness for a particular purpose.  The
+ **	entire risk as to the quality and performance of the program is with you.
+ **	Should the program prove defective, you assume the cost of all necessary
+ **	servicing, repair or correction.
+ **	-------------------- [Limitation of Liability] --------------------------
+ **	In no event unless required by applicable law or agreed to in writing will
+ **	any copyright holder, or any other party who modifies and/or conveys the
+ **	program as permitted above, be liable to you for damages, including any
+ **	general, special, incidental or consequential damages arising out of the
+ **	use or inability to use the program (including but not limited to loss of
+ **	data or data being rendered inaccurate or losses sustained by you or third
+ **	parties or a failure of the program to operate with any other programs),
+ **	even if such holder or other party has been advised of the possibility of
+ **	such damages.
+ **
+ ******************************************************************************/

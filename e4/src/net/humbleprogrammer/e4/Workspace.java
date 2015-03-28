@@ -1,7 +1,216 @@
 /*****************************************************************************
  **
- ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
+ **
+ ******************************************************************************/
+package net.humbleprogrammer.e4;
+
+import java.awt.event.KeyEvent;
+import java.util.Random;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import net.humbleprogrammer.e4.documents.GameDocument;
+import net.humbleprogrammer.e4.gui.dialogs.DialogManager;
+import net.humbleprogrammer.e4.gui.helpers.Command;
+import net.humbleprogrammer.e4.gui.players.PlayerHuman;
+import net.humbleprogrammer.e4.interfaces.*;
+import net.humbleprogrammer.maxx.Parser;
+
+import static net.humbleprogrammer.maxx.Constants.*;
+
+public class Workspace
+	{
+
+	//  -----------------------------------------------------------------------
+	//	STATIC DECLARATIONS
+	//	-----------------------------------------------------------------------
+
+	/** Logger */
+	private static final Logger s_log = LoggerFactory.getLogger( Workspace.class );
+
+	//  -----------------------------------------------------------------------
+	//	DECLARATIONS
+	//	-----------------------------------------------------------------------
+
+	/** Players */
+	private final IPlayer[] _players = new IPlayer[ 2 ];
+
+	/** Current document. */
+	private GameDocument _document;
+	/** Moving player. */
+	private IPlayer      _playerMoving;
+
+	//  -----------------------------------------------------------------------
+	//	CTOR
+	//	-----------------------------------------------------------------------
+
+	/**
+	 * Default CTOR.
+	 */
+	Workspace()
+		{
+		s_log.debug( "Workspace()" );
+		/*
+		**	EMPTY CTOR
+		*/
+		}
+
+	//  -----------------------------------------------------------------------
+	//	PUBLIC METHODS
+	//	-----------------------------------------------------------------------
+
+	public void dispose()
+		{
+		s_log.debug( "dispose()" );
+		/*
+		**	STUB METHOD
+		*/
+		}
+
+	//  -----------------------------------------------------------------------
+	//	IMPLEMENTATION
+	//	-----------------------------------------------------------------------
+
+	/**
+	 * Starts a new game.
+	 */
+	private void startNewGame()
+		{
+		IBoardPresenter presenter = App.getFrame().getBoardPresenter();
+
+		if (_document != null)
+			_document.deleteObserver( presenter );
+
+		_document = new GameDocument();
+		_document.addObserver( presenter );
+
+		_players[ WHITE ] = new PlayerHuman( WHITE, _document.getPosition() );
+		_players[ BLACK ] = new PlayerHuman( BLACK, _document.getPosition() );
+		//
+		//	Get the moving player and connect it to the board.
+		//
+		_playerMoving = _players[ _document.getPosition().getMovingPlayer() ];
+		}
+
+	//  -----------------------------------------------------------------------
+	//	COMMAND: QuickGameWhite
+	//	-----------------------------------------------------------------------
+
+	private final Command cmdQuickGameWhite = new Command( Command.ID.QUICK_GAME_WHITE,
+														   "Play White",
+														   "Play white against the default engine.",
+														   "White-16x16.png",
+														   KeyEvent.VK_W )
+	{
+	@Override
+	public void run()
+		{
+		s_log.debug( "cmdQuickGameWhite" );
+		/*
+		**	CODE
+		*/
+		startNewGame();
+		//
+		//	Set the board so that white is at the bottom.
+		//
+		Command.execute( ID.BLACK_ON_TOP );
+		cmdRequestMove.run();
+		}
+	};
+
+	//  -----------------------------------------------------------------------
+	//	COMMAND: QuickGameBlack
+	//	-----------------------------------------------------------------------
+
+	private final Command cmdQuickGameBlack = new Command( Command.ID.QUICK_GAME_BLACK,
+														   "Play Black",
+														   "Play black against the default engine.",
+														   "Black-16x16.png",
+														   KeyEvent.VK_B )
+	{
+	@Override
+	public void run()
+		{
+		s_log.debug( "cmdQuickGameBlack" );
+		/*
+		**	CODE
+		*/
+		startNewGame();
+		//
+		//	Set the board so that black is at the bottom.
+		//
+		Command.execute( ID.WHITE_ON_TOP );
+		cmdRequestMove.run();
+		}
+	};
+
+	//  -----------------------------------------------------------------------
+	//	COMMAND: QuickGameRandom
+	//	-----------------------------------------------------------------------
+	@SuppressWarnings( "unused" )
+	private final Command cmdQuickGameRandom = new Command( Command.ID.QUICK_GAME_RANDOM,
+															"Play Random",
+															"Play a random side against the default engine.",
+															"Random-16x16.png",
+															KeyEvent.VK_R )
+	{
+	@Override
+	public void run()
+		{
+		s_log.debug( "cmdQuickGameRandom" );
+		/*
+		**	CODE
+		*/
+		Random rnd = new Random();
+		int pc = rnd.nextBoolean() ? WHITE : BLACK;
+		//
+		//	Tell the user which side they're playing.
+		//
+		String strMessage = String.format( "You will be playing %s this game.",
+										   Parser.playerToString( pc ) );
+
+		DialogManager.advise( strMessage );
+		//
+		//	Now set the board.
+		//
+		if (pc == WHITE)
+			cmdQuickGameWhite.run();
+		else
+			cmdQuickGameBlack.run();
+		}
+	};
+
+	//  -----------------------------------------------------------------------
+	//	Command: RequestMove
+	//	-----------------------------------------------------------------------
+
+	private final Command cmdRequestMove = new Command( Command.ID.REQUEST_MOVE,
+														"Move Now" )
+	{
+	@Override
+	public void run()
+		{
+		s_log.debug( "cmdRequestMove" );
+		/*
+		**	CODE
+		*/
+		if (_playerMoving instanceof IBoardController)
+			{
+			App.getFrame()
+			   .getBoardPresenter()
+			   .setBoardController( (IBoardController) _playerMoving );
+			}
+
+		_playerMoving.startThinking();
+		}
+	};
+
+	}   /* end of class Workspace */
+/*****************************************************************************
+ **
+ ** @author Lee Neuse (coder@humbleprogrammer.net)
  **
  **	---------------------------- [License] ----------------------------------
  **	This work is licensed under the Creative Commons Attribution-NonCommercial-
@@ -30,235 +239,3 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.e4;
-
-import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.util.*;
-import javax.swing.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import net.humbleprogrammer.e4.documents.GameDocument;
-import net.humbleprogrammer.e4.gui.dialogs.DialogManager;
-import net.humbleprogrammer.e4.gui.helpers.Command;
-import net.humbleprogrammer.e4.gui.helpers.ResourceManager;
-import net.humbleprogrammer.e4.interfaces.IBoardController;
-import net.humbleprogrammer.humble.DBC;
-import net.humbleprogrammer.maxx.Board;
-import net.humbleprogrammer.maxx.Parser;
-
-import static net.humbleprogrammer.maxx.Constants.*;
-
-public class Workspace extends Observable implements IBoardController
-	{
-
-	//  -----------------------------------------------------------------------
-	//	STATIC DECLARATIONS
-	//	-----------------------------------------------------------------------
-
-	/** Logger */
-	private static final Logger s_log = LoggerFactory.getLogger( Workspace.class );
-
-	//  -----------------------------------------------------------------------
-	//	DECLARATIONS
-	//	-----------------------------------------------------------------------
-
-	/** Current document. */
-	private GameDocument _document = new GameDocument();
-
-	//  -----------------------------------------------------------------------
-	//	CTOR
-	//	-----------------------------------------------------------------------
-
-	Workspace()
-		{
-		s_log.debug( "Workspace()" );
-		/*
-		**	CODE
-		*/
-		App.addCommand( Command.ID.QUICK_GAME_WHITE, new QuickGameWhiteCommand() );
-		App.addCommand( Command.ID.QUICK_GAME_BLACK, new QuickGameBlackCommand() );
-		App.addCommand( Command.ID.QUICK_GAME_RANDOM, new QuickGameRandomCommand() );
-		}
-
-	//  -----------------------------------------------------------------------
-	//	PUBLIC METHODS
-	//	-----------------------------------------------------------------------
-
-	public void dispose()
-		{
-		s_log.debug( "dispose()" );
-		/*
-		**	STUB METHOD
-		*/
-		}
-	//  -----------------------------------------------------------------------
-	//	INTERFACE: IBoardController
-	//	-----------------------------------------------------------------------
-
-	/**
-	 * Gets the current position.
-	 *
-	 * @return Board object.
-	 */
-	@Override
-	public Board getPosition()
-		{
-		return _document.getPosition();
-		}
-
-	/**
-	 * Adds an observer.
-	 *
-	 * @param observer
-	 * 	Observer to add.
-	 */
-	@Override
-	public void registerObserver( Observer observer )
-		{
-		DBC.requireNotNull( observer, "Observer" );
-		/*
-		**	CODE
-		*/
-		addObserver( observer );
-		}
-
-	/**
-	 * Deletes an observer.
-	 *
-	 * @param observer
-	 * 	Observer object to delete.
-	 */
-	public void unregisterObserver( Observer observer )
-		{
-		deleteObserver( observer );
-		}
-
-	//  -----------------------------------------------------------------------
-	//	IMPLEMENTATION
-	//	-----------------------------------------------------------------------
-
-
-	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: QuickGameWhiteCommand
-	//	-----------------------------------------------------------------------
-
-	public class QuickGameWhiteCommand extends Command
-		{
-		public QuickGameWhiteCommand()
-			{
-			putValue( NAME, "Play White" );
-			putValue( LONG_DESCRIPTION, "Play white against the default engine." );
-			putValue( MNEMONIC_KEY, KeyEvent.VK_W );
-
-			Image img = ResourceManager.getImage( "White-16x16.png" );
-			if (img != null)
-				putValue( SMALL_ICON, new ImageIcon( img ) );
-			}
-
-		@Override
-		public void run()
-			{
-			s_log.debug( "QuickGameWhiteCommand" );
-			/*
-			**  CODE
-            */
-			Command cmd = App.getCommand( ID.WHITE_ON_TOP );
-
-			_document = new GameDocument();
-
-			if (cmd != null)
-				cmd.run();
-			//
-			//	And tell the world.
-			//
-			setChanged();
-			notifyObservers();
-			}
-		}
-
-	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: QuickGameBlackCommand
-	//	-----------------------------------------------------------------------
-
-	public class QuickGameBlackCommand extends Command
-		{
-		public QuickGameBlackCommand()
-			{
-			putValue( NAME, "Play Black" );
-			putValue( LONG_DESCRIPTION, "Play black against the default engine." );
-			putValue( MNEMONIC_KEY, KeyEvent.VK_B );
-
-			Image img = ResourceManager.getImage( "Black-16x16.png" );
-			if (img != null)
-				putValue( SMALL_ICON, new ImageIcon( img ) );
-			}
-
-		@Override
-		public void run()
-			{
-			s_log.debug( "QuickGameBlackCommand" );
-			/*
-			**  CODE
-            */
-			Command cmd = App.getCommand( ID.BLACK_ON_TOP );
-
-			_document = new GameDocument();
-
-			if (cmd != null)
-				cmd.run();
-			//
-			//	And tell the world.
-			//
-			setChanged();
-			notifyObservers();
-			}
-		}
-
-	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: QuickGameRandomCommand
-	//	-----------------------------------------------------------------------
-
-	public class QuickGameRandomCommand extends Command
-		{
-		public QuickGameRandomCommand()
-			{
-			putValue( NAME, "Play Random" );
-			putValue( LONG_DESCRIPTION, "Play a random side against the default engine." );
-			putValue( MNEMONIC_KEY, KeyEvent.VK_W );
-
-			Image img = ResourceManager.getImage( "Random-16x16.png" );
-			if (img != null)
-				putValue( SMALL_ICON, new ImageIcon( img ) );
-			}
-
-		@Override
-		public void run()
-			{
-			s_log.debug( "QuickGameRandomCommand" );
-			/*
-			**  CODE
-            */
-			Random rnd = new Random();
-			int pc = rnd.nextBoolean() ? WHITE : BLACK;
-			//
-			//	Tell the user which side they're playing.
-			//
-			String strMessage = String.format( "You will be playing %s this game.",
-											   Parser.playerToString( pc ) );
-
-			DialogManager.advise( strMessage );
-			//
-			//	Now set the board.
-			//
-			Command cmd = App.getCommand( (pc == WHITE)
-										  ? ID.BLACK_ON_TOP
-										  : ID.WHITE_ON_TOP );
-
-			if (cmd != null)
-				cmd.run();
-			}
-		}
-	}   /* end of class Workspace */

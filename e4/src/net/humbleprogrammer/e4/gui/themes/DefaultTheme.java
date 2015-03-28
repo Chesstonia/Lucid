@@ -1,7 +1,90 @@
 /*****************************************************************************
  **
- ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
+ **
+ ******************************************************************************/
+package net.humbleprogrammer.e4.gui.themes;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+
+import net.humbleprogrammer.e4.gui.helpers.ResourceManager;
+import net.humbleprogrammer.e4.interfaces.ITheme;
+import net.humbleprogrammer.humble.DBC;
+import net.humbleprogrammer.humble.GfxUtil;
+
+//
+//	Named colors: http://www.imagemagick.org/script/color.php
+//
+public class DefaultTheme implements ITheme
+	{
+	private static final Color s_clrDarkSq  = new Color( 0x556B2F );    // dark olive green
+	private static final Color s_clrLabels  = new Color( 0x333333 );    // grey 20
+	private static final Color s_clrLightSq = new Color( 0xFFF8DC );    // cornsilk
+
+	/** Default piece set. */
+	private static BufferedImage s_imgPieces;
+	/** Default label font. */
+	private static Font          s_fontLabels;
+
+	@Override
+	public Color getDarkSquareColor()
+		{
+		return s_clrDarkSq;
+		}
+
+	@Override
+	public Color getLabelColor()
+		{
+		return s_clrLabels;
+		}
+
+	/**
+	 * Gest the font to use to draw rank/file labels.
+	 *
+	 * @return Font object.
+	 */
+	@Override
+	public Font getLabelFont()
+		{
+		if (s_fontLabels == null)
+			s_fontLabels = new Font( "Segoe UI", Font.PLAIN, 10 );
+
+		return s_fontLabels;
+		}
+
+	@Override
+	public Color getLightSquareColor()
+		{
+		return s_clrLightSq;
+		}
+
+	/**
+	 * Gets the piece set, scaled to a square size.
+	 *
+	 * @param iSqDim
+	 * 	Desired square size, in pixels.
+	 *
+	 * @return Scaled piece set image.
+	 */
+	@Override
+	public Image getPieceSet( int iSqDim )
+		{
+		DBC.requireGreaterThanZero( iSqDim, "Square size" );
+		/*
+		**	CODE
+		*/
+		if (s_imgPieces == null)
+			s_imgPieces = ResourceManager.getImage( "PiecesUSCF-96x96.png" );
+
+		return GfxUtil.scaleImage( s_imgPieces,
+								   new Dimension( (iSqDim * 6), (iSqDim * 2) ), true );
+		}
+
+	}	/* end of class DefaultTheme */
+/*****************************************************************************
+ **
+ ** @author Lee Neuse (coder@humbleprogrammer.net)
  **
  **	---------------------------- [License] ----------------------------------
  **	This work is licensed under the Creative Commons Attribution-NonCommercial-
@@ -30,90 +113,3 @@
  **	such damages.
  **
  ******************************************************************************/
-package net.humbleprogrammer.e4.gui.themes;
-
-import java.awt.*;
-
-import net.humbleprogrammer.e4.gui.helpers.ResourceManager;
-import net.humbleprogrammer.humble.DBC;
-
-import static net.humbleprogrammer.maxx.Constants.*;
-
-//
-//	Named colors: http://www.imagemagick.org/script/color.php
-//
-public class DefaultTheme implements ITheme
-	{
-	private static final Color s_clrDarkSq  = new Color( 0x556B2F );    // dark olive green
-	private static final Color s_clrLabels  = new Color( 0x333333 );    // grey 20
-	private static final Color s_clrLightSq = new Color( 0xFFF8DC );    // cornsilk
-	/** Default piece set. */
-	private static final Image s_imgPiecesLarge;
-	/** Default piece set. */
-	private static final Image s_imgPiecesSmall;
-
-	/** Default label font. */
-	private static Font s_fontLabels;
-
-	static
-		{
-		s_imgPiecesLarge = ResourceManager.getImage( "PiecesUSCF-96x96.png" );
-		s_imgPiecesSmall = ResourceManager.getImage( "PiecesUSCF-32x32.png" );
-		}
-
-	@Override
-	public Color getDarkSquareColor()
-		{
-		return s_clrDarkSq;
-		}
-
-	@Override
-	public Color getLabelColor()
-		{
-		return s_clrLabels;
-		}
-
-	/**
-	 * Gest the font to use to draw rank/file labels.
-	 *
-	 * @return Font object.
-	 */
-	@Override
-	public Font getLabelFont()
-		{
-		if (s_fontLabels == null)
-			s_fontLabels = new Font( "Segoe UI", Font.BOLD, 12 );
-
-		return s_fontLabels;
-		}
-
-	@Override
-	public Color getLightSquareColor()
-		{
-		return s_clrLightSq;
-		}
-
-	/**
-	 * Gets the piece set, scaled to a square size.
-	 *
-	 * @param iSqDim
-	 * 	Desired square size, in pixels.
-	 *
-	 * @return Scaled piece set image.
-	 */
-	@Override
-	public Image getPieceSet( int iSqDim )
-		{
-		DBC.requireGreaterThanZero( iSqDim, "Square size" );
-		/*
-		**	CODE
-		*/
-		int iHeight = iSqDim * 2;
-		int iWidth = iSqDim * 6;
-
-		return (iSqDim >= (96 / 2))
-			   ? s_imgPiecesLarge.getScaledInstance( iWidth, iHeight, Image.SCALE_SMOOTH )
-			   : s_imgPiecesSmall.getScaledInstance( iWidth, iHeight, Image.SCALE_SMOOTH );
-		}
-
-	}
