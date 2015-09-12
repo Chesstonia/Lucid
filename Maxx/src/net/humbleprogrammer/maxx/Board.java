@@ -562,18 +562,6 @@ public class Board
 		}
 
 	/**
-	 * Gets all legal moves for the current position.
-	 *
-	 * @return {@link MoveList} object.
-	 */
-	public MoveList getLegalMoves()
-		{
-		MoveList moves = new MoveList( this );
-		moves.generate();
-		return moves;
-		}
-
-	/**
 	 * Gets the current move number.
 	 *
 	 * @return Move number.

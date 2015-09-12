@@ -1,34 +1,25 @@
 /*****************************************************************************
- **
- ** @author Lee Neuse (coder@humbleprogrammer.net)
- ** @since 1.0
- **
- **	---------------------------- [License] ----------------------------------
- **	This work is licensed under the Creative Commons Attribution-NonCommercial-
- **	ShareAlike 3.0 Unported License. To view a copy of this license, visit
- **				http://creativecommons.org/licenses/by-nc-sa/3.0/
- **	or send a letter to Creative Commons, 444 Castro Street Suite 900, Mountain
- **	View, California, 94041, USA.
- **	--------------------- [Disclaimer of Warranty] --------------------------
- **	There is no warranty for the program, to the extent permitted by applicable
- **	law.  Except when otherwise stated in writing the copyright holders and/or
- **	other parties provide the program “as is” without warranty of any kind,
- **	either expressed or implied, including, but not limited to, the implied
- **	warranties of merchantability and fitness for a particular purpose.  The
- **	entire risk as to the quality and performance of the program is with you.
- **	Should the program prove defective, you assume the cost of all necessary
- **	servicing, repair or correction.
- **	-------------------- [Limitation of Liability] --------------------------
- **	In no event unless required by applicable law or agreed to in writing will
- **	any copyright holder, or any other party who modifies and/or conveys the
- **	program as permitted above, be liable to you for damages, including any
- **	general, special, incidental or consequential damages arising out of the
- **	use or inability to use the program (including but not limited to loss of
- **	data or data being rendered inaccurate or losses sustained by you or third
- **	parties or a failure of the program to operate with any other programs),
- **	even if such holder or other party has been advised of the possibility of
- **	such damages.
- **
+ * * * @author Lee Neuse (coder@humbleprogrammer.net) * @since 1.0 *
+ * *	---------------------------- [License] ---------------------------------- *	This work is
+ * licensed under the Creative Commons Attribution-NonCommercial- *	ShareAlike 3.0 Unported
+ * License. To view a copy of this license, visit *				http://creativecommons.org/licenses/by-nc-sa/3.0/
+ * *	or send a letter to Creative Commons, 444 Castro Street Suite 900, Mountain *	View,
+ * California, 94041, USA. *	--------------------- [Disclaimer of Warranty]
+ * -------------------------- *	There is no warranty for the program, to the extent permitted by
+ * applicable *	law.  Except when otherwise stated in writing the copyright holders and/or
+ * *	other parties provide the program “as is” without warranty of any kind, *	either expressed
+ * or implied, including, but not limited to, the implied *	warranties of merchantability and
+ * fitness for a particular purpose.  The *	entire risk as to the quality and performance of the
+ * program is with you. *	Should the program prove defective, you assume the cost of all
+ * necessary *	servicing, repair or correction. *	-------------------- [Limitation of Liability]
+ * -------------------------- *	In no event unless required by applicable law or agreed to in
+ * writing will *	any copyright holder, or any other party who modifies and/or conveys the
+ * *	program as permitted above, be liable to you for damages, including any *	general, special,
+ * incidental or consequential damages arising out of the *	use or inability to use the program
+ * (including but not limited to loss of *	data or data being rendered inaccurate or losses
+ * sustained by you or third *	parties or a failure of the program to operate with any other
+ * programs), *	even if such holder or other party has been advised of the possibility of *	such
+ * damages. *
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
@@ -371,7 +362,7 @@ public class Bitboards
 		if ((iSq & ~0x3F) != 0 || (all[ iSq ] & map[ player ]) == 0L)
 			return 0L;
 		/*
-        **  CODE
+		**  CODE
         */
 		long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
 		long bbPawns = (player == WHITE)
@@ -382,8 +373,32 @@ public class Bitboards
 		return (bbPawns |
 				(king[ iSq ] & map[ MAP_W_KING + player ]) |
 				(knight[ iSq ] & map[ MAP_W_KNIGHT + player ]) |
-				(getBishopAttacks( iSq, bbAll ) & (map[ MAP_W_BISHOP + player ] | bbQueens)) |
-				(getRookAttacks( iSq, bbAll ) & (map[ MAP_W_ROOK + player ] | bbQueens)));
+				(getDiagonalMovesFrom( iSq, bbAll ) &
+				 (map[ MAP_W_BISHOP + player ] | bbQueens)) |
+				(getLateralMovesFrom( iSq, bbAll ) & (map[ MAP_W_ROOK + player ] | bbQueens)));
+		}
+
+	/**
+	 * Computes all diagonally-reachable squares from a given square.
+	 *
+	 * @param iSq
+	 * 	Origin square, in 8x8 format.
+	 * @param bbAttackers
+	 * 	Bitboard of potential attackers.
+	 * @param bbAll
+	 * 	Bitboard of all pieces on the board.
+	 *
+	 * @return Bitboard of all squares that can reach the origin square.
+	 */
+	static long getDiagonalAttackers( int iSq, long bbAttackers, long bbAll )
+		{
+		if ((iSq & ~0x3F) != 0 || (bbAttackers &= bishop[ iSq ]) == 0L) return 0L;
+		//	-----------------------------------------------------------------
+		int idx = magicTransform( bbAll & bishopMask[ iSq ],
+								  bishopMagicNumber[ iSq ],
+								  bishopShiftBits[ iSq ] );
+
+		return bbAttackers & bishopMagic[ iSq ][ idx ];
 		}
 
 	/**
@@ -396,18 +411,41 @@ public class Bitboards
 	 *
 	 * @return Bitboard of all squares that can reach the origin square.
 	 */
-	static long getBishopAttacks( int iSq, long bbAll )
+	static long getDiagonalMovesFrom( int iSq, long bbAll )
 		{
 		if ((iSq & ~0x3F) != 0)
 			return 0L;
-        /*
-        **  CODE
+		/*
+		**  CODE
         */
 		int idx = magicTransform( bbAll & bishopMask[ iSq ],
 								  bishopMagicNumber[ iSq ],
 								  bishopShiftBits[ iSq ] );
 
 		return bishopMagic[ iSq ][ idx ];
+		}
+
+	/**
+	 * Computes all pieces that attack a square laterally.
+	 *
+	 * @param iSq
+	 * 	Origin square, in 8x8 format.
+	 * @param bbAttackers
+	 * 	Bitboard of potential attackers.
+	 * @param bbAll
+	 * 	Bitboard of all pieces on the board.
+	 *
+	 * @return Bitboard of all squares that can reach the origin square.
+	 */
+	static long getLateralAttackers( int iSq, long bbAttackers, long bbAll )
+		{
+		if ((iSq & ~0x3F) != 0 || (bbAttackers &= rook[ iSq ]) == 0L) return 0L;
+		//	-----------------------------------------------------------------
+		int idx = magicTransform( bbAll & rookMask[ iSq ],
+								  rookMagicNumber[ iSq ],
+								  rookShiftBits[ iSq ] );
+
+		return bbAttackers & rookMagic[ iSq ][ idx ];
 		}
 
 	/**
@@ -420,7 +458,7 @@ public class Bitboards
 	 *
 	 * @return Bitboard of all squares that can reach the origin square.
 	 */
-	static long getRookAttacks( int iSq, long bbAll )
+	static long getLateralMovesFrom( int iSq, long bbAll )
 		{
 		if ((iSq & ~0x3F) != 0)
 			return 0L;
@@ -443,7 +481,7 @@ public class Bitboards
 	 *
 	 * @return Bitboard of all squares that can reach the origin square.
 	 */
-	static long getQueenAttacks( int iSq, long bbAll )
+	static long getQueenMovesFrom( int iSq, long bbAll )
 		{
 		if ((iSq & ~0x3F) != 0)
 			return 0L;
@@ -532,13 +570,13 @@ public class Bitboards
 
 		//  Sliding attacks: rooks & queens.
 		long bbLateral = map[ MAP_B_QUEEN ] | map[ MAP_B_ROOK ];
-		if (bbLateral != 0L && (bbLateral & getRookAttacks( iSq, bbAll )) != 0L)
+		if (bbLateral != 0L && (bbLateral & getLateralMovesFrom( iSq, bbAll )) != 0L)
 			return true;
 
 		//  Sliding attacks: bishops & queens.
 		long bbDiagonal = map[ MAP_B_QUEEN ] | map[ MAP_B_BISHOP ];
 
-		return (bbDiagonal != 0 && (bbDiagonal & getBishopAttacks( iSq, bbAll )) != 0L);
+		return (bbDiagonal != 0 && (bbDiagonal & getDiagonalMovesFrom( iSq, bbAll )) != 0L);
 		}
 
 	/**
@@ -571,13 +609,13 @@ public class Bitboards
 
 		//  Sliding attacks: rooks & queens.
 		long bbLateral = map[ MAP_W_QUEEN ] | map[ MAP_W_ROOK ];
-		if (bbLateral != 0L && (bbLateral & getRookAttacks( iSq, bbAll )) != 0L)
+		if (bbLateral != 0L && (bbLateral & getLateralMovesFrom( iSq, bbAll )) != 0L)
 			return true;
 
 		//  Sliding attacks: bishops & queens.
 		long bbDiagonal = map[ MAP_W_QUEEN ] | map[ MAP_W_BISHOP ];
 
-		return (bbDiagonal != 0 && (bbDiagonal & getBishopAttacks( iSq, bbAll )) != 0L);
+		return (bbDiagonal != 0 && (bbDiagonal & getDiagonalMovesFrom( iSq, bbAll )) != 0L);
 		}
 
 	//  -----------------------------------------------------------------------

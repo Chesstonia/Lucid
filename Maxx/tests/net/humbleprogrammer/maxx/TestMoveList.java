@@ -56,7 +56,7 @@ public class TestMoveList extends TestBase
 	public void t_ctor_blank()
 		{
 		final Board bd = BoardFactory.createBlank();
-		final MoveList moves = new MoveList( bd ).generate();
+		final MoveList moves = new MoveList( bd );
 
 		assertEquals( 0, moves.size() );
 		assertFalse( moves.hasLegalMove() );
@@ -160,7 +160,7 @@ public class TestMoveList extends TestBase
 	 * Helper method to quickly count the avialble moves in a FEN position.
 	 *
 	 * @param strFEN
-	 *     Position as a Forsyth-Edwards Notation string.
+	 * 	Position as a Forsyth-Edwards Notation string.
 	 *
 	 * @return Count of moves available.
 	 */
@@ -169,7 +169,7 @@ public class TestMoveList extends TestBase
 		Board bd = BoardFactory.createFromFEN( strFEN );
 
 		return (bd != null)
-			   ? new MoveList( bd ).generate().size()
+			   ? new MoveList( bd ).size()
 			   : 0;
 		}
 
@@ -220,16 +220,14 @@ public class TestMoveList extends TestBase
 			assert bd != null;
 			assert (iDepth >= 0 && iDepth <= iMaxDepth);
 			assert (iMaxDepth >= 0 && iMaxDepth < Byte.MAX_VALUE);
-			/*
-            **  CODE
-            */
-			MoveList moves = new MoveList( bd ).generate();
+			//	-------------------------------------------------------------
+			MoveList moves = new MoveList( bd );
 
 			_lActual[ iDepth ] += moves.size();
 
 			if (moves.hasLegalMove() && iDepth < iMaxDepth)
 				{
-				Board bdUndo = new Board(bd);
+				Board bdUndo = new Board( bd );
 
 				for ( Move mv : moves )
 					{
@@ -244,7 +242,7 @@ public class TestMoveList extends TestBase
 			{
 			assert iMaxDepth >= 0;
 			assert (player == WHITE || player == BLACK);
-            /*
+			/*
             **  CODE
             */
 			int iDepth = Math.min( iMaxDepth, _lExpected.length );

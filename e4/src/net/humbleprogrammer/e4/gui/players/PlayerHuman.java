@@ -108,10 +108,8 @@ public class PlayerHuman implements IBoardController, IPlayer
 		s_log.debug( "{} start thinking.", Parser.playerToString( _player ) );
 
 		assert _presenter != null;
-		/*
-		**	CODE
-		*/
-		_movesLegal = new MoveList( _board ).generate();
+		//	-----------------------------------------------------------------
+		_movesLegal = new MoveList( _board );
 		}
 
 	}
