@@ -357,25 +357,18 @@ public class Bitboards
 	static long getAttackedBy( long[] map, int iSq, int player )
 		{
 		assert map != null;
-		assert (player == WHITE || player == BLACK);
-
-		if ((iSq & ~0x3F) != 0 || (all[ iSq ] & map[ player ]) == 0L)
-			return 0L;
-		/*
-		**  CODE
-        */
+		if ((iSq & ~0x3F) != 0 ) return 0L;
+		//	-----------------------------------------------------------------
 		long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
 		long bbPawns = (player == WHITE)
 					   ? (map[ MAP_W_PAWN ] & pawnDownwards[ iSq ])
 					   : (map[ MAP_B_PAWN ] & pawnUpwards[ iSq ]);
-		long bbQueens = map[ MAP_W_QUEEN + player ];
 
 		return (bbPawns |
 				(king[ iSq ] & map[ MAP_W_KING + player ]) |
 				(knight[ iSq ] & map[ MAP_W_KNIGHT + player ]) |
-				(getDiagonalMovesFrom( iSq, bbAll ) &
-				 (map[ MAP_W_BISHOP + player ] | bbQueens)) |
-				(getLateralMovesFrom( iSq, bbAll ) & (map[ MAP_W_ROOK + player ] | bbQueens)));
+				getDiagonalAttackers( iSq, (map[ MAP_W_BISHOP + player ] | map[ MAP_W_QUEEN + player ]), bbAll ) |
+				getLateralAttackers( iSq, (map[ MAP_W_ROOK + player ] | map[ MAP_W_QUEEN + player ]), bbAll ));
 		}
 
 	/**
@@ -413,11 +406,8 @@ public class Bitboards
 	 */
 	static long getDiagonalMovesFrom( int iSq, long bbAll )
 		{
-		if ((iSq & ~0x3F) != 0)
-			return 0L;
-		/*
-		**  CODE
-        */
+		if ((iSq & ~0x3F) != 0) return 0L;
+		//	-----------------------------------------------------------------
 		int idx = magicTransform( bbAll & bishopMask[ iSq ],
 								  bishopMagicNumber[ iSq ],
 								  bishopShiftBits[ iSq ] );
@@ -460,11 +450,8 @@ public class Bitboards
 	 */
 	static long getLateralMovesFrom( int iSq, long bbAll )
 		{
-		if ((iSq & ~0x3F) != 0)
-			return 0L;
-        /*
-        **  CODE
-        */
+		if ((iSq & ~0x3F) != 0) return 0L;
+		//	-----------------------------------------------------------------
 		int idx = magicTransform( bbAll & rookMask[ iSq ],
 								  rookMagicNumber[ iSq ],
 								  rookShiftBits[ iSq ] );
@@ -483,11 +470,8 @@ public class Bitboards
 	 */
 	static long getQueenMovesFrom( int iSq, long bbAll )
 		{
-		if ((iSq & ~0x3F) != 0)
-			return 0L;
-        /*
-        **  CODE
-        */
+		if ((iSq & ~0x3F) != 0) return 0L;
+		//	-----------------------------------------------------------------
 		int iDiagonal = magicTransform( bbAll & bishopMask[ iSq ],
 										bishopMagicNumber[ iSq ],
 										bishopShiftBits[ iSq ] );
@@ -532,9 +516,7 @@ public class Bitboards
 		assert map != null;
 		assert (iSq & ~0x3F) == 0;
 		assert (player == WHITE || player == BLACK);
-        /*
-        **  CODE
-        */
+		//	-----------------------------------------------------------------
 		return (player == WHITE)
 			   ? isAttackedByWhite( map, iSq )
 			   : isAttackedByBlack( map, iSq );
@@ -553,12 +535,8 @@ public class Bitboards
 	static boolean isAttackedByBlack( long[] map, int iSq )
 		{
 		assert map != null;
-
-		if ((iSq & ~0x3F) != 0 || (all[ iSq ] & map[ MAP_B_ALL ]) == 0L)
-			return false;
-        /*
-        **  CODE
-        */
+		if ((iSq & ~0x3F) != 0) return false;
+		//	-----------------------------------------------------------------
 		if ((knight[ iSq ] & map[ MAP_B_KNIGHT ]) != 0L ||
 			(king[ iSq ] & map[ MAP_B_KING ]) != 0L ||
 			(map[ MAP_B_PAWN ] & pawnUpwards[ iSq ]) != 0)
@@ -592,12 +570,8 @@ public class Bitboards
 	static boolean isAttackedByWhite( long[] map, int iSq )
 		{
 		assert map != null;
-
-		if ((iSq & ~0x3F) != 0 || (all[ iSq ] & map[ MAP_W_ALL ]) == 0L)
-			return false;
-        /*
-        **  CODE
-        */
+		if ((iSq & ~0x3F) != 0) return false;
+		//	-----------------------------------------------------------------
 		if ((knight[ iSq ] & map[ MAP_W_KNIGHT ]) != 0L ||
 			(king[ iSq ] & map[ MAP_W_KING ]) != 0L ||
 			(map[ MAP_W_PAWN ] & pawnDownwards[ iSq ]) != 0)
@@ -639,9 +613,7 @@ public class Bitboards
 	private static long checkSquareAttacked( long bbSqMask, long bbAll, int iShift, long bbBorder )
 		{
 		assert iShift != 0;
-        /*
-        **  CODE
-        */
+		//	-----------------------------------------------------------------
 		long bbResult = 0;
 
 		while ( (bbSqMask & bbBorder) == 0L )
@@ -689,9 +661,7 @@ public class Bitboards
 	private static long squareAttacked( long bbSqMask, int iShift, long bbBorder )
 		{
 		assert iShift != 0;
-        /*
-        **  CODE
-        */
+		//	-----------------------------------------------------------------
 		if ((bbSqMask & bbBorder) != 0L)
 			return 0L;
 
@@ -703,9 +673,7 @@ public class Bitboards
 	private static long squareAttackedSlider( long bbSqMask, int iShift, long bbBorder )
 		{
 		assert iShift != 0;
-        /*
-        **  CODE
-        */
+		//	-----------------------------------------------------------------
 		long bbAttacked = 0L;
 
 		while ( (bbSqMask & bbBorder) == 0L )
@@ -724,9 +692,7 @@ public class Bitboards
 	private static long squareAttackedSliderMask( long bbSqMask, int iShift, long bbBorder )
 		{
 		assert iShift != 0;
-        /*
-        **  CODE
-        */
+		//	-----------------------------------------------------------------
 		long bbAttacked = 0L;
 
 		while ( (bbSqMask & bbBorder) == 0 )

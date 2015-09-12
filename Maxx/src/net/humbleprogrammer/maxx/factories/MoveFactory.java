@@ -23,6 +23,7 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx.factories;
 
+import net.humbleprogrammer.humble.StrUtil;
 import net.humbleprogrammer.maxx.*;
 
 import org.slf4j.Logger;
@@ -56,11 +57,8 @@ public class MoveFactory
 	 */
 	public static Move fromSAN( Board bd, String strSAN )
 		{
-		if (bd == null || strSAN == null || strSAN.isEmpty())
-			return null;
-		/*
-        **  CODE
-        */
+		if (bd == null || StrUtil.isBlank(strSAN)) return null;
+		//	-----------------------------------------------------------------
 		final MoveInfo info = new MoveInfo( strSAN, bd.getMovingPlayer() );
 
 		if (info.iLength <= 0)
@@ -100,8 +98,8 @@ public class MoveFactory
 		else if (moves.size() > 1)
 			{
 			//
-			//  Handle the edge case where a pawn in being promoted--but the piece
-			//  isn't specified--by always promoting to a queen.
+			//  Handle the edge case where a pawn in being promoted -- but the piece isn't
+			//	specified -- by always promoting to a queen.
 			//
 			if (info.iPieceMoving == PAWN &&
 				info.iType == Move.Type.NORMAL &&
@@ -173,9 +171,7 @@ public class MoveFactory
 			{
 			assert strIn != null;
 			assert (player & ~0x01) == 0;
-            /*
-            **  CODE
-            */
+			//	-----------------------------------------------------------------
 			int ch = strIn.codePointAt( 0 );
 
 			if (!Character.isLetter( ch ))

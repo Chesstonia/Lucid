@@ -76,7 +76,7 @@ public final class Constants
     /** Invalid Zobrist hash value (all ones). */
     public static final long   HASH_INVALID = ~0L;
     //
-    //  Elements of the _map[] array
+    //  Elements of the map[] array
     //
     public static final int MAP_W_ALL    = 0;
     public static final int MAP_B_ALL    = 1;

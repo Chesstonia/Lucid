@@ -103,8 +103,8 @@ public class MoveList implements Iterable<Move>
 		_player = _board.getMovingPlayer();
 		_opponent = _player ^ 1;
 
-		_bbOpponent = _board._map[ _opponent ];
-		_bbPlayer = _board._map[ _player ];
+		_bbOpponent = _board.map[ _opponent ];
+		_bbPlayer = _board.map[ _player ];
 		_bbAll = _bbPlayer | _bbOpponent;
 
 		_bbFromSq = _bbPlayer;
@@ -140,8 +140,8 @@ public class MoveList implements Iterable<Move>
 		_player = _board.getMovingPlayer();
 		_opponent = _player ^ 1;
 
-		_bbOpponent = _board._map[ _opponent ];
-		_bbPlayer = _board._map[ _player ];
+		_bbOpponent = _board.map[ _opponent ];
+		_bbPlayer = _board.map[ _player ];
 		_bbAll = _bbPlayer | _bbOpponent;
 
 		_bbFromSq = bbCandidates & _bbPlayer;
@@ -304,7 +304,7 @@ public class MoveList implements Iterable<Move>
 			{
 			iSq = BitUtil.first( bbPieces );
 
-			switch (_board._sq[ iSq ])
+			switch (_board.sq[ iSq ])
 				{
 				case MAP_W_PAWN:
 					generatePawnMovesWhite( iSq );
@@ -373,7 +373,7 @@ public class MoveList implements Iterable<Move>
 	private void generateKingMovesBlack( int iSq, int castling )
 		{
 		assert Square.isValid( iSq );
-		assert _board._sq[ iSq ] == Piece.B_KING;
+		assert _board.sq[ iSq ] == Piece.B_KING;
 		//	-----------------------------------------------------------------
 		addMoves( iSq, Bitboards.king[ iSq ], Move.Type.NORMAL );
 
@@ -384,7 +384,7 @@ public class MoveList implements Iterable<Move>
 		//
 		if ((castling & Board.CastlingFlags.BLACK_SHORT) != 0 &&
 			(_bbAll & Board.CastlingFlags.BLACK_SHORT_MASK) == 0 &&
-			!Bitboards.isAttackedByWhite( _board._map, Square.F8 ))
+			!Bitboards.isAttackedByWhite( _board.map, Square.F8 ))
 			{
 			// Black  O-O
 			addMove( Square.E8, Square.G8, Move.Type.CASTLING );
@@ -392,7 +392,7 @@ public class MoveList implements Iterable<Move>
 
 		if ((castling & Board.CastlingFlags.BLACK_LONG) != 0 &&
 			(_bbAll & Board.CastlingFlags.BLACK_LONG_MASK) == 0 &&
-			!Bitboards.isAttackedByWhite( _board._map, Square.D8 ))
+			!Bitboards.isAttackedByWhite( _board.map, Square.D8 ))
 			{
 			// Black O-O-O
 			addMove( Square.E8, Square.C8, Move.Type.CASTLING );
@@ -410,7 +410,7 @@ public class MoveList implements Iterable<Move>
 	private void generateKingMovesWhite( int iSq, int castling )
 		{
 		assert Square.isValid( iSq );
-		assert _board._sq[ iSq ] == Piece.W_KING;
+		assert _board.sq[ iSq ] == Piece.W_KING;
 		//	-----------------------------------------------------------------
 		addMoves( iSq, Bitboards.king[ iSq ], Move.Type.NORMAL );
 
@@ -421,7 +421,7 @@ public class MoveList implements Iterable<Move>
 		//
 		if ((castling & Board.CastlingFlags.WHITE_SHORT) != 0 &&
 			(_bbAll & Board.CastlingFlags.WHITE_SHORT_MASK) == 0 &&
-			!Bitboards.isAttackedByBlack( _board._map, Square.F1 ))
+			!Bitboards.isAttackedByBlack( _board.map, Square.F1 ))
 			{
 			// White O-O
 			addMove( Square.E1, Square.G1, Move.Type.CASTLING );
@@ -429,7 +429,7 @@ public class MoveList implements Iterable<Move>
 
 		if ((castling & Board.CastlingFlags.WHITE_LONG) != 0 &&
 			(_bbAll & Board.CastlingFlags.WHITE_LONG_MASK) == 0 &&
-			!Bitboards.isAttackedByBlack( _board._map, Square.D1 ))
+			!Bitboards.isAttackedByBlack( _board.map, Square.D1 ))
 			{
 			// White O-O-O
 			addMove( Square.E1, Square.C1, Move.Type.CASTLING );
@@ -444,7 +444,7 @@ public class MoveList implements Iterable<Move>
 	 */
 	private void generatePawnMovesBlack( int iSqFrom )
 		{
-		assert _board._sq[ iSqFrom ] == Piece.B_PAWN;
+		assert _board.sq[ iSqFrom ] == Piece.B_PAWN;
 		//	-----------------------------------------------------------------
 		int iType = (iSqFrom > Square.H2)
 					? Move.Type.NORMAL
@@ -460,11 +460,11 @@ public class MoveList implements Iterable<Move>
 		//
 		int iSqTo = iSqFrom - 8;
 
-		if (_board._sq[ iSqTo ] == EMPTY)
+		if (_board.sq[ iSqTo ] == EMPTY)
 			{
 			addMove( iSqFrom, iSqTo, iType );
 			// If moving from 7th rank, check for pawn advance.
-			if (iSqFrom >= Square.A7 && _board._sq[ (iSqTo -= 8) ] == EMPTY)
+			if (iSqFrom >= Square.A7 && _board.sq[ (iSqTo -= 8) ] == EMPTY)
 				addMove( iSqFrom, iSqTo, Move.Type.PAWN_PUSH );
 			}
 		}
@@ -478,7 +478,7 @@ public class MoveList implements Iterable<Move>
 	 */
 	private void generatePawnMovesWhite( final int iSqFrom )
 		{
-		assert _board._sq[ iSqFrom ] == Piece.W_PAWN;
+		assert _board.sq[ iSqFrom ] == Piece.W_PAWN;
 		//	-----------------------------------------------------------------
 		int iType = (iSqFrom < Square.A7)
 					? Move.Type.NORMAL
@@ -494,11 +494,11 @@ public class MoveList implements Iterable<Move>
 		//
 		int iSqTo = iSqFrom + 8;
 
-		if (_board._sq[ iSqTo ] == EMPTY)
+		if (_board.sq[ iSqTo ] == EMPTY)
 			{
 			addMove( iSqFrom, iSqTo, iType );
 			// If moving from 2nd rank, check for pawn advance.
-			if (iSqFrom <= Square.H2 && _board._sq[ (iSqTo += 8) ] == EMPTY)
+			if (iSqFrom <= Square.H2 && _board.sq[ (iSqTo += 8) ] == EMPTY)
 				addMove( iSqFrom, iSqTo, Move.Type.PAWN_PUSH );
 			}
 		}
@@ -510,7 +510,7 @@ public class MoveList implements Iterable<Move>
 		{
 		assert Square.isValid( _iSqKing );
 		//	-----------------------------------------------------------------
-		System.arraycopy( _board._map, 0, _map, 0, MAP_LENGTH );
+		System.arraycopy( _board.map, 0, _map, 0, MAP_LENGTH );
 		//
 		//	See if there are any e.p. captures possible.
 		//
@@ -611,7 +611,7 @@ public class MoveList implements Iterable<Move>
 		assert Square.isValid( iSqFrom );
 		assert Square.isValid( iSqTo );
 		//	-----------------------------------------------------------------
-		int piece = _board._sq[ iSqFrom ];
+		int piece = _board.sq[ iSqFrom ];
 		long bbSqFrom = 1L << iSqFrom;
 		long bbSqTo = 1L << iSqTo;
 
@@ -646,7 +646,7 @@ public class MoveList implements Iterable<Move>
 			_map[ _opponent ] ^= bbMask;
 			_map[ MAP_W_PAWN + _opponent ] ^= bbMask;
 			}
-		else if ((piece = _board._sq[ iSqTo ]) != EMPTY)
+		else if ((piece = _board.sq[ iSqTo ]) != EMPTY)
 			{
 			_map[ piece ] ^= bbSqTo;
 			_map[ _opponent ] ^= bbSqTo;
@@ -656,7 +656,7 @@ public class MoveList implements Iterable<Move>
 												   ((iSqFrom == _iSqKing) ? iSqTo : _iSqKing),
 												   _opponent );
 
-		System.arraycopy( _board._map, 0, _map, 0, MAP_LENGTH );
+		System.arraycopy( _board.map, 0, _map, 0, MAP_LENGTH );
 
 		return !bInCheck;
 		}

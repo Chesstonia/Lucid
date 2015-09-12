@@ -88,7 +88,7 @@ public class TestBitboards extends TestBase
     @Test
     public void t_getAttackedBy()
         {
-        Board.State state = BoardFactory.createFromFEN( FEN_TEST ).getState();
+        Board bd = BoardFactory.createFromFEN( FEN_TEST );
 
         for ( int iSq = 0; iSq < Math.min( 64, s_bbAttacks.length ); ++iSq )
             {
@@ -96,28 +96,28 @@ public class TestBitboards extends TestBase
 
             assertEquals( "White attacking " + Square.toString( iSq ),
                           (s_bbPieces[ WHITE ] & bbAttacks),
-                          Bitboards.getAttackedBy( state.map, iSq, WHITE ) );
+                          Bitboards.getAttackedBy( bd.map, iSq, WHITE ) );
 
             assertEquals( "Black attacking " + Square.toString( iSq ),
                           (s_bbPieces[ BLACK ] & bbAttacks),
-                          Bitboards.getAttackedBy( state.map, iSq, BLACK ) );
+                          Bitboards.getAttackedBy( bd.map, iSq, BLACK ) );
             }
         }
 
     @Test
     public void t_isAttackedBy()
         {
-        Board.State state = BoardFactory.createFromFEN( FEN_TEST ).getState();
+        Board bd = BoardFactory.createFromFEN( FEN_TEST );
 
         for ( int iSq = 0; iSq < 64; ++iSq )
             {
             assertEquals( "White attacking " + Square.toString( iSq ),
                           ((s_bbAttacks[ iSq ] & s_bbPieces[ WHITE ]) != 0L),
-                          Bitboards.isAttackedBy( state.map, iSq, WHITE ) );
+                          Bitboards.isAttackedBy( bd.map, iSq, WHITE ) );
 
             assertEquals( "Black attacking " + Square.toString( iSq ),
                           ((s_bbAttacks[ iSq ] & s_bbPieces[ BLACK ]) != 0L),
-                          Bitboards.isAttackedBy( state.map, iSq, BLACK ) );
+                          Bitboards.isAttackedBy( bd.map, iSq, BLACK ) );
             }
         }
 
