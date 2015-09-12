@@ -1,34 +1,25 @@
 /*****************************************************************************
- **
- ** @author Lee Neuse (coder@humbleprogrammer.net)
- ** @since 1.0
- **
- **	---------------------------- [License] ----------------------------------
- **	This work is licensed under the Creative Commons Attribution-NonCommercial-
- **	ShareAlike 3.0 Unported License. To view a copy of this license, visit
- **				http://creativecommons.org/licenses/by-nc-sa/3.0/
- **	or send a letter to Creative Commons, 444 Castro Street Suite 900, Mountain
- **	View, California, 94041, USA.
- **	--------------------- [Disclaimer of Warranty] --------------------------
- **	There is no warranty for the program, to the extent permitted by applicable
- **	law.  Except when otherwise stated in writing the copyright holders and/or
- **	other parties provide the program “as is” without warranty of any kind,
- **	either expressed or implied, including, but not limited to, the implied
- **	warranties of merchantability and fitness for a particular purpose.  The
- **	entire risk as to the quality and performance of the program is with you.
- **	Should the program prove defective, you assume the cost of all necessary
- **	servicing, repair or correction.
- **	-------------------- [Limitation of Liability] --------------------------
- **	In no event unless required by applicable law or agreed to in writing will
- **	any copyright holder, or any other party who modifies and/or conveys the
- **	program as permitted above, be liable to you for damages, including any
- **	general, special, incidental or consequential damages arising out of the
- **	use or inability to use the program (including but not limited to loss of
- **	data or data being rendered inaccurate or losses sustained by you or third
- **	parties or a failure of the program to operate with any other programs),
- **	even if such holder or other party has been advised of the possibility of
- **	such damages.
- **
+ * * * @author Lee Neuse (coder@humbleprogrammer.net) * @since 1.0 *
+ * *	---------------------------- [License] ---------------------------------- *	This work is
+ * licensed under the Creative Commons Attribution-NonCommercial- *	ShareAlike 3.0 Unported
+ * License. To view a copy of this license, visit *				http://creativecommons.org/licenses/by-nc-sa/3.0/
+ * *	or send a letter to Creative Commons, 444 Castro Street Suite 900, Mountain *	View,
+ * California, 94041, USA. *	--------------------- [Disclaimer of Warranty]
+ * -------------------------- *	There is no warranty for the program, to the extent permitted by
+ * applicable *	law.  Except when otherwise stated in writing the copyright holders and/or
+ * *	other parties provide the program “as is” without warranty of any kind, *	either expressed
+ * or implied, including, but not limited to, the implied *	warranties of merchantability and
+ * fitness for a particular purpose.  The *	entire risk as to the quality and performance of the
+ * program is with you. *	Should the program prove defective, you assume the cost of all
+ * necessary *	servicing, repair or correction. *	-------------------- [Limitation of Liability]
+ * -------------------------- *	In no event unless required by applicable law or agreed to in
+ * writing will *	any copyright holder, or any other party who modifies and/or conveys the
+ * *	program as permitted above, be liable to you for damages, including any *	general, special,
+ * incidental or consequential damages arising out of the *	use or inability to use the program
+ * (including but not limited to loss of *	data or data being rendered inaccurate or losses
+ * sustained by you or third *	parties or a failure of the program to operate with any other
+ * programs), *	even if such holder or other party has been advised of the possibility of *	such
+ * damages. *
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
@@ -55,19 +46,19 @@ public class MoveList implements Iterable<Move>
 	//	-----------------------------------------------------------------------
 
 	/** Color of opposing player. */
-	private final int         _opponent;
+	private final int   _opponent;
 	/** Color of moving player. */
-	private final int         _player;
+	private final int   _player;
 	/** Square occupied by the moving player's King. */
-	private final int         _iSqKing;
+	private final int   _iSqKing;
 	/** Bitboard of all pieces. */
-	private final long        _bbAll;
+	private final long  _bbAll;
 	/** Bitboard of opposing pieces. */
-	private final long        _bbOpponent;
+	private final long  _bbOpponent;
 	/** Bitboard of moving pieces. */
-	private final long        _bbPlayer;
+	private final long  _bbPlayer;
 	/** Current position. */
-	private final Board.State _state;
+	private final Board _board;
 	/** Array of packed moves. */
 	private final int[]  _moves = new int[ MAX_MOVE_COUNT ];
 	/** Saved copy of the board maps. */
@@ -100,17 +91,15 @@ public class MoveList implements Iterable<Move>
 	public MoveList( Board bd )
 		{
 		DBC.requireNotNull( bd, "bd" );
-		/*
-		**  CODE
-        */
-		_state = bd.getState();
+		//	-----------------------------------------------------------------
+		_board = bd;
 
-		_player = _state.player;
+		_player = _board.getMovingPlayer();
 		_opponent = _player ^ 1;
 		_iSqKing = bd.getKingSquare( _player );
 
-		_bbOpponent = _state.map[ _opponent ];
-		_bbPlayer = _state.map[ _player ];
+		_bbOpponent = _board._map[ _opponent ];
+		_bbPlayer = _board._map[ _player ];
 		_bbAll = _bbPlayer | _bbOpponent;
 
 		initBitboards( _bbPlayer, ~_bbPlayer );
@@ -178,7 +167,7 @@ public class MoveList implements Iterable<Move>
 	public Move getAt( int index )
 		{
 		return (index >= 0 && index < _iCount)
-			   ? new Move( _moves[ index ], _state )
+			   ? new Move( _moves[ index ], _board.getZobristHash() )
 			   : null;
 		}
 
@@ -255,7 +244,7 @@ public class MoveList implements Iterable<Move>
 		{
 		bbTo &= _bbToSq;
 
-		while (bbTo != 0L )
+		while ( bbTo != 0L )
 			{
 			final int iSqTo = BitUtil.first( bbTo );
 
@@ -274,20 +263,15 @@ public class MoveList implements Iterable<Move>
 	 */
 	private void generateAllMoves( long bbFromSq, long bbToSq )
 		{
-		if (bbFromSq == 0L || bbToSq == 0L)
-			return;
-		/*
-		**  CODE
-        */
-		long bbPieces = bbFromSq;
+		if (bbFromSq == 0L || bbToSq == 0L) return;
+		//	-----------------------------------------------------------------
+		int iSq;
 
-		while ( bbPieces != 0L )
+		for ( long bbPieces = bbFromSq; bbPieces != 0L; bbPieces ^= (1L << iSq) )
 			{
-			final int iSq = BitUtil.first( bbPieces );
+			iSq = BitUtil.first( bbPieces );
 
-			bbPieces ^= (1L << iSq);
-
-			switch (_state.sq[ iSq ])
+			switch (_board._sq[ iSq ])
 				{
 				case MAP_W_PAWN:
 					generatePawnMovesWhite( iSq );
@@ -325,11 +309,15 @@ public class MoveList implements Iterable<Move>
 					break;
 
 				case MAP_W_KING:
-					generateKingMovesWhite( iSq );
+					generateKingMovesWhite( iSq,
+											(_board.getCastlingFlags() &
+											 Board.CastlingFlags.WHITE_BOTH) );
 					break;
 
 				case MAP_B_KING:
-					generateKingMovesBlack( iSq );
+					generateKingMovesBlack( iSq,
+											(_board.getCastlingFlags() &
+											 Board.CastlingFlags.BLACK_BOTH) );
 					break;
 
 				default:
@@ -337,8 +325,9 @@ public class MoveList implements Iterable<Move>
 				}
 			}
 
-		if (Square.isValid( _state.iSqEP ))
-			generateEnPassantCaptures( _state.iSqEP, bbFromSq );
+		iSq = _board.getEnPassantSquare();
+		if (Square.isValid( iSq ))
+			generateEnPassantCaptures( iSq, bbFromSq );
 		}
 
 	/**
@@ -350,20 +339,15 @@ public class MoveList implements Iterable<Move>
 	private void generateEnPassantCaptures( int iSqEP, long bbFromSq )
 		{
 		assert Square.isValid( iSqEP );
-        /*
-        **  CODE
-        */
+		//	-----------------------------------------------------------------
+		int iSq;
 		long bbPawns = (_player == WHITE)
-					   ? (Bitboards.pawnDownwards[ iSqEP ] & _state.map[ MAP_W_PAWN ])
-					   : (Bitboards.pawnUpwards[ iSqEP ] & _state.map[ MAP_B_PAWN ]);
+					   ? (Bitboards.pawnDownwards[ iSqEP ] & _board._map[ MAP_W_PAWN ])
+					   : (Bitboards.pawnUpwards[ iSqEP ] & _board._map[ MAP_B_PAWN ]);
 
-		bbPawns &= bbFromSq;
-
-		while ( bbPawns != 0L )
+		for ( bbPawns &= bbFromSq; bbPawns != 0L; bbPawns ^= (1L << iSq) )
 			{
-			final int iSq = BitUtil.first( bbPawns );
-
-			bbPawns ^= (1L << iSq);
+			iSq = BitUtil.first( bbPawns );
 			addMove( iSq, iSqEP, Move.Type.EN_PASSANT );
 			}
 		}
@@ -373,37 +357,35 @@ public class MoveList implements Iterable<Move>
 	 *
 	 * @param iSq
 	 * 	"From" square, in 8x8 format.
+	 * @param castling
+	 * 	Black's castling rights.
 	 */
-	private void generateKingMovesBlack( int iSq )
+	private void generateKingMovesBlack( int iSq, int castling )
 		{
 		assert Square.isValid( iSq );
-		assert _state.sq[iSq] == Piece.B_KING;
-        /*
-        **  CODE
-        */
-		addMoves( iSq,
-				  Bitboards.king[ iSq ],
-				  Move.Type.NORMAL );
+		assert _board._sq[ iSq ] == Piece.B_KING;
+		//	-----------------------------------------------------------------
+		addMoves( iSq, Bitboards.king[ iSq ], Move.Type.NORMAL );
 
-		if (iSq == Square.E8 &&
-			_bbCheckers == 0 &&
-			_state.castling != Board.CastlingFlags.NONE)
+		if (_bbCheckers != 0 || castling == Board.CastlingFlags.NONE)
+			return;
+		//
+		//	Check for possible castling moves.
+		//
+		if ((castling & Board.CastlingFlags.BLACK_SHORT) != 0 &&
+			(_bbAll & Board.CastlingFlags.BLACK_SHORT_MASK) == 0 &&
+			!Bitboards.isAttackedByWhite( _board._map, Square.F8 ))
 			{
-			if ((_state.castling & Board.CastlingFlags.BLACK_SHORT) != 0 &&
-				(_bbAll & Board.CastlingFlags.BLACK_SHORT_MASK) == 0 &&
-				!Bitboards.isAttackedByWhite( _state.map, Square.F8 ))
-				{
-				// Black  O-O
-				addMove( Square.E8, Square.G8, Move.Type.CASTLING );
-				}
+			// Black  O-O
+			addMove( Square.E8, Square.G8, Move.Type.CASTLING );
+			}
 
-			if ((_state.castling & Board.CastlingFlags.BLACK_LONG) != 0 &&
-				(_bbAll & Board.CastlingFlags.BLACK_LONG_MASK) == 0 &&
-				!Bitboards.isAttackedByWhite( _state.map, Square.D8 ))
-				{
-				// Black O-O-O
-				addMove( Square.E8, Square.C8, Move.Type.CASTLING );
-				}
+		if ((castling & Board.CastlingFlags.BLACK_LONG) != 0 &&
+			(_bbAll & Board.CastlingFlags.BLACK_LONG_MASK) == 0 &&
+			!Bitboards.isAttackedByWhite( _board._map, Square.D8 ))
+			{
+			// Black O-O-O
+			addMove( Square.E8, Square.C8, Move.Type.CASTLING );
 			}
 		}
 
@@ -412,37 +394,35 @@ public class MoveList implements Iterable<Move>
 	 *
 	 * @param iSq
 	 * 	"From" square, in 8x8 format.
+	 * @param castling
+	 * 	White's castling rights.
 	 */
-	private void generateKingMovesWhite( int iSq)
+	private void generateKingMovesWhite( int iSq, int castling )
 		{
 		assert Square.isValid( iSq );
-		assert _state.sq[iSq] == Piece.W_KING;
-        /*
-        **  CODE
-        */
-		addMoves( iSq,
-				  Bitboards.king[ iSq ],
-				  Move.Type.NORMAL );
+		assert _board._sq[ iSq ] == Piece.W_KING;
+		//	-----------------------------------------------------------------
+		addMoves( iSq, Bitboards.king[ iSq ], Move.Type.NORMAL );
 
-		if (iSq == Square.E1 &&
-			_bbCheckers == 0 &&
-			_state.castling != Board.CastlingFlags.NONE)
+		if (_bbCheckers != 0 || castling == Board.CastlingFlags.NONE)
+			return;
+		//
+		//	Check for possible castling moves.
+		//
+		if ((castling & Board.CastlingFlags.WHITE_SHORT) != 0 &&
+			(_bbAll & Board.CastlingFlags.WHITE_SHORT_MASK) == 0 &&
+			!Bitboards.isAttackedByBlack( _board._map, Square.F1 ))
 			{
-			if ((_state.castling & Board.CastlingFlags.WHITE_SHORT) != 0 &&
-				(_bbAll & Board.CastlingFlags.WHITE_SHORT_MASK) == 0 &&
-				!Bitboards.isAttackedByBlack( _state.map, Square.F1 ))
-				{
-				// White O-O
-				addMove( Square.E1, Square.G1, Move.Type.CASTLING );
-				}
+			// White O-O
+			addMove( Square.E1, Square.G1, Move.Type.CASTLING );
+			}
 
-			if ((_state.castling & Board.CastlingFlags.WHITE_LONG) != 0 &&
-				(_bbAll & Board.CastlingFlags.WHITE_LONG_MASK) == 0 &&
-				!Bitboards.isAttackedByBlack( _state.map, Square.D1 ))
-				{
-				// White O-O-O
-				addMove( Square.E1, Square.C1, Move.Type.CASTLING );
-				}
+		if ((castling & Board.CastlingFlags.WHITE_LONG) != 0 &&
+			(_bbAll & Board.CastlingFlags.WHITE_LONG_MASK) == 0 &&
+			!Bitboards.isAttackedByBlack( _board._map, Square.D1 ))
+			{
+			// White O-O-O
+			addMove( Square.E1, Square.C1, Move.Type.CASTLING );
 			}
 		}
 
@@ -454,9 +434,9 @@ public class MoveList implements Iterable<Move>
 	 */
 	private void generatePawnMovesBlack( int iSqFrom )
 		{
-		assert _state.sq[ iSqFrom ] == Piece.B_PAWN;
-        /*
-        **  CODE
+		assert _board._sq[ iSqFrom ] == Piece.B_PAWN;
+		/*
+		**  CODE
         */
 		final int iType = (iSqFrom > Square.H2)
 						  ? Move.Type.NORMAL
@@ -472,11 +452,11 @@ public class MoveList implements Iterable<Move>
 		//
 		int iSqTo = iSqFrom - 8;
 
-		if (_state.sq[ iSqTo ] == EMPTY)
+		if (_board._sq[ iSqTo ] == EMPTY)
 			{
 			addMove( iSqFrom, iSqTo, iType );
 			// If moving from 7th rank, check for pawn advance.
-			if (iSqFrom >= Square.A7 && _state.sq[ (iSqTo -= 8) ] == EMPTY)
+			if (iSqFrom >= Square.A7 && _board._sq[ (iSqTo -= 8) ] == EMPTY)
 				addMove( iSqFrom, iSqTo, Move.Type.PAWN_PUSH );
 			}
 		}
@@ -490,7 +470,7 @@ public class MoveList implements Iterable<Move>
 	 */
 	private void generatePawnMovesWhite( final int iSqFrom )
 		{
-		assert _state.sq[ iSqFrom ] == Piece.W_PAWN;
+		assert _board._sq[ iSqFrom ] == Piece.W_PAWN;
         /*
         **  CODE
         */
@@ -508,11 +488,11 @@ public class MoveList implements Iterable<Move>
 		//
 		int iSqTo = iSqFrom + 8;
 
-		if (_state.sq[ iSqTo ] == EMPTY)
+		if (_board._sq[ iSqTo ] == EMPTY)
 			{
 			addMove( iSqFrom, iSqTo, iType );
 			// If moving from 2nd rank, check for pawn advance.
-			if (iSqFrom <= Square.H2 && _state.sq[ (iSqTo += 8) ] == EMPTY)
+			if (iSqFrom <= Square.H2 && _board._sq[ (iSqTo += 8) ] == EMPTY)
 				addMove( iSqFrom, iSqTo, Move.Type.PAWN_PUSH );
 			}
 		}
@@ -532,7 +512,7 @@ public class MoveList implements Iterable<Move>
         /*
         **  CODE
         */
-		_bbCheckers = Bitboards.getAttackedBy( _state.map, _iSqKing, _opponent );
+		_bbCheckers = Bitboards.getAttackedBy( _board._map, _iSqKing, _opponent );
 		_bbPinned = 0L;
 		_bbFromSq = bbFromSq & _bbPlayer;
 		_bbToSq = bbToSq & ~_bbPlayer;
@@ -546,10 +526,12 @@ public class MoveList implements Iterable<Move>
 			//  could attack the King if the moving player's pieces were removed.
 			//
 			long bbDiagonal = Bitboards.getBishopAttacks( _iSqKing, _bbOpponent ) &
-							  (_state.map[ MAP_W_QUEEN + _opponent ] | _state.map[ MAP_W_BISHOP + _opponent ]);
+							  (_board._map[ MAP_W_QUEEN + _opponent ] |
+							   _board._map[ MAP_W_BISHOP + _opponent ]);
 
 			long bbLateral = Bitboards.getRookAttacks( _iSqKing, _bbOpponent ) &
-							 (_state.map[ MAP_W_QUEEN + _opponent ] | _state.map[ MAP_W_ROOK + _opponent ]);
+							 (_board._map[ MAP_W_QUEEN + _opponent ] |
+							  _board._map[ MAP_W_ROOK + _opponent ]);
 			//
 			//  Now see if there is one (and only one) moving piece that lies on the path between
 			//  a threatening piece and the King, then it is pinned.  Pinned pieces may still be
@@ -624,9 +606,9 @@ public class MoveList implements Iterable<Move>
         */
 		final long bbSqFrom = 1L << iSqFrom;
 		final long bbSqTo = 1L << iSqTo;
-		int piece = _state.sq[ iSqFrom ];
+		int piece = _board._sq[ iSqFrom ];
 
-		System.arraycopy( _state.map, 0, _map, 0, MAP_LENGTH );
+		System.arraycopy( _board._map, 0, _map, 0, MAP_LENGTH );
 
 		_map[ piece ] ^= bbSqFrom | bbSqTo;
 		_map[ _player ] ^= bbSqFrom | bbSqTo;
@@ -659,7 +641,7 @@ public class MoveList implements Iterable<Move>
 			_map[ _opponent ] ^= bbMask;
 			_map[ MAP_W_PAWN + _opponent ] ^= bbMask;
 			}
-		else if ((piece = _state.sq[ iSqTo ]) != EMPTY)
+		else if ((piece = _board._sq[ iSqTo ]) != EMPTY)
 			{
 			_map[ piece ] ^= bbSqTo;
 			_map[ _opponent ] ^= bbSqTo;
@@ -713,7 +695,7 @@ public class MoveList implements Iterable<Move>
             /*
             **  CODE
             */
-			return new Move( _moves[ _iNext++ ], _state );
+			return new Move( _moves[ _iNext++ ], _board.getZobristHash() );
 			}
 
 		@Override

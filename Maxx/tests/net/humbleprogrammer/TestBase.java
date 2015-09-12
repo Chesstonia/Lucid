@@ -169,13 +169,13 @@ public abstract class TestBase
                 s_lMaxNanosecs = TimeUnit.SECONDS.toNanos( 15 );
                 break;
             case NORMAL:
-                s_lMaxNanosecs = TimeUnit.MINUTES.toNanos( 2 );
+                s_lMaxNanosecs = TimeUnit.MINUTES.toNanos( 1 );
                 break;
             case SLOW:
-                s_lMaxNanosecs = TimeUnit.MINUTES.toNanos( 15 );
+                s_lMaxNanosecs = TimeUnit.MINUTES.toNanos( 5 );
                 break;
             case EPIC:
-                s_lMaxNanosecs = TimeUnit.HOURS.toNanos( 2 );
+                s_lMaxNanosecs = TimeUnit.MINUTES.toNanos( 15 );
                 break;
             default:
                 s_lMaxNanosecs = Long.MAX_VALUE;
