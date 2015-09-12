@@ -357,7 +357,7 @@ public class Bitboards
 	static long getAttackedBy( long[] map, int iSq, int player )
 		{
 		assert map != null;
-		if ((iSq & ~0x3F) != 0 ) return 0L;
+		if ((iSq & ~0x3F) != 0) return 0L;
 		//	-----------------------------------------------------------------
 		long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
 		long bbPawns = (player == WHITE)
@@ -367,8 +367,11 @@ public class Bitboards
 		return (bbPawns |
 				(king[ iSq ] & map[ MAP_W_KING + player ]) |
 				(knight[ iSq ] & map[ MAP_W_KNIGHT + player ]) |
-				getDiagonalAttackers( iSq, (map[ MAP_W_BISHOP + player ] | map[ MAP_W_QUEEN + player ]), bbAll ) |
-				getLateralAttackers( iSq, (map[ MAP_W_ROOK + player ] | map[ MAP_W_QUEEN + player ]), bbAll ));
+				getDiagonalAttackers( iSq, (map[ MAP_W_BISHOP + player ] |
+											map[ MAP_W_QUEEN + player ]), bbAll ) |
+				getLateralAttackers( iSq,
+									 (map[ MAP_W_ROOK + player ] | map[ MAP_W_QUEEN + player ]),
+									 bbAll ));
 		}
 
 	/**
@@ -514,9 +517,11 @@ public class Bitboards
 	static boolean isAttackedBy( long[] map, int iSq, int player )
 		{
 		assert map != null;
-		assert (iSq & ~0x3F) == 0;
-		assert (player == WHITE || player == BLACK);
+		if ((iSq & ~0x3F) != 0 || (all[ iSq ] & map[ player ]) == 0L) return false;
 		//	-----------------------------------------------------------------
+		if ((king[iSq] & map[MAP_W_QUEEN + player]) != 0L)
+			return true;
+
 		return (player == WHITE)
 			   ? isAttackedByWhite( map, iSq )
 			   : isAttackedByBlack( map, iSq );
@@ -537,24 +542,17 @@ public class Bitboards
 		assert map != null;
 		if ((iSq & ~0x3F) != 0) return false;
 		//	-----------------------------------------------------------------
-		if ((knight[ iSq ] & map[ MAP_B_KNIGHT ]) != 0L ||
-			(king[ iSq ] & map[ MAP_B_KING ]) != 0L ||
-			(map[ MAP_B_PAWN ] & pawnUpwards[ iSq ]) != 0)
+		if ((map[ MAP_B_PAWN ] & pawnUpwards[ iSq ]) != 0L ||
+			(knight[ iSq ] & map[ MAP_B_KNIGHT ]) != 0L ||
+			(king[ iSq ] & map[ MAP_B_KING ]) != 0L)
 			{
 			return true;
 			}
 
-		long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
+		final long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
 
-		//  Sliding attacks: rooks & queens.
-		long bbLateral = map[ MAP_B_QUEEN ] | map[ MAP_B_ROOK ];
-		if (bbLateral != 0L && (bbLateral & getLateralMovesFrom( iSq, bbAll )) != 0L)
-			return true;
-
-		//  Sliding attacks: bishops & queens.
-		long bbDiagonal = map[ MAP_B_QUEEN ] | map[ MAP_B_BISHOP ];
-
-		return (bbDiagonal != 0 && (bbDiagonal & getDiagonalMovesFrom( iSq, bbAll )) != 0L);
+		return (getDiagonalAttackers( iSq, (map[ MAP_B_QUEEN ] | map[ MAP_B_BISHOP ]), bbAll ) != 0L ||
+				getLateralAttackers( iSq, (map[ MAP_B_QUEEN ] | map[ MAP_B_ROOK ]), bbAll ) != 0L);
 		}
 
 	/**
@@ -572,24 +570,19 @@ public class Bitboards
 		assert map != null;
 		if ((iSq & ~0x3F) != 0) return false;
 		//	-----------------------------------------------------------------
-		if ((knight[ iSq ] & map[ MAP_W_KNIGHT ]) != 0L ||
-			(king[ iSq ] & map[ MAP_W_KING ]) != 0L ||
-			(map[ MAP_W_PAWN ] & pawnDownwards[ iSq ]) != 0)
+		if ((map[ MAP_W_PAWN ] & pawnDownwards[ iSq ]) != 0L ||
+			(knight[ iSq ] & map[ MAP_W_KNIGHT ]) != 0L ||
+			(king[ iSq ] & map[ MAP_W_KING ]) != 0L)
 			{
 			return true;
 			}
 
 		long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
 
-		//  Sliding attacks: rooks & queens.
-		long bbLateral = map[ MAP_W_QUEEN ] | map[ MAP_W_ROOK ];
-		if (bbLateral != 0L && (bbLateral & getLateralMovesFrom( iSq, bbAll )) != 0L)
-			return true;
-
-		//  Sliding attacks: bishops & queens.
-		long bbDiagonal = map[ MAP_W_QUEEN ] | map[ MAP_W_BISHOP ];
-
-		return (bbDiagonal != 0 && (bbDiagonal & getDiagonalMovesFrom( iSq, bbAll )) != 0L);
+		return (
+			getDiagonalAttackers( iSq, (map[ MAP_W_QUEEN ] | map[ MAP_W_BISHOP ]), bbAll ) !=
+			0L ||
+			getLateralAttackers( iSq, (map[ MAP_W_QUEEN ] | map[ MAP_W_ROOK ]), bbAll ) != 0L);
 		}
 
 	//  -----------------------------------------------------------------------

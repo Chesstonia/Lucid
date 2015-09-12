@@ -320,6 +320,7 @@ public class MoveList implements Iterable<Move>
 							  Bitboards.knight[ iSq ],
 							  Move.Type.NORMAL );
 					break;
+
 				case MAP_W_BISHOP:
 				case MAP_B_BISHOP:
 					addMoves( iSq,
@@ -542,16 +543,20 @@ public class MoveList implements Iterable<Move>
 			long bbPinners = Bitboards.getDiagonalAttackers( _iSqKing, bbDiagonal, _bbOpponent ) |
 							 Bitboards.getLateralAttackers( _iSqKing, bbLateral, _bbOpponent );
 
-			for ( bbPinners &= ~Bitboards.king[ _iSqKing ]; bbPinners != 0L; bbPinners ^= (1L << iSq) )
+			bbPinners &= ~Bitboards.king[ _iSqKing ];
+
+			while ( bbPinners != 0L )
 				{
-				iSq = BitUtil.first( bbPinners );
 				//
 				//  Now see if there is one (and only one) moving piece that lies on the path
-				//	between a threatening piece and the King, then it is pinned.  Pinned pieces
-				//	may still be able to move (except for Knights) but need to test for check
-				//	when they do so.
+				//	between a threatening piece (the "pinner") and the King, then it is pinned.
+				//	Pinned pieces may still be able to move (except for Knights) but need to
+				//	test for check when they do so.
 				//
-				long bbBetween = _bbPlayer & Bitboards.getSquaresBetween( _iSqKing, iSq );
+				int iSqPinner = BitUtil.first( bbPinners );
+				long bbBetween = _bbPlayer & Bitboards.getSquaresBetween( _iSqKing, iSqPinner );
+
+				bbPinners ^= (1L << iSqPinner);
 
 				if (BitUtil.singleton( bbBetween ))
 					_bbUnpinned ^= bbBetween;
@@ -605,7 +610,6 @@ public class MoveList implements Iterable<Move>
 	 *
 	 * @return <code>.T.</code> if move is legal; <code>.F.</code> if king left in check.
 	 */
-	@SuppressWarnings( "PointlessBitwiseExpression" )
 	private boolean testMove( int iSqFrom, int iSqTo, int iMoveType )
 		{
 		assert Square.isValid( iSqFrom );
@@ -651,10 +655,12 @@ public class MoveList implements Iterable<Move>
 			_map[ piece ] ^= bbSqTo;
 			_map[ _opponent ] ^= bbSqTo;
 			}
-
-		boolean bInCheck = Bitboards.isAttackedBy( _map,
-												   ((iSqFrom == _iSqKing) ? iSqTo : _iSqKing),
-												   _opponent );
+		//
+		//	See if the King is exposed to check, and reset the _map[] array back to match the
+		//	board.
+		//
+		int iSqKing = (iSqFrom == _iSqKing) ? iSqTo : _iSqKing;
+		boolean bInCheck = Bitboards.isAttackedBy( _map, iSqKing, _opponent );
 
 		System.arraycopy( _board.map, 0, _map, 0, MAP_LENGTH );
 
@@ -699,12 +705,9 @@ public class MoveList implements Iterable<Move>
 		@Override
 		public Move next()
 			{
-			if (_iNext >= _iCount)
-				throw new java.util.NoSuchElementException();
-			/*
-			**  CODE
-            */
-			return new Move( _moves[ _iNext++ ], _board.getZobristHash() );
+			if (_iNext >= _iCount) throw new java.util.NoSuchElementException();
+			//	-------------------------------------------------------------
+			return new Move( _moves[ _iNext++ ], _hashZobrist );
 			}
 
 		@Override

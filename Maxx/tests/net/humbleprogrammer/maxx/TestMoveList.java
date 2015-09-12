@@ -218,21 +218,21 @@ public class TestMoveList extends TestBase
 		private void perft( final Board bd, int iDepth, int iMaxDepth )
 			{
 			assert bd != null;
-			assert (iDepth >= 0 && iDepth <= iMaxDepth);
-			assert (iMaxDepth >= 0 && iMaxDepth < Byte.MAX_VALUE);
+			assert (iDepth >= 0 && iDepth < _lActual.length);
+			assert (iMaxDepth >= 0 && iMaxDepth < _lActual.length);
 			//	-------------------------------------------------------------
 			MoveList moves = new MoveList( bd );
 
 			_lActual[ iDepth ] += moves.size();
 
-			if (moves.hasLegalMove() && iDepth < iMaxDepth)
+			if (moves.hasLegalMove() && ++iDepth <= iMaxDepth)
 				{
 				Board bdUndo = new Board( bd );
 
 				for ( Move mv : moves )
 					{
 					bd.makeMove( mv );
-					perft( bd, (iDepth + 1), iMaxDepth );
+					perft( bd, iDepth, iMaxDepth );
 					bd.copyFrom( bdUndo );
 					}
 				}
@@ -241,10 +241,7 @@ public class TestMoveList extends TestBase
 		long test( int iMaxDepth, int player )
 			{
 			assert iMaxDepth >= 0;
-			assert (player == WHITE || player == BLACK);
-			/*
-            **  CODE
-            */
+			//	-------------------------------------------------------------
 			int iDepth = Math.min( iMaxDepth, _lExpected.length );
 			Board bd = (player == WHITE) ? _board : _boardMirror;
 
