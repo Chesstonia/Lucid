@@ -150,7 +150,7 @@ public class Bitboards
 		};
 
 	/** Bitboard masks for individual ranks. */
-	private static final long[] rankMask = new long[]
+	static final long[] rankMask = new long[]
 		{
 			0x00000000000000FFL,
 			0x000000000000FF00L,
@@ -519,7 +519,7 @@ public class Bitboards
 		assert map != null;
 		if ((iSq & ~0x3F) != 0 || (all[ iSq ] & map[ player ]) == 0L) return false;
 		//	-----------------------------------------------------------------
-		if ((king[iSq] & map[MAP_W_QUEEN + player]) != 0L)
+		if ((king[ iSq ] & map[ MAP_W_QUEEN + player ]) != 0L)
 			return true;
 
 		return (player == WHITE)
@@ -579,10 +579,8 @@ public class Bitboards
 
 		long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
 
-		return (
-			getDiagonalAttackers( iSq, (map[ MAP_W_QUEEN ] | map[ MAP_W_BISHOP ]), bbAll ) !=
-			0L ||
-			getLateralAttackers( iSq, (map[ MAP_W_QUEEN ] | map[ MAP_W_ROOK ]), bbAll ) != 0L);
+		return (getDiagonalAttackers( iSq, (map[ MAP_W_QUEEN ] | map[ MAP_W_BISHOP ]), bbAll ) != 0L ||
+				getLateralAttackers( iSq, (map[ MAP_W_QUEEN ] | map[ MAP_W_ROOK ]), bbAll ) != 0L);
 		}
 
 	//  -----------------------------------------------------------------------

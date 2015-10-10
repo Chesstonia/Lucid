@@ -49,15 +49,15 @@ public class MoveFactory
 	 * Converts a SAN string to a move.
 	 *
 	 * @param bd
-	 *     Current position.
+	 * 	Current position.
 	 * @param strSAN
-	 *     SAN string.
+	 * 	SAN string.
 	 *
 	 * @return Move on success; null if move is illegal, ambiguous, or invalid.
 	 */
 	public static Move fromSAN( Board bd, String strSAN )
 		{
-		if (bd == null || StrUtil.isBlank(strSAN)) return null;
+		if (bd == null || StrUtil.isBlank( strSAN )) return null;
 		//	-----------------------------------------------------------------
 		final MoveInfo info = new MoveInfo( strSAN, bd.getMovingPlayer() );
 
@@ -70,72 +70,57 @@ public class MoveFactory
 		int iSqTo = Square.toIndex( info.iRankTo, info.iFileTo );
 		long bbCandidates = bd.getCandidates( iSqTo, info.iPieceMoving );
 
-		if (info.iPieceMoving == PAWN)
-			{
-			bbCandidates &= info.bCapture
-							? ~Bitboards.getFileMask( info.iFileTo )
-							: Bitboards.getFileMask( info.iFileTo );
-			}
-
 		if (Square.isValidRankOrFile( info.iFileFrom ))
 			bbCandidates &= Bitboards.getFileMask( info.iFileFrom );
+		else if (info.iPieceMoving == PAWN && info.bCapture)
+			bbCandidates &= ~Bitboards.getFileMask( info.iFileFrom );
 
 		if (Square.isValidRankOrFile( info.iRankFrom ))
 			bbCandidates &= Bitboards.getRankMask( info.iRankFrom );
 
 		if (bbCandidates == 0L)
+			{
+			s_log.debug( "'{}' => '{}' has no candidates.",
+						 bd,
+						 strSAN );
 			return null;
+			}
 		//
-		//  Look for a matching move.  In a majority of cases (99.99% in over a million legal games)
-		//  only a single move will be returned.  THe only exception is promotions, which have to
-		//  be searched to find the matching piece type.
+		//  Look for a matching move.  In a majority of cases (99.99% in over a million legal
+		//	games) only a single move will be returned.
 		//
-		Move moveFound = null;
 		MoveList moves = new MoveList( bd, bbCandidates, iSqTo );
 
 		if (moves.size() == 1)
-			moveFound = moves.getAt( 0 );
-		else if (moves.size() > 1)
+			return moves.getAt( 0 );
+		//
+		//	Promotions have to be searched to find the matching piece type.
+		//
+		if (moves.size() > 1)
 			{
-			//
-			//  Handle the edge case where a pawn in being promoted -- but the piece isn't
-			//	specified -- by always promoting to a queen.
-			//
-			if (info.iPieceMoving == PAWN &&
-				info.iType == Move.Type.NORMAL &&
-				(info.iRankTo == 0 || info.iRankTo == 7))
+			if (info.iType >= Move.Type.PROMOTION)
 				{
-				info.iType = Move.Type.PROMOTION;
-				s_log.debug( "'{}' => auto-promoting to a Queen.", strSAN );
+				for ( Move move : moves )
+					if (move.iType == info.iType)
+						return move;
 				}
 
-			for ( Move move : moves )
-				if (move.iType < Move.Type.CASTLING || move.iType == info.iType)
-					{
-					if (moveFound == null)
-						moveFound = move;
-					else
-						{
-						s_log.debug( "'{}' => '{}' is ambiguous.",
-									 bd,
-									 strSAN );
-						return null;
-						}
-					}
+			s_log.debug( "'{}' => '{}' is ambiguous.",
+						 bd,
+						 strSAN );
 			}
 
-		return moveFound;
+		return null;
 		}
 
-//  -----------------------------------------------------------------------
-//	NESTED CLASSES: MoveInfo
-//	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	NESTED CLASSES: MoveInfo
+	//	-----------------------------------------------------------------------
 
 	/**
 	 * The MoveInfo class extracts information from a SAN move string.
 	 *
-	 * This code is loosely based on the source for v. 1.6.2 of StockFish by Tord Romstad, Marco
-	 * Costalba, Joona Kiiski, et al.
+	 * This code is loosely based on v1.6.2 of StockFish by Tord Romstad, Marco Costalba, et al.
 	 */
 	private static class MoveInfo
 		{
@@ -163,9 +148,9 @@ public class MoveFactory
 		 * CTOR
 		 *
 		 * @param strIn
-		 *     SAN string.
+		 * 	SAN string.
 		 * @param player
-		 *     Moving player color [WHITE|BLACK]
+		 * 	Moving player color [WHITE|BLACK]
 		 */
 		MoveInfo( String strIn, int player )
 			{
@@ -204,17 +189,35 @@ public class MoveFactory
 			//  If we ran out of input prematurely, the state will be set to something .LT.
 			//  STATE_CHECK, which is an error condition.
 			//
-			if (iState >= STATE_CHECK && iPieceMoving != EMPTY)
-				iLength = index;
+			if (iState < STATE_CHECK || iPieceMoving == EMPTY)
+				return;
+
+			iLength = index;
+
+			if (iPieceMoving == PAWN)
+				{
+				//	Non-capturing pawn moves must start from the same file.
+				if (!bCapture)
+					iFileFrom = iFileTo;
+				//
+				//	Handle cases where a pawn is being promoted -- but the promotion piece
+				//	isn't specified --  by "auto-promoting" to a Queen.
+				//
+				if (iType == Move.Type.NORMAL && (iRankTo == 0 || iRankTo == 7))
+					{
+					iType = Move.Type.PROMOTION;
+					s_log.debug( "'{}' => auto-promoting to a Queen.", strIn );
+					}
+				}
 			}
 
 		/**
 		 * Parses a castling move ("O-O" or "O-O-O")
 		 *
 		 * @param strIn
-		 *     Input string.
+		 * 	Input string.
 		 * @param player
-		 *     Moving player color [BLACK|WHITE] return Length of parsed move, or zero on error.
+		 * 	Moving player color [BLACK|WHITE] return Length of parsed move, or zero on error.
 		 */
 		private int parseCastling( String strIn, int player )
 			{
@@ -244,9 +247,9 @@ public class MoveFactory
 		 * Parse a file indicator (a-h)
 		 *
 		 * @param iState
-		 *     Current parse state.
+		 * 	Current parse state.
 		 * @param iFile
-		 *     File [0..7]
+		 * 	File [0..7]
 		 *
 		 * @return New state, or INVALID on error.
 		 */
@@ -267,9 +270,9 @@ public class MoveFactory
 		 * Parse a rank indicator (1-8)
 		 *
 		 * @param iState
-		 *     Current parse state.
+		 * 	Current parse state.
 		 * @param iRank
-		 *     Rank [0..7]
+		 * 	Rank [0..7]
 		 *
 		 * @return New state, or INVALID on error.
 		 */
@@ -294,9 +297,9 @@ public class MoveFactory
 		 * Parse all other characters.
 		 *
 		 * @param iState
-		 *     Current parse state.
+		 * 	Current parse state.
 		 * @param ch
-		 *     Character to parse.
+		 * 	Character to parse.
 		 *
 		 * @return New state, or INVALID on error.
 		 */

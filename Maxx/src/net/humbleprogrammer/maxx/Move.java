@@ -36,6 +36,15 @@ public class Move
 	static final int MASK_TYPE    = 0x000007;
 	static final int MASK_ALL     = MASK_FROM_SQ | MASK_TO_SQ | MASK_TYPE;
 
+	/** Black castling O-O-O */
+	static final int BLACK_CASTLE_LONG  = pack( Square.E8, Square.C8, Type.CASTLING );
+	/** Black castling O-O */
+	static final int BLACK_CASTLE_SHORT = pack( Square.E8, Square.G8, Type.CASTLING );
+	/** White castling O-O-O */
+	static final int WHITE_CASTLE_LONG  = pack( Square.E1, Square.C1, Type.CASTLING );
+	/** White castling O-O */
+	static final int WHITE_CASTLE_SHORT = pack( Square.E1, Square.G1, Type.CASTLING );
+
 	//  -----------------------------------------------------------------------
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
@@ -58,9 +67,9 @@ public class Move
 	 * Default CTOR.
 	 *
 	 * @param iPacked
-	 *     Packed move.
+	 * 	Packed move.
 	 * @param hash
-	 *     Zobrist hash of the board prior to the move being made.
+	 * 	Zobrist hash of the board prior to the move being made.
 	 */
 	Move( int iPacked, long hash )
 		{
@@ -79,9 +88,9 @@ public class Move
 	 * Packs the "From" square, "To" square, and move type into a 32-bit integer.
 	 *
 	 * @param iSqFrom
-	 *     "From" square in 8x8 format.
+	 * 	"From" square in 8x8 format.
 	 * @param iSqTo
-	 *     "To" square in 8x8 format.
+	 * 	"To" square in 8x8 format.
 	 *
 	 * @return packed move.
 	 */
@@ -95,11 +104,11 @@ public class Move
 	 * Packs the "From" square, "To" square, and move type into a 32-bit integer.
 	 *
 	 * @param iSqFrom
-	 *     "From" square in 8x8 format.
+	 * 	"From" square in 8x8 format.
 	 * @param iSqTo
-	 *     "To" square in 8x8 format.
+	 * 	"To" square in 8x8 format.
 	 * @param iMoveType
-	 *     Move type.
+	 * 	Move type.
 	 *
 	 * @return packed move.
 	 */
