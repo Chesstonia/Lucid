@@ -152,9 +152,9 @@ public class TestMoveList extends TestBase
 				return;
 				}
 		}
-//  -----------------------------------------------------------------------
-//	METHODS
-//	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	METHODS
+	//	-----------------------------------------------------------------------
 
 	/**
 	 * Helper method to quickly count the avialble moves in a FEN position.
@@ -227,13 +227,12 @@ public class TestMoveList extends TestBase
 
 			if (moves.hasLegalMove() && ++iDepth <= iMaxDepth)
 				{
-				Board bdUndo = new Board( bd );
-
 				for ( Move mv : moves )
 					{
-					bd.makeMove( mv );
-					perft( bd, iDepth, iMaxDepth );
-					bd.copyFrom( bdUndo );
+					Board bdNext = new Board( bd );
+
+					bdNext.makeMove( mv );
+					perft( bdNext, iDepth, iMaxDepth );
 					}
 				}
 			}
@@ -321,9 +320,8 @@ public class TestMoveList extends TestBase
 							  new long[]{ 50L, 279L, 13310L, 54703L, 2538084L, 10809689L, 493407574L } ),
 			new TestPosition( "rnbqkb1r/ppppp1pp/7n/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6",
 							  new long[]{ 31L, 570L, 17546L, 351806L, 11139762L, 244063299L, 7930902498L } ),
-			new TestPosition(
-				"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -",
-				new long[]{ 48L, 2039L, 97862L, 4085603L, 193690690L, 8031647685L, 374190009323L } ),
+			new TestPosition( "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -",
+							  new long[]{ 48L, 2039L, 97862L, 4085603L, 193690690L, 8031647685L, 374190009323L } ),
 			new TestPosition( "8/p7/8/1P6/K1k3p1/6P1/7P/8 w - -",
 							  new long[]{ 5L, 39L, 237L, 2002L, 14062L, 120995L, 966152L } ),
 			new TestPosition( "r3k2r/p6p/8/B7/1pp1p3/3b4/P6P/R3K2R w KQkq -",

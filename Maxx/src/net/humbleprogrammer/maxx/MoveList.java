@@ -1,34 +1,25 @@
 /*****************************************************************************
- **
- ** @author Lee Neuse (coder@humbleprogrammer.net)
- ** @since 1.0
- **
- **	---------------------------- [License] ----------------------------------
- **	This work is licensed under the Creative Commons Attribution-NonCommercial-
- **	ShareAlike 3.0 Unported License. To view a copy of this license, visit
- **				http://creativecommons.org/licenses/by-nc-sa/3.0/
- **	or send a letter to Creative Commons, 444 Castro Street Suite 900, Mountain
- **	View, California, 94041, USA.
- **	--------------------- [Disclaimer of Warranty] --------------------------
- **	There is no warranty for the program, to the extent permitted by applicable
- **	law.  Except when otherwise stated in writing the copyright holders and/or
- **	other parties provide the program “as is” without warranty of any kind,
- **	either expressed or implied, including, but not limited to, the implied
- **	warranties of merchantability and fitness for a particular purpose.  The
- **	entire risk as to the quality and performance of the program is with you.
- **	Should the program prove defective, you assume the cost of all necessary
- **	servicing, repair or correction.
- **	-------------------- [Limitation of Liability] --------------------------
- **	In no event unless required by applicable law or agreed to in writing will
- **	any copyright holder, or any other party who modifies and/or conveys the
- **	program as permitted above, be liable to you for damages, including any
- **	general, special, incidental or consequential damages arising out of the
- **	use or inability to use the program (including but not limited to loss of
- **	data or data being rendered inaccurate or losses sustained by you or third
- **	parties or a failure of the program to operate with any other programs),
- **	even if such holder or other party has been advised of the possibility of
- **	such damages.
- **
+ * * * @author Lee Neuse (coder@humbleprogrammer.net) * @since 1.0 *
+ * *	---------------------------- [License] ---------------------------------- *	This work is
+ * licensed under the Creative Commons Attribution-NonCommercial- *	ShareAlike 3.0 Unported
+ * License. To view a copy of this license, visit *				http://creativecommons.org/licenses/by-nc-sa/3.0/
+ * *	or send a letter to Creative Commons, 444 Castro Street Suite 900, Mountain *	View,
+ * California, 94041, USA. *	--------------------- [Disclaimer of Warranty]
+ * -------------------------- *	There is no warranty for the program, to the extent permitted by
+ * applicable *	law.  Except when otherwise stated in writing the copyright holders and/or
+ * *	other parties provide the program “as is” without warranty of any kind, *	either expressed
+ * or implied, including, but not limited to, the implied *	warranties of merchantability and
+ * fitness for a particular purpose.  The *	entire risk as to the quality and performance of the
+ * program is with you. *	Should the program prove defective, you assume the cost of all
+ * necessary *	servicing, repair or correction. *	-------------------- [Limitation of Liability]
+ * -------------------------- *	In no event unless required by applicable law or agreed to in
+ * writing will *	any copyright holder, or any other party who modifies and/or conveys the
+ * *	program as permitted above, be liable to you for damages, including any *	general, special,
+ * incidental or consequential damages arising out of the *	use or inability to use the program
+ * (including but not limited to loss of *	data or data being rendered inaccurate or losses
+ * sustained by you or third *	parties or a failure of the program to operate with any other
+ * programs), *	even if such holder or other party has been advised of the possibility of *	such
+ * damages. *
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
@@ -275,7 +266,7 @@ public class MoveList implements Iterable<Move>
 		}
 
 	/**
-	 * Adds a set of moves to the move list, testing it for legality if necessary.
+	 * Adds a set of moves to the move list, testing each one for legality.
 	 *
 	 * @param iDelta
 	 * 	Mathematical distance between "From" and "To" squares.
@@ -376,13 +367,11 @@ public class MoveList implements Iterable<Move>
 					break;
 
 				case MAP_W_KING:
-					generateKingMovesWhite( iSq,
-											(_board.getCastlingFlags() & Board.CastlingFlags.WHITE_BOTH) );
+					generateKingMoves( iSq, Board.CastlingFlags.WHITE_BOTH );
 					break;
 
 				case MAP_B_KING:
-					generateKingMovesBlack( iSq,
-											(_board.getCastlingFlags() & Board.CastlingFlags.BLACK_BOTH) );
+					generateKingMoves( iSq, Board.CastlingFlags.BLACK_BOTH );
 					break;
 
 				default:
@@ -393,78 +382,76 @@ public class MoveList implements Iterable<Move>
 		}
 
 	/**
-	 * Generate all legal castling moves for Black.
+	 * Generate all legal moves for a King.
 	 *
 	 * @param iSq
 	 * 	"From" square, in 8x8 format.
-	 * @param castling
-	 * 	Black's castling rights.
+	 * @param castlingMask
+	 * 	Moving player's castling rights.
 	 */
-	private void generateKingMovesBlack( int iSq, int castling )
+	private void generateKingMoves( int iSq, int castlingMask )
 		{
 		assert Square.isValid( iSq );
-		assert _board.sq[ iSq ] == Piece.B_KING;
 		//	-----------------------------------------------------------------
-		addMoves( iSq, Bitboards.king[ iSq ], Move.Type.NORMAL );
+		final boolean bInCheck = (_bbCheckers != 0L);
 
-		//	Can't castle out of check.
-		if (_bbCheckers != 0)
-			return;
+		int iSqTo;
 
-		// Black  O-O
-		if ((castling & Board.CastlingFlags.BLACK_SHORT) != 0 &&
-			(_bbAll & Board.CastlingFlags.BLACK_SHORT_MASK) == 0 &&
-			!Bitboards.isAttackedByWhite( _board.map, Square.F8 ) &&
-			testMove( Square.E8, Square.G8, Move.Type.CASTLING ))
+		for ( long bb = _bbToSq & Bitboards.king[ iSq ]; bb != 0L; bb ^= (1L << iSqTo) )
 			{
-			_moves[ _iCount++ ] = Move.BLACK_CASTLE_SHORT;
+			iSqTo = BitUtil.first( bb );
+
+			if (Bitboards.isAttackedBy( _map, iSqTo, _opponent ) ||
+				(bInCheck && !testMove( iSq, iSqTo, Move.Type.NORMAL )))
+				{
+				continue;
+				}
+
+			_moves[ _iCount++ ] = Move.pack( iSq, iSqTo, Move.Type.NORMAL );
 			}
+		//
+		//	Check for castling moves.
+		//
+		int castling = _board.getCastlingFlags();
 
-		// Black O-O-O
-		if ((castling & Board.CastlingFlags.BLACK_LONG) != 0 &&
-			(_bbAll & Board.CastlingFlags.BLACK_LONG_MASK) == 0 &&
-			!Bitboards.isAttackedByWhite( _board.map, Square.D8 ) &&
-			testMove( Square.E8, Square.C8, Move.Type.CASTLING ))
+		if (bInCheck || (castling & castlingMask) == Board.CastlingFlags.NONE)
+			return;    // Can't castle out of check, or just plain can't castle.
+
+		if (iSq == Square.E1)
 			{
-			_moves[ _iCount++ ] = Move.BLACK_CASTLE_LONG;
+			if ((castling & Board.CastlingFlags.WHITE_SHORT) != 0 &&
+				(_bbAll & Board.CastlingFlags.WHITE_SHORT_MASK) == 0 &&
+				!Bitboards.isAttackedByBlack( _map, Square.F1 ) &&
+				!Bitboards.isAttackedByBlack( _map, Square.G1 ))
+				{
+				_moves[ _iCount++ ] = Move.WHITE_CASTLE_SHORT;    // White O-O
+				}
+
+			if ((castling & Board.CastlingFlags.WHITE_LONG) != 0 &&
+				(_bbAll & Board.CastlingFlags.WHITE_LONG_MASK) == 0 &&
+				!Bitboards.isAttackedByBlack( _map, Square.D1 ) &&
+				!Bitboards.isAttackedByBlack( _map, Square.C1 ))
+				{
+				_moves[ _iCount++ ] = Move.WHITE_CASTLE_LONG;    // White O-O-O
+				}
 			}
-		}
-
-	/**
-	 * Generate all legal castling moves for White.
-	 *
-	 * @param iSq
-	 * 	"From" square, in 8x8 format.
-	 * @param castling
-	 * 	White's castling rights.
-	 */
-	private void generateKingMovesWhite( int iSq, int castling )
-		{
-		assert Square.isValid( iSq );
-		assert _board.sq[ iSq ] == Piece.W_KING;
-		//	-----------------------------------------------------------------
-		addMoves( iSq, Bitboards.king[ iSq ], Move.Type.NORMAL );
-
-		//	Can't castle out of check.
-		if (_bbCheckers != 0)
-			return;
-
-		// White O-O
-		if ((castling & Board.CastlingFlags.WHITE_SHORT) != 0 &&
-			(_bbAll & Board.CastlingFlags.WHITE_SHORT_MASK) == 0 &&
-			!Bitboards.isAttackedByBlack( _board.map, Square.F1 ) &&
-			testMove( Square.E1, Square.G1, Move.Type.CASTLING ))
+		else    // if (iSq == Square.E8)
 			{
-			_moves[ _iCount++ ] = Move.WHITE_CASTLE_SHORT;
-			}
+			if ((castling & Board.CastlingFlags.BLACK_SHORT) != 0 &&
+				(_bbAll & Board.CastlingFlags.BLACK_SHORT_MASK) == 0 &&
+				!Bitboards.isAttackedByWhite( _map, Square.F8 ) &&
+				!Bitboards.isAttackedByWhite( _map, Square.G8 ))
+				{
+				_moves[ _iCount++ ] = Move.BLACK_CASTLE_SHORT;    // Black O-O
+				}
 
-		// White O-O-O
-		if ((castling & Board.CastlingFlags.WHITE_LONG) != 0 &&
-			(_bbAll & Board.CastlingFlags.WHITE_LONG_MASK) == 0 &&
-			!Bitboards.isAttackedByBlack( _board.map, Square.D1 ) &&
-			testMove( Square.E1, Square.C1, Move.Type.CASTLING ))
-			{
-			_moves[ _iCount++ ] = Move.WHITE_CASTLE_LONG;
+			if ((castling & Board.CastlingFlags.BLACK_LONG) != 0 &&
+				(_bbAll & Board.CastlingFlags.BLACK_LONG_MASK) == 0 &&
+				!Bitboards.isAttackedByWhite( _map, Square.D8 ) &&
+				!Bitboards.isAttackedByWhite( _map, Square.C8 ))
+				{
+				_moves[ _iCount++ ] = Move.BLACK_CASTLE_LONG;    // Black O-O-O
+				}
 			}
 		}
 
@@ -474,6 +461,7 @@ public class MoveList implements Iterable<Move>
 	 * @param bbPawns
 	 * 	Bitboard of pawns to moves.
 	 */
+
 	private void generatePawnMovesBlack( long bbPawns )
 		{
 		if (bbPawns == 0) return;
@@ -489,13 +477,12 @@ public class MoveList implements Iterable<Move>
 					  (((bbPawns & 0xFEFEFEFEFEFEFEFEL) >>> 9) & _bbOpponent),
 					  Move.Type.NORMAL );
 
-		//	All e.p. captures.
+		//	Any e.p. captures.
 		if (_bbEP != 0L)
 			addMoves( _bbEP, _board.getEnPassantSquare(), Move.Type.EN_PASSANT );
 
 		//	Normal moves.
-		long bbEmpty = ~_bbAll;
-		long bbUnblocked = (bbPawns >>> 8) & bbEmpty;
+		long bbUnblocked = (bbPawns >>> 8) & ~_bbAll;
 
 		addPawnMoves( 8, bbUnblocked, Move.Type.NORMAL );
 
@@ -503,7 +490,7 @@ public class MoveList implements Iterable<Move>
 		if ((bbUnblocked &= Bitboards.rankMask[ 5 ]) != 0)
 			{
 			addPawnMoves( 16,
-						  ((bbUnblocked >>> 8) & bbEmpty),
+						  ((bbUnblocked >>> 8) & ~_bbAll),
 						  Move.Type.PAWN_PUSH );
 			}
 		}
@@ -518,8 +505,6 @@ public class MoveList implements Iterable<Move>
 		{
 		if (bbPawns == 0) return;
 		//	-----------------------------------------------------------------
-		long bbEmpty = ~_bbAll;
-
 		//	Captures to the NW.
 		addPawnMoves( -9,
 					  (((bbPawns & 0x7F7F7F7F7F7F7F7FL) << 9) & _bbOpponent),
@@ -530,12 +515,12 @@ public class MoveList implements Iterable<Move>
 					  (((bbPawns & 0xFEFEFEFEFEFEFEFEL) << 7) & _bbOpponent),
 					  Move.Type.NORMAL );
 
-		//	All e.p. captures.
+		//	Any e.p. captures.
 		if (_bbEP != 0L)
 			addMoves( _bbEP, _board.getEnPassantSquare(), Move.Type.EN_PASSANT );
 
 		//	Normal moves.
-		long bbUnblocked = (bbPawns << 8) & bbEmpty;
+		long bbUnblocked = (bbPawns << 8) & ~_bbAll;
 
 		addPawnMoves( -8, bbUnblocked, Move.Type.NORMAL );
 
@@ -543,7 +528,7 @@ public class MoveList implements Iterable<Move>
 		if ((bbUnblocked &= Bitboards.rankMask[ 2 ]) != 0)
 			{
 			addPawnMoves( -16,
-						  ((bbUnblocked << 8) & bbEmpty),
+						  ((bbUnblocked << 8) & ~_bbAll),
 						  Move.Type.PAWN_PUSH );
 			}
 		}
@@ -655,10 +640,12 @@ public class MoveList implements Iterable<Move>
 		assert Square.isValid( iSqFrom );
 		assert Square.isValid( iSqTo );
 		//	-----------------------------------------------------------------
+		long bbSqFrom = 1L << iSqFrom;
+
 		if (iMoveType != Move.Type.EN_PASSANT &&
 			_bbCheckers == 0L &&
 			iSqFrom != _iSqKing &&
-			(_bbUnpinned & (1L << iSqFrom)) != 0L)
+			(_bbUnpinned & bbSqFrom) != 0L)
 			{
 			return true;
 			}
@@ -666,7 +653,6 @@ public class MoveList implements Iterable<Move>
 		//	Now do it the hard way.
 		//
 		int piece = _board.sq[ iSqFrom ];
-		long bbSqFrom = 1L << iSqFrom;
 		long bbSqTo = 1L << iSqTo;
 
 		_map[ piece ] ^= bbSqFrom | bbSqTo;

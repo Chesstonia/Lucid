@@ -23,11 +23,6 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import net.humbleprogrammer.humble.Stopwatch;
-
 import static net.humbleprogrammer.maxx.Constants.*;
 
 /**
@@ -58,9 +53,6 @@ public class Bitboards
 	//  -----------------------------------------------------------------------
 	//	STATIC DECLARATIONS
 	//	-----------------------------------------------------------------------
-
-	/** Logger */
-	private static final Logger s_log = LoggerFactory.getLogger( "MAXX" );
 
 	private final static byte rookShiftBits[] =
 		{
@@ -178,9 +170,6 @@ public class Bitboards
 
 	static
 		{
-		int iByteCount = 0;
-		Stopwatch swatch = Stopwatch.startNew();
-
 		for ( int iSq = 0; iSq < 64; ++iSq )
 			{
 			long bbMask = 1L << iSq;
@@ -235,7 +224,6 @@ public class Bitboards
 			//
 			int bishopPositions = 1 << bishopShiftBits[ iSq ];
 
-			iByteCount += bishopPositions * 8;
 			bishopMagic[ iSq ] = new long[ bishopPositions ];
 
 			for ( int idx = 0; idx < bishopPositions; idx++ )
@@ -253,7 +241,6 @@ public class Bitboards
 			//
 			int rookPositions = 1 << rookShiftBits[ iSq ];
 
-			iByteCount += rookPositions * 8;
 			rookMagic[ iSq ] = new long[ rookPositions ];
 
 			for ( int idx = 0; idx < rookPositions; ++idx )
@@ -277,8 +264,6 @@ public class Bitboards
 				long bbLine = ((bbFile & 0x07) - 1) & 0x0001010101010100L;
 				long bbRank = ((iSqRHS | 0x07) - iSq) >>> 3;
 
-				iByteCount += 8;
-
 				bbLine += 2 * (((bbRank & 0x07) - 1) >> 58);
 				bbLine += (((bbRank - bbFile) & 0x0F) - 1) & 0x0040201008040200L;
 				bbLine += (((bbRank + bbFile) & 0x0F) - 1) & 0x0002040810204080L;
@@ -286,25 +271,6 @@ public class Bitboards
 
 				between[ iSq ][ iSqRHS ] = bbLine & bbBetween;
 				}
-			}
-
-		swatch.stop();
-
-		iByteCount += (8 * all.length) +
-					  (8 * bishop.length) +
-					  (8 * bishopMask.length) +
-					  (8 * rook.length) +
-					  (8 * rookMask.length) +
-					  (8 * knight.length) +
-					  (8 * king.length) +
-					  (8 * pawnDownwards.length) +
-					  (8 * pawnUpwards.length);
-
-		if (s_log.isDebugEnabled())
-			{
-			s_log.debug( String.format( "Generated %,.1fKB attack tables in %s.",
-										(iByteCount / 1024.0),
-										swatch ) );
 			}
 		}
 
@@ -360,18 +326,18 @@ public class Bitboards
 		if ((iSq & ~0x3F) != 0) return 0L;
 		//	-----------------------------------------------------------------
 		long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
-		long bbPawns = (player == WHITE)
-					   ? (map[ MAP_W_PAWN ] & pawnDownwards[ iSq ])
-					   : (map[ MAP_B_PAWN ] & pawnUpwards[ iSq ]);
 
-		return (bbPawns |
-				(king[ iSq ] & map[ MAP_W_KING + player ]) |
-				(knight[ iSq ] & map[ MAP_W_KNIGHT + player ]) |
-				getDiagonalAttackers( iSq, (map[ MAP_W_BISHOP + player ] |
-											map[ MAP_W_QUEEN + player ]), bbAll ) |
-				getLateralAttackers( iSq,
-									 (map[ MAP_W_ROOK + player ] | map[ MAP_W_QUEEN + player ]),
-									 bbAll ));
+		return (player == WHITE)
+		   ? (map[ MAP_W_PAWN ] & pawnDownwards[ iSq ]) |
+			 (king[ iSq ] & map[ MAP_W_KING ]) |
+			 (knight[ iSq ] & map[ MAP_W_KNIGHT ]) |
+			 getDiagonalAttackers( iSq, (map[ MAP_W_BISHOP ] | map[ MAP_W_QUEEN ]), bbAll ) |
+			 getLateralAttackers( iSq, (map[ MAP_W_ROOK ] | map[ MAP_W_QUEEN ]), bbAll )
+		   : (map[ MAP_B_PAWN ] & pawnUpwards[ iSq ]) |
+			 (king[ iSq ] & map[ MAP_B_KING ]) |
+			 (knight[ iSq ] & map[ MAP_B_KNIGHT ]) |
+			 getDiagonalAttackers( iSq, (map[ MAP_B_BISHOP ] | map[ MAP_B_QUEEN ]), bbAll ) |
+			 getLateralAttackers( iSq, (map[ MAP_B_ROOK ] | map[ MAP_B_QUEEN ]), bbAll );
 		}
 
 	/**
@@ -519,9 +485,6 @@ public class Bitboards
 		assert map != null;
 		if ((iSq & ~0x3F) != 0 || (all[ iSq ] & map[ player ]) == 0L) return false;
 		//	-----------------------------------------------------------------
-		if ((king[ iSq ] & map[ MAP_W_QUEEN + player ]) != 0L)
-			return true;
-
 		return (player == WHITE)
 			   ? isAttackedByWhite( map, iSq )
 			   : isAttackedByBlack( map, iSq );
@@ -544,7 +507,7 @@ public class Bitboards
 		//	-----------------------------------------------------------------
 		if ((map[ MAP_B_PAWN ] & pawnUpwards[ iSq ]) != 0L ||
 			(knight[ iSq ] & map[ MAP_B_KNIGHT ]) != 0L ||
-			(king[ iSq ] & map[ MAP_B_KING ]) != 0L)
+			(king[ iSq ] & (map[ MAP_B_KING ] | map[ MAP_B_QUEEN ])) != 0L)
 			{
 			return true;
 			}
@@ -572,7 +535,7 @@ public class Bitboards
 		//	-----------------------------------------------------------------
 		if ((map[ MAP_W_PAWN ] & pawnDownwards[ iSq ]) != 0L ||
 			(knight[ iSq ] & map[ MAP_W_KNIGHT ]) != 0L ||
-			(king[ iSq ] & map[ MAP_W_KING ]) != 0L)
+			(king[ iSq ] & (map[ MAP_W_KING ] | map[ MAP_W_QUEEN ])) != 0L)
 			{
 			return true;
 			}
