@@ -69,6 +69,23 @@ public class Piece
     //	-----------------------------------------------------------------------
 
     /**
+     * Returns a piece of the given type and color.
+     *
+     * @param pc
+     *     Piece color [BLACK|WHITE]
+     * @param pt
+     *     Piece type [PAWN..KING]
+     *
+     * @return Piece.*, or EMPTY if either type or color are invalid.
+     */
+    static int create( int pc, int pt )
+        {
+        return (pt >= PAWN && pt <= KING && (pc == WHITE || pc == BLACK))
+               ? ((pt << 1) + pc)
+               : EMPTY;
+        }
+
+    /**
      * Extracts the piece color from a Piece.* constant.
      *
      * @param piece
@@ -101,20 +118,4 @@ public class Piece
     public static boolean isValid( int piece )
         { return (piece >= W_PAWN && piece <= B_KING); }
 
-    /**
-     * Returns a piece of the given type and color.
-     *
-     * @param pc
-     *     Piece color [BLACK|WHITE]
-     * @param pt
-     *     Piece type [PAWN..KING]
-     *
-     * @return Piece.*, or EMPTY if either type or color are invalid.
-     */
-    static int set( int pc, int pt )
-        {
-        return (pt >= PAWN && pt <= KING && (pc == WHITE || pc == BLACK))
-               ? ((pt << 1) + pc)
-               : EMPTY;
-        }
     }   /* end of enum Piece */

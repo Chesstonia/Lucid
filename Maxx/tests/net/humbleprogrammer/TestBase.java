@@ -60,7 +60,7 @@ public abstract class TestBase
         }
 
     /** Test duration. */
-    protected static final Duration DURATION = Duration.NORMAL;
+    protected static final Duration DURATION = Duration.EPIC;
 
     /** Square index used for range testing. */
     protected static final int SQ_LO = -512;
