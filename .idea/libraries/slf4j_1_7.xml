@@ -1,14 +1,17 @@
 <component name="libraryTable">
-  <library name="slf4j 1.7">
+  <library name="slf4j-1.7">
     <CLASSES>
-      <root url="jar://D:/Developer/Java/slf4j-1.7.5/slf4j-api-1.7.5.jar!/" />
+      <root url="jar://D:/Developer/Java/lib/slf4j-1.7.5/slf4j-api-1.7.5.jar!/" />
+      <root url="jar://D:/Developer/Java/lib/slf4j-1.7.5/slf4j-simple-1.7.5.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="file://D:/Developer/Java/slf4j-1.7.5/site/apidocs" />
+      <root url="file://D:/Developer/Java/lib/slf4j-1.7.5/site/apidocs" />
     </JAVADOC>
     <SOURCES>
-      <root url="file://D:/Developer/Java/slf4j-1.7.5/slf4j-simple/src/main/java" />
-      <root url="file://D:/Developer/Java/slf4j-1.7.5/slf4j-api/src/main/java" />
+      <root url="file://D:/Developer/Java/lib/slf4j-1.7.5" />
+      <root url="file://D:/Developer/Java/lib/slf4j-1.7.5/slf4j-api/src/main/java" />
+      <root url="file://D:/Developer/Java/lib/slf4j-1.7.5/slf4j-simple/src/main/java" />
     </SOURCES>
+    <jarDirectory url="file://D:/Developer/Java/lib/slf4j-1.7.5" recursive="false" type="SOURCES" />
   </library>
 </component>

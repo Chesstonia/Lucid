@@ -117,6 +117,32 @@ public class Move
 		return ((iSqTo << 16) | (iSqFrom << 8) | iMoveType) & MASK_ALL;
 		}
 
+	/**
+	 * Unpacks the "From" square from a packed move.
+	 *
+	 * @param packed
+	 * 	Packed move.
+	 *
+	 * @return "From" square, in 8x8 format.
+	 */
+	static int unpackFromSq( int packed )
+		{
+		return (packed >>> 8) & 0x3F;
+		}
+
+	/**
+	 * Unpacks the "To" square from a packed move.
+	 *
+	 * @param packed
+	 * 	Packed move.
+	 *
+	 * @return "To" square, in 8x8 format.
+	 */
+	static int unpackToSq( int packed )
+		{
+		return (packed >>> 16) & 0x3F;
+		}
+
 	//  -----------------------------------------------------------------------
 	//	OVERRIDES
 	//	-----------------------------------------------------------------------

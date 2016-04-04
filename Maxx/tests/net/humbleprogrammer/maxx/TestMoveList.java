@@ -143,15 +143,24 @@ public class TestMoveList extends TestBase
 	@Test
 	public void t_perft()
 		{
-		int iDepth = DURATION.ordinal() + 3;
+		boolean bRanTest = true;
 
-		for ( TestPosition position : s_positions )
-			if (position.test( iDepth, WHITE ) >= s_lMaxNanosecs ||
-				position.test( iDepth, BLACK ) >= s_lMaxNanosecs)
-				{
-				return;
-				}
+		for ( int iDepth = DURATION.ordinal(); bRanTest; ++iDepth )
+			{
+			bRanTest = false;
+			for ( TestPosition position : s_positions )
+				if (position.getMaxDepth() > iDepth)
+					{
+					bRanTest = true;
+					if (position.test( iDepth, WHITE ) >= s_lMaxNanosecs ||
+						position.test( iDepth, BLACK ) >= s_lMaxNanosecs)
+						{
+						return;
+						}
+					}
+			}
 		}
+
 	//  -----------------------------------------------------------------------
 	//	METHODS
 	//	-----------------------------------------------------------------------
@@ -214,6 +223,8 @@ public class TestMoveList extends TestBase
 			_lExpected = lExpected;
 			_lActual = new long[ _lExpected.length ];
 			}
+
+		int getMaxDepth() { return _lExpected.length; }
 
 		private void perft( final Board bd, int iDepth, int iMaxDepth )
 			{
@@ -320,8 +331,9 @@ public class TestMoveList extends TestBase
 							  new long[]{ 50L, 279L, 13310L, 54703L, 2538084L, 10809689L, 493407574L } ),
 			new TestPosition( "rnbqkb1r/ppppp1pp/7n/4Pp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6",
 							  new long[]{ 31L, 570L, 17546L, 351806L, 11139762L, 244063299L, 7930902498L } ),
-			new TestPosition( "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -",
-							  new long[]{ 48L, 2039L, 97862L, 4085603L, 193690690L, 8031647685L, 374190009323L } ),
+			new TestPosition(
+				"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -",
+				new long[]{ 48L, 2039L, 97862L, 4085603L, 193690690L, 8031647685L, 374190009323L } ),
 			new TestPosition( "8/p7/8/1P6/K1k3p1/6P1/7P/8 w - -",
 							  new long[]{ 5L, 39L, 237L, 2002L, 14062L, 120995L, 966152L } ),
 			new TestPosition( "r3k2r/p6p/8/B7/1pp1p3/3b4/P6P/R3K2R w KQkq -",

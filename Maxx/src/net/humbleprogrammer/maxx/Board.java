@@ -405,10 +405,8 @@ public class Board
 			{
 			case PAWN:
 				return (_player == WHITE)
-					   ? (map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] |
-											   Bitboards.fileMask[ iSqTo & 0x07 ]))
-					   : (map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] |
-											   Bitboards.fileMask[ iSqTo & 0x07 ]));
+					   ? (map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]))
+					   : (map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]));
 
 			case KNIGHT:
 				return map[ MAP_W_KNIGHT + _player ] & Bitboards.knight[ iSqTo ];
@@ -425,8 +423,7 @@ public class Board
 
 			case QUEEN:
 				return map[ MAP_W_QUEEN + _player ] &
-					   Bitboards.getQueenMovesFrom( iSqTo,
-													(map[ MAP_W_ALL ] | map[ MAP_B_ALL ]) );
+					   Bitboards.getQueenMovesFrom( iSqTo, (map[ MAP_W_ALL ] | map[ MAP_B_ALL ]) );
 
 			case KING:
 				//  Don't mask against Bitboards.king[] because that excludes castling moves.
