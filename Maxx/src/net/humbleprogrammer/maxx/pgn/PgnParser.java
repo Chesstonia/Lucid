@@ -50,7 +50,7 @@ public class PgnParser extends Parser
     //	-----------------------------------------------------------------------
 
     /** PGN Tag name of starting position. */
-    static final String TAG_FEN = "FEN";
+    public static final String TAG_FEN = "FEN";
 
     /** Dash, hyphen, minus sign, etc. */
     private static final char SYM_DASH    = '-';
@@ -137,9 +137,7 @@ public class PgnParser extends Parser
         {
         assert listener != null;
         assert strPGN != null;
-        /*
-        **  CODE
-        */
+        //  -----------------------------------------------------------------
         _lexer = new StrLexer( strPGN );
         _listener = listener;
         }
@@ -190,19 +188,16 @@ public class PgnParser extends Parser
      *
      * @return .T. if parsed successfully; .F. on error.
      */
-    static boolean parse( IPgnListener listener, String strPGN )
+    public static boolean parse( IPgnListener listener, String strPGN )
         {
         DBC.requireNotNull( listener, "PGN Listener" );
-
-        if (StrUtil.isBlank( strPGN ))
-            return false;
-        /*
-        **  CODE
-        */
+        if (StrUtil.isBlank( strPGN )) return false;
+        //  -----------------------------------------------------------------
         PgnParser parser = new PgnParser( listener, strPGN );
 
         try
             {
+            listener.reset();
             //noinspection StatementWithEmptyBody
             while ( parser.nextToken() ) ;
             }

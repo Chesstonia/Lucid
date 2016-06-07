@@ -80,6 +80,35 @@ public class Variation implements Iterable<Move>
 	 */
 	public boolean isEmpty()
 		{ return _moves.isEmpty(); }
+
+	/**
+	 * Gets the position <i>BEFORE</i> the player's move at a given move number.
+	 *
+	 * @param iDelta
+	 * 	Distance to seek: positive from start, negative from end
+	 *
+	 * @return Board position, or <code>null</code> if move number or player are invalid.
+	 */
+	public Board seekPosition( int iDelta )
+		{
+		if (iDelta < 0)
+			iDelta += _moves.size();
+
+		if (iDelta < 0 || iDelta >= _moves.size())
+			return null;
+		//
+		//	Make each move
+		//
+		Board bd = (_bdStart != null)
+				   ? BoardFactory.createCopy( _bdStart )
+				   : BoardFactory.createInitial();
+
+		for (int idx = 0; idx < iDelta; ++idx)
+			bd.makeMove( _moves.get(idx) );
+
+		return bd;
+		}
+
 	//  -----------------------------------------------------------------------
 	//	PUBLIC GETTERS & SETTERS
 	//	-----------------------------------------------------------------------

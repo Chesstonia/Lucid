@@ -93,6 +93,25 @@ public class BoardFactory extends Parser
         }
 
     /**
+     * Creates a copy of an existing board.
+     *
+     * @param src
+     *     Board to copy from.
+     *
+     * @return Board object.
+     */
+    public static Board createCopy( final Board src, Move move )
+        {
+        if (src == null || !src.isLegalMove(move)) return null;
+        //  -----------------------------------------------------------------
+        Board bd = new Board(src);
+
+        bd.makeMove( move );
+
+        return bd;
+        }
+
+    /**
      * Creates a board from a FEN string.
      *
      * @param strFEN

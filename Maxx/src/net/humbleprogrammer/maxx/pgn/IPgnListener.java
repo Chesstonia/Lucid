@@ -123,4 +123,8 @@ interface IPgnListener
      * A variation close marker ')' was parsed.
      */
     void onVariationExit();
+    /**
+     * A new game is being started.
+     */
+    void reset();
     }   /* end of interface IPgnListener */

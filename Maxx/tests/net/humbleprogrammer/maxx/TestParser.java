@@ -39,6 +39,7 @@ import org.junit.Test;
 import java.util.Collection;
 
 import static org.junit.Assert.*;
+import static net.humbleprogrammer.maxx.Constants.*;
 
 public class TestParser extends TestBase
     {
@@ -67,6 +68,17 @@ public class TestParser extends TestBase
         {
         assertNull( Parser.matchFEN( null ) );
         assertNull( Parser.matchFEN( "" ) );
+        }
+
+    @Test
+    public void t_pieceTypeToGlyph()
+        {
+        assertEquals( 'P', Parser.pieceTypeToGlyph(  PAWN ) );
+        assertEquals( 'N', Parser.pieceTypeToGlyph( KNIGHT ) );
+        assertEquals( 'B', Parser.pieceTypeToGlyph( BISHOP ) );
+        assertEquals( 'R', Parser.pieceTypeToGlyph( ROOK ) );
+        assertEquals( 'Q', Parser.pieceTypeToGlyph( QUEEN ) );
+        assertEquals( 'K', Parser.pieceTypeToGlyph( KING ) );
         }
 
     //  -----------------------------------------------------------------------

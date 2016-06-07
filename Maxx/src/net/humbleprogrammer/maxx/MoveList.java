@@ -1,25 +1,34 @@
-/*****************************************************************************
- * * * @author Lee Neuse (coder@humbleprogrammer.net) * @since 1.0 *
- * *	---------------------------- [License] ---------------------------------- *	This work is
- * licensed under the Creative Commons Attribution-NonCommercial- *	ShareAlike 3.0 Unported
- * License. To view a copy of this license, visit *				http://creativecommons.org/licenses/by-nc-sa/3.0/
- * *	or send a letter to Creative Commons, 444 Castro Street Suite 900, Mountain *	View,
- * California, 94041, USA. *	--------------------- [Disclaimer of Warranty]
- * -------------------------- *	There is no warranty for the program, to the extent permitted by
- * applicable *	law.  Except when otherwise stated in writing the copyright holders and/or
- * *	other parties provide the program “as is” without warranty of any kind, *	either expressed
- * or implied, including, but not limited to, the implied *	warranties of merchantability and
- * fitness for a particular purpose.  The *	entire risk as to the quality and performance of the
- * program is with you. *	Should the program prove defective, you assume the cost of all
- * necessary *	servicing, repair or correction. *	-------------------- [Limitation of Liability]
- * -------------------------- *	In no event unless required by applicable law or agreed to in
- * writing will *	any copyright holder, or any other party who modifies and/or conveys the
- * *	program as permitted above, be liable to you for damages, including any *	general, special,
- * incidental or consequential damages arising out of the *	use or inability to use the program
- * (including but not limited to loss of *	data or data being rendered inaccurate or losses
- * sustained by you or third *	parties or a failure of the program to operate with any other
- * programs), *	even if such holder or other party has been advised of the possibility of *	such
- * damages. *
+/* ****************************************************************************
+ *
+ *	@author Lee Neuse (coder@humbleprogrammer.net)
+ *	@since 1.0
+ *
+ *	---------------------------- [License] ----------------------------------
+ *	This work is licensed under the Creative Commons Attribution-NonCommercial-
+ *	ShareAlike 3.0 Unported License. To view a copy of this license, visit
+ *			http://creativecommons.org/licenses/by-nc-sa/3.0/
+ *	or send a letter to Creative Commons, 444 Castro Street Suite 900, Mountain
+ *	View, California, 94041, USA.
+ *	--------------------- [Disclaimer of Warranty] --------------------------
+ *	There is no warranty for the program, to the extent permitted by applicable
+ *	law.  Except when otherwise stated in writing the copyright holders and/or
+ *	other parties provide the program “as is” without warranty of any kind,
+ *	either expressed or implied, including, but not limited to, the implied
+ *	warranties of merchantability and fitness for a particular purpose.  The
+ *	entire risk as to the quality and performance of the program is with you.
+ *	Should the program prove defective, you assume the cost of all necessary
+ *	servicing, repair or correction.
+ *	-------------------- [Limitation of Liability] --------------------------
+ *	In no event unless required by applicable law or agreed to in writing will
+ *	any copyright holder, or any other party who modifies and/or conveys the
+ *	program as permitted above, be liable to you for damages, including any
+ *	general, special, incidental or consequential damages arising out of the
+ *	use or inability to use the program (including but not limited to loss of
+ *	data or data being rendered inaccurate or losses sustained by you or third
+ *	parties or a failure of the program to operate with any other programs),
+ *	even if such holder or other party has been advised of the possibility of
+ *	such damages.
+ *
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
@@ -39,47 +48,51 @@ public class MoveList implements Iterable<Move>
 	//	-----------------------------------------------------------------------
 
 	/** Maximum possible moves in a single position. */
-	private static final int MAX_MOVE_COUNT = 224;
+	private static final int     MAX_MOVE_COUNT = 224;
+	/** Controls how _map[] array is restored in addMoveIfLegal() */
+	private static final boolean USE_ARRAY_COPY = true;
 
 	//  -----------------------------------------------------------------------
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
-	/** .T. if move list is all legal mvoes; .F. otherwise. */
-	private final boolean _bAllMoves;
 	/** Color of opposing player. */
-	private final int     _opponent;
+	private final int   _opponent;
 	/** Color of moving player. */
-	private final int     _player;
+	private final int   _player;
 	/** Square occupied by the moving player's King. */
-	private final int     _iSqKing;
+	private final int   _iSqKing;
 	/** Bitboard of all pieces. */
-	private final long    _bbAll;
+	private final long  _bbAll;
+	/** Bitboard of the moving player's King. */
+	private final long  _bbKing;
 	/** Bitboard of opposing pieces. */
-	private final long    _bbOpponent;
+	private final long  _bbOpponent;
 	/** Bitboard of moving pieces. */
-	private final long    _bbPlayer;
+	private final long  _bbPlayer;
 	/** Zobrist hash of board that moves were generated for. */
-	private final long    _hashZobrist;
+	private final long  _hashZobrist;
 	/** Current position. */
-	private final Board   _board;
+	private final Board _board;
 	/** Array of packed moves. */
 	private final int[]  _moves = new int[ MAX_MOVE_COUNT ];
 	/** Saved copy of the board maps. */
 	private final long[] _map   = new long[ MAP_LENGTH ];
 
+	/** .T. if move list is all legal mvoes; .F. otherwise. */
+	private boolean _bAllMoves;
 	/** Number of moves in {@link #_moves}. */
-	private int  _iCount;
+	private int     _iCount;
 	/** Bitboard of pieces threatening the moving player's King. */
-	private long _bbCheckers;
+	private long    _bbCheckers;
 	/** Bitboard of pawns that can capture via e.p. */
-	private long _bbEP;
+	private long    _bbEP;
 	/** Bitboard of potential "From" squares. */
-	private long _bbFromSq;
+	private long    _bbFromSq;
 	/** Bitboard of potential "To" squares. */
-	private long _bbToSq;
+	private long    _bbToSq;
 	/** Bitboard of all pieces that are NOT pinned. */
-	private long _bbUnpinned;
+	private long    _bbUnpinned;
 
 	//  -----------------------------------------------------------------------
 	//	CTOR
@@ -96,29 +109,9 @@ public class MoveList implements Iterable<Move>
 	 */
 	public MoveList( Board bd )
 		{
-		DBC.requireNotNull( bd, "bd" );
+		this( bd, ~0L, ~0L );
 		//	-----------------------------------------------------------------
-		_board = bd;
-
-		_player = _board.getMovingPlayer();
-		_opponent = _player ^ 1;
-
-		_bbOpponent = _board.map[ _opponent ];
-		_bbPlayer = _board.map[ _player ];
-		_bbAll = _bbPlayer | _bbOpponent;
-
-		_bbFromSq = _bbPlayer;
-		_bbToSq = ~_bbPlayer;
-
 		_bAllMoves = true;
-		_hashZobrist = bd.getZobristHash();
-		_iSqKing = bd.getKingSquare( _player );
-
-		if (Square.isValid( _iSqKing ))
-			{
-			initBitboards();
-			generate();
-			}
 		}
 
 	/**
@@ -133,39 +126,55 @@ public class MoveList implements Iterable<Move>
 	 */
 	public MoveList( Board bd, long bbCandidates, int iSqTo )
 		{
-		DBC.requireNotNull( bd, "bd" );
+		this( bd, bbCandidates, Square.getMask( iSqTo ) );
+		//	-----------------------------------------------------------------
+		_bAllMoves = false;
+		//
+		//  Take out all moves that don't reach the "To" square.  Do this by copying the last
+		//  move on top of the "bad" move.  The current index is decremented so that the next
+		//  iteration of the loop will test the copied move, which is now in the same element.
+		//
+		int iToMask = Move.pack( 0, iSqTo );
+
+		for ( int index = 0; index < _iCount; ++index )
+			if ((_moves[ index ] & Move.MASK_TO_SQ) != iToMask && --_iCount > index)
+				_moves[ index-- ] = _moves[ _iCount ];
+		}
+
+	/**
+	 * Generate a subset of legal moves.
+	 *
+	 * @param bd
+	 * 	Position to generate moves for.
+	 * @param bbFromSq
+	 * 	Bitboard of moving pieces.
+	 * @param bbToSq
+	 * 	Bitboard of target squares.
+	 */
+	MoveList( Board bd, long bbFromSq, long bbToSq )
+		{
+		DBC.requireNotNull( bd, "Board" );
 		//	-----------------------------------------------------------------
 		_board = bd;
 
-		_player = _board.getMovingPlayer();
+		_player = bd.getMovingPlayer();
 		_opponent = _player ^ 1;
 
-		_bbOpponent = _board.map[ _opponent ];
-		_bbPlayer = _board.map[ _player ];
+		System.arraycopy( _board.map, 0, _map, 0, MAP_LENGTH );
+
+		_bbOpponent = _map[ _opponent ];
+		_bbPlayer = _map[ _player ];
 		_bbAll = _bbPlayer | _bbOpponent;
+		_bbKing = _map[ MAP_W_KING + _player ];
 
-		_bbFromSq = bbCandidates & _bbPlayer;
-		_bbToSq = (1L << iSqTo);
+		_bbFromSq = bbFromSq & _bbPlayer;
+		_bbToSq = bbToSq & ~_bbPlayer;
 
-		_bAllMoves = false;
 		_hashZobrist = bd.getZobristHash();
-		_iSqKing = bd.getKingSquare( _player );
+		_iSqKing = BitUtil.first( _bbKing );
 
-		if (Square.isValid( _iSqKing ))
-			{
-			initBitboards();
+		if (initBitboards())
 			generate();
-			//
-			//  Take out all moves that don't reach the "To" square.  Do this by copying the last
-			//  move on top of the "bad" move.  The current index is decremented so that the next
-			//  iteration of the loop will test the copied move, which is now in the same element.
-			//
-			int iToMask = Move.pack( 0, iSqTo );
-
-			for ( int index = 0; index < _iCount; ++index )
-				if ((_moves[ index ] & Move.MASK_TO_SQ) != iToMask && --_iCount > index)
-					_moves[ index-- ] = _moves[ _iCount ];
-			}
 		}
 
 	//  -----------------------------------------------------------------------
@@ -208,6 +217,23 @@ public class MoveList implements Iterable<Move>
 		}
 
 	/**
+	 * Determines if the current position is mate.
+	 *
+	 * @param bd
+	 * 	Position to test.
+	 *
+	 * @return .T. if moving player is in check but has no legal moves; .F. otherwise.
+	 */
+	public static boolean isMate( Board bd )
+		{
+		if (bd == null || !bd.isInCheck()) return false;
+		//	-----------------------------------------------------------------
+		MoveList moves = new MoveList( bd );
+
+		return (moves.size() == 0);
+		}
+
+	/**
 	 * Gets the number of legal moves found.
 	 *
 	 * @return Move count.
@@ -235,6 +261,7 @@ public class MoveList implements Iterable<Move>
 	 *
 	 * @return <code>.T.</code> if move is legal; <code>.F.</code> if king left in check.
 	 */
+	@SuppressWarnings( "PointlessBooleanExpression" )
 	private boolean addMoveIfLegal( int iSqFrom, int iSqTo, int iMoveType )
 		{
 		assert Square.isValid( iSqFrom | iSqTo );
@@ -278,12 +305,20 @@ public class MoveList implements Iterable<Move>
 
 				bInCheck = Bitboards.isAttackedBy( _map, _iSqKing, _opponent );
 
-				_map[ victim ] ^= bbSqVictim;
-				_map[ _opponent ] ^= bbSqVictim;
+				if (!USE_ARRAY_COPY)
+					{
+					_map[ victim ] ^= bbSqVictim;
+					_map[ _opponent ] ^= bbSqVictim;
+					}
 				}
 
-			_map[ piece ] ^= bbSqBoth;
-			_map[ _player ] ^= bbSqBoth;
+			if (USE_ARRAY_COPY)
+				System.arraycopy( _board.map, 0, _map, 0, MAP_LENGTH );
+			else
+				{
+				_map[ piece ] ^= bbSqBoth;
+				_map[ _player ] ^= bbSqBoth;
+				}
 
 			if (bInCheck) return false;
 			}
@@ -305,13 +340,8 @@ public class MoveList implements Iterable<Move>
 	 */
 	private void addMovesFrom( long bbFrom, int iSqTo, int iType )
 		{
-		int iSqFrom;
-
-		for ( bbFrom &= _bbFromSq; bbFrom != 0L; bbFrom ^= (1L << iSqFrom) )
-			{
-			iSqFrom = BitUtil.first( bbFrom );
-			addMoveIfLegal( iSqFrom, iSqTo, iType );
-			}
+		for ( long bb = bbFrom & _bbFromSq; bb != 0L; bb &= (bb - 1) )
+			addMoveIfLegal( BitUtil.first( bb ), iSqTo, iType );
 		}
 
 	/**
@@ -326,13 +356,8 @@ public class MoveList implements Iterable<Move>
 	 */
 	private void addMovesTo( int iSqFrom, long bbTo, int iType )
 		{
-		int iSqTo;
-
-		for ( bbTo &= _bbToSq; bbTo != 0L; bbTo ^= (1L << iSqTo) )
-			{
-			iSqTo = BitUtil.first( bbTo );
-			addMoveIfLegal( iSqFrom, iSqTo, iType );
-			}
+		for ( long bb = bbTo & _bbToSq; bb != 0L; bb &= (bb - 1) )
+			addMoveIfLegal( iSqFrom, BitUtil.first( bb ), iType );
 		}
 
 	/**
@@ -347,14 +372,12 @@ public class MoveList implements Iterable<Move>
 		{
 		if ((bbTo &= _bbToSq) == 0) return;
 		//	-----------------------------------------------------------------
-		int iSqTo;
-
 		if (iDelta > -16 && iDelta < 16)
 			{
 			//	Promotions first.
-			for ( long bb = bbTo & Square.NO_PAWN_ZONE; bb != 0; bb ^= (1L << iSqTo) )
+			for ( long bb = bbTo & Square.NO_PAWN_ZONE; bb != 0; bb &= (bb - 1) )
 				{
-				iSqTo = BitUtil.first( bb );
+				int iSqTo = BitUtil.first( bb );
 				int iSqFrom = iSqTo + iDelta;
 
 				if (addMoveIfLegal( iSqFrom, iSqTo, Move.Type.PROMOTION ))
@@ -366,17 +389,17 @@ public class MoveList implements Iterable<Move>
 				}
 
 			//	Then regular captures/moves.
-			for ( long bb = bbTo & ~Square.NO_PAWN_ZONE; bb != 0; bb ^= (1L << iSqTo) )
+			for ( long bb = bbTo & ~Square.NO_PAWN_ZONE; bb != 0; bb &= (bb - 1) )
 				{
-				iSqTo = BitUtil.first( bb );
+				int iSqTo = BitUtil.first( bb );
 				addMoveIfLegal( iSqTo + iDelta, iSqTo, Move.Type.NORMAL );
 				}
 			}
 		else    // Must be a pawn advance
 			{
-			for ( long bb = bbTo; bb != 0; bb ^= (1L << iSqTo) )
+			for ( long bb = bbTo; bb != 0; bb &= (bb - 1) )
 				{
-				iSqTo = BitUtil.first( bb );
+				int iSqTo = BitUtil.first( bb );
 				addMoveIfLegal( iSqTo + iDelta, iSqTo, Move.Type.PAWN_PUSH );
 				}
 			}
@@ -474,16 +497,16 @@ public class MoveList implements Iterable<Move>
 
 		if (bbKingMoves != 0L)
 			{
-			_map[ MAP_B_ALL ] ^= (1L << iSq);
+			_map[ MAP_B_ALL ] ^= _bbKing;
 
-			for ( int iSqTo; bbKingMoves != 0L; bbKingMoves ^= (1L << iSqTo) )
+			for ( long bb = bbKingMoves; bb != 0L; bb &= (bb - 1) )
 				{
-				iSqTo = BitUtil.first( bbKingMoves );
+				int iSqTo = BitUtil.first( bb );
 				if (!Bitboards.isAttackedByWhite( _map, iSqTo ))
 					_moves[ _iCount++ ] = Move.pack( iSq, iSqTo, Move.Type.NORMAL );
 				}
 
-			_map[ MAP_B_ALL ] ^= (1L << iSq);
+			_map[ MAP_B_ALL ] ^= _bbKing;
 			}
 		//
 		//	Check for castling moves.
@@ -522,16 +545,16 @@ public class MoveList implements Iterable<Move>
 
 		if (bbKingMoves != 0L)
 			{
-			_map[ MAP_W_ALL ] ^= (1L << iSq);
+			_map[ MAP_W_ALL ] ^= _bbKing;
 
-			for ( int iSqTo; bbKingMoves != 0L; bbKingMoves ^= (1L << iSqTo) )
+			for ( long bb = bbKingMoves; bb != 0L; bb &= (bb - 1) )
 				{
-				iSqTo = BitUtil.first( bbKingMoves );
+				int iSqTo = BitUtil.first( bb );
 				if (!Bitboards.isAttackedByBlack( _map, iSqTo ))
 					_moves[ _iCount++ ] = Move.pack( iSq, iSqTo, Move.Type.NORMAL );
 				}
 
-			_map[ MAP_W_ALL ] ^= (1L << iSq);
+			_map[ MAP_W_ALL ] ^= _bbKing;
 			}
 		//
 		//	Check for castling moves.
@@ -613,21 +636,20 @@ public class MoveList implements Iterable<Move>
 	/**
 	 * Initializes the internal bitboards.
 	 */
-	private void initBitboards()
+	private boolean initBitboards()
 		{
-		assert Square.isValid( _iSqKing );
+		if (!BitUtil.singleton( _bbKing )) return false;
 		//	-----------------------------------------------------------------
-		System.arraycopy( _board.map, 0, _map, 0, MAP_LENGTH );
 		//
 		//	See if there are any e.p. captures possible.
 		//
-		int iSq = _board.getEnPassantSquare();
+		int iSqEP = _board.getEnPassantSquare();
 
-		if (Square.isValid( iSq ))
+		if (Square.isValid( iSqEP ))
 			{
 			_bbEP = (_player == WHITE)
-					? (Bitboards.pawnDownwards[ iSq ] & _map[ MAP_W_PAWN ])
-					: (Bitboards.pawnUpwards[ iSq ] & _map[ MAP_B_PAWN ]);
+					? (Bitboards.pawnDownwards[ iSqEP ] & _map[ MAP_W_PAWN ])
+					: (Bitboards.pawnUpwards[ iSqEP ] & _map[ MAP_B_PAWN ]);
 			}
 		//
 		//  Find out if the moving player is in check, because that affects the possible "From"
@@ -642,23 +664,23 @@ public class MoveList implements Iterable<Move>
 			//  Find pinned pieces.  This is done by finding all of the opposing pieces that
 			//  could attack the King if the moving player's pieces were removed.
 			//
-			long bbDiagonal = _map[ MAP_W_QUEEN + _opponent ] | _map[ MAP_W_BISHOP + _opponent ];
+			long bbDiagonal =
+				_map[ MAP_W_QUEEN + _opponent ] | _map[ MAP_W_BISHOP + _opponent ];
 			long bbLateral = _map[ MAP_W_QUEEN + _opponent ] | _map[ MAP_W_ROOK + _opponent ];
-			long bbPinners = Bitboards.getDiagonalAttackers( _iSqKing, bbDiagonal, _bbOpponent ) |
-							 Bitboards.getLateralAttackers( _iSqKing, bbLateral, _bbOpponent );
+			long bbPinners =
+				Bitboards.getDiagonalAttackers( _iSqKing, bbDiagonal, _bbOpponent ) |
+				Bitboards.getLateralAttackers( _iSqKing, bbLateral, _bbOpponent );
 
-			for ( bbPinners &= ~Bitboards.king[ _iSqKing ];
-				  bbPinners != 0L;
-				  bbPinners ^= (1L << iSq) )
+			for ( long bb = bbPinners & ~Bitboards.king[ _iSqKing ]; bb != 0L; bb &= (bb - 1) )
 				{
-				iSq = BitUtil.first( bbPinners );
 				//
 				//  Now see if there is one (and only one) moving piece that lies on the path
 				//	between a threatening piece (the "pinner") and the King, then it is pinned.
 				//	Pinned pieces may still be able to move (except for Knights) but need to
 				//	test for check when they do so.
 				//
-				long bbBetween = _bbPlayer & Bitboards.getSquaresBetween( _iSqKing, iSq );
+				long bbBetween =
+					_bbPlayer & Bitboards.getSquaresBetween( _iSqKing, BitUtil.first( bb ) );
 
 				if (BitUtil.singleton( bbBetween ))
 					_bbUnpinned ^= bbBetween;
@@ -684,9 +706,11 @@ public class MoveList implements Iterable<Move>
 			else
 				{
 				_bbFromSq &= _bbEP |
-							 (1L << _iSqKing) |
+							 _bbKing |
 							 Bitboards.getAttackedBy( _map, iSqChecker, _player );
-				_bbToSq &= (_bbCheckers | Bitboards.king[ _iSqKing ]);
+				_bbToSq &= _bbCheckers |
+						   Bitboards.king[ _iSqKing ] |
+						   Square.getMask( iSqEP );
 				}
 			}
 		//
@@ -695,9 +719,11 @@ public class MoveList implements Iterable<Move>
 		//
 		else
 			{
-			_bbFromSq &= (1L << _iSqKing);
+			_bbFromSq &= _bbKing;
 			_bbToSq &= Bitboards.king[ _iSqKing ];
 			}
+
+		return (_bbFromSq != 0 && _bbToSq != 0);
 		}
 
 	//  -----------------------------------------------------------------------

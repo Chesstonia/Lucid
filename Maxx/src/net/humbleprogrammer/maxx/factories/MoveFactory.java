@@ -59,10 +59,9 @@ public class MoveFactory
 		{
 		if (bd == null || StrUtil.isBlank( strSAN )) return null;
 		//	-----------------------------------------------------------------
-		final MoveInfo info = new MoveInfo( strSAN, bd.getMovingPlayer() );
+		final MoveInfo info = new MoveInfo();
 
-		if (info.iLength <= 0)
-			return null;
+		if (!info.parse( strSAN, bd.getMovingPlayer() )) return null;
 		//
 		//  Create a bitboard of moving pieces (candidates) and find all
 		//  legal moves to the target square.
@@ -96,19 +95,16 @@ public class MoveFactory
 		//
 		//	Promotions have to be searched to find the matching piece type.
 		//
-		if (moves.size() > 1)
+		if (moves.size() > 1 && info.iType >= Move.Type.PROMOTION)
 			{
-			if (info.iType >= Move.Type.PROMOTION)
-				{
-				for ( Move move : moves )
-					if (move.iType == info.iType)
-						return move;
-				}
-
-			s_log.debug( "'{}' => '{}' is ambiguous.",
-						 bd,
-						 strSAN );
+			for ( Move move : moves )
+				if (move.iType == info.iType)
+					return move;
 			}
+
+		s_log.debug( "'{}' => '{}' is ambiguous.",
+					 bd,
+					 strSAN );
 
 		return null;
 		}
@@ -120,7 +116,8 @@ public class MoveFactory
 	/**
 	 * The MoveInfo class extracts information from a SAN move string.
 	 *
-	 * This code is loosely based on v1.6.2 of StockFish by Tord Romstad, Marco Costalba, et al.
+	 * This code is loosely based on v1.6.2 of StockFish by Tord Romstad, Marco Costalba, et
+	 * al.
 	 */
 	private static class MoveInfo
 		{
@@ -132,46 +129,37 @@ public class MoveFactory
 		private static final int STATE_SUFFIX     = 5;
 		private static final int STATE_ANNOTATION = 6;
 
-		boolean bCapture;
-		boolean bCheck;
+		private boolean bCapture;
+		private boolean bCheck;
 
-		int iFileFrom = INVALID;
-		int iFileTo   = INVALID;
-		int iRankFrom = INVALID;
-		int iRankTo   = INVALID;
+		private int iFileFrom;
+		private int iFileTo;
+		private int iRankFrom;
+		private int iRankTo;
 
-		int iLength;
-		int iPieceMoving = EMPTY;
-		int iType        = Move.Type.NORMAL;
+		private int iPieceMoving;
+		private int iType;
 
 		/**
-		 * CTOR
+		 * Parses a SAN string.
 		 *
 		 * @param strIn
 		 * 	SAN string.
 		 * @param player
 		 * 	Moving player color [WHITE|BLACK]
 		 */
-		MoveInfo( String strIn, int player )
+		boolean parse( String strIn, int player )
 			{
-			assert strIn != null;
-			assert (player & ~0x01) == 0;
+			if (StrUtil.isBlank( strIn ) || !Character.isLetter( strIn.charAt( 0 ) )) return false;
 			//	-----------------------------------------------------------------
-			int ch = strIn.codePointAt( 0 );
+			reset();
 
-			if (!Character.isLetter( ch ))
-				return;
-			//
-			//  Try castling first, because it's simple to parse.
-			//
-			int index = 0;
-			int iState = (ch == 'O' && (index = parseCastling( strIn, player )) > 0)
-						 ? STATE_CHECK
-						 : STATE_START;
+			int index = parseCastling( strIn, player );
+			int iState = (index == 0) ? STATE_START : STATE_CHECK;
 
 			while ( index < strIn.length() )
 				{
-				ch = strIn.codePointAt( index++ );
+				int ch = strIn.codePointAt( index++ );
 				if (Character.isSupplementaryCodePoint( ch ))
 					index++;
 
@@ -183,16 +171,13 @@ public class MoveFactory
 					iState = parseSpecial( iState, ch );
 
 				if (iState < STATE_START)
-					return;
+					return false;
 				}
 			//
 			//  If we ran out of input prematurely, the state will be set to something .LT.
 			//  STATE_CHECK, which is an error condition.
 			//
-			if (iState < STATE_CHECK || iPieceMoving == EMPTY)
-				return;
-
-			iLength = index;
+			if (iState < STATE_CHECK || iPieceMoving == EMPTY) return false;
 
 			if (iPieceMoving == PAWN)
 				{
@@ -209,6 +194,8 @@ public class MoveFactory
 					s_log.debug( "'{}' => auto-promoting to a Queen.", strIn );
 					}
 				}
+
+			return true;
 			}
 
 		/**
@@ -221,6 +208,11 @@ public class MoveFactory
 		 */
 		private int parseCastling( String strIn, int player )
 			{
+			assert strIn != null;
+			assert (player & ~0x01) == 0;
+
+			if (strIn.charAt( 0 ) != 'O') return 0;
+			//	-----------------------------------------------------------------
 			int iLen;
 
 			if (strIn.startsWith( Parser.STR_CASTLE_LONG ))
@@ -238,7 +230,7 @@ public class MoveFactory
 
 			iFileFrom = 4;
 			iPieceMoving = KING;
-			iRankFrom = iRankTo = (player == WHITE) ? 0 : 7;
+			iRankFrom = iRankTo = (player & 1) * 7; // (player == WHITE) ? 0 : 7;
 
 			return iLen;
 			}
@@ -389,6 +381,15 @@ public class MoveFactory
 
 			return INVALID;
 			}
+
+		private void reset()
+			{
+			bCapture = bCheck = false;
+			iFileFrom = iFileTo = iRankFrom = iRankTo = INVALID;
+			iPieceMoving = EMPTY;
+			iType = Move.Type.NORMAL;
+			}
+
 		}   /* end of nested class MoveInfo */
 
 	}   /* end of class MoveFactory */

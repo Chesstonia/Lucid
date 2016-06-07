@@ -193,6 +193,16 @@ public class Board
 		}
 
 	/**
+	 * Determines if the moving player is currently in check.
+	 *
+	 * @return .T. if moveing player in check; .F. otherwise.
+	 */
+	public boolean isInCheck()
+		{
+		return Bitboards.isAttackedBy( map, getKingSquare( _player ), (_player ^ 1) );
+		}
+
+	/**
 	 * Tests a board for validity.
 	 *
 	 * In order to be valid, all of the following must be <i>true</i>: <ul> <li>Neither side can
@@ -405,8 +415,10 @@ public class Board
 			{
 			case PAWN:
 				return (_player == WHITE)
-					   ? (map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]))
-					   : (map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]));
+					   ? (map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] |
+											   Bitboards.fileMask[ iSqTo & 0x07 ]))
+					   : (map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] |
+											   Bitboards.fileMask[ iSqTo & 0x07 ]));
 
 			case KNIGHT:
 				return map[ MAP_W_KNIGHT + _player ] & Bitboards.knight[ iSqTo ];
@@ -423,7 +435,8 @@ public class Board
 
 			case QUEEN:
 				return map[ MAP_W_QUEEN + _player ] &
-					   Bitboards.getQueenMovesFrom( iSqTo, (map[ MAP_W_ALL ] | map[ MAP_B_ALL ]) );
+					   Bitboards.getQueenMovesFrom( iSqTo,
+													(map[ MAP_W_ALL ] | map[ MAP_B_ALL ]) );
 
 			case KING:
 				//  Don't mask against Bitboards.king[] because that excludes castling moves.

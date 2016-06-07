@@ -180,7 +180,7 @@ public class Parser
 	public static char pieceTypeToGlyph( int pt )
 		{
 		return (pt >= PAWN && pt <= KING)
-			   ? PIECE_GLYPHS.charAt( pt << 1 )
+			   ? PIECE_GLYPHS.charAt( (pt - 1) << 1 )
 			   : 0;
 		}
 

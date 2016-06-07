@@ -160,4 +160,10 @@ public class PgnAdapter implements IPgnListener
      */
     public void onVariationExit()
         { /* STUB METHOD */ }
+
+	/**
+     * A new game is being started.
+     */
+    public void reset()
+        { /* STUB METHOD */ }
     }   /* end of class PgnAdapter */

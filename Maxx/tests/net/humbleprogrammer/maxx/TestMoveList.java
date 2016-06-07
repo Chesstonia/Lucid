@@ -82,16 +82,14 @@ public class TestMoveList extends TestBase
 					  countMoves( "2r3k1/4Rppp/8/p7/Kb3PP1/1Pn4P/8/7R w - -" ) );
 		//	http://www.chessgames.com/perl/chessgame?gid=1259009
 		assertEquals( 0L,
-					  countMoves(
-						  "rn3r2/pbppq1p1/1p2pN2/8/3P2NP/6P1/PPPKBP1R/R5k1 b - -" ) );
+					  countMoves( "rn3r2/pbppq1p1/1p2pN2/8/3P2NP/6P1/PPPKBP1R/R5k1 b - -" ) );
 		//	http://www.chessgames.com/perl/chessgame?gid=1251892
 		assertEquals( 0L,
 					  countMoves(
 						  "rn1q1bnr/ppp1kB1p/3p2p1/3NN3/4P3/8/PPPP1PPP/R1BbK2R b KQ -" ) );
 		//	http://www.chessgames.com/perl/chessgame?gid=1056921
 		assertEquals( 0L,
-					  countMoves(
-						  "r1b2rk1/pp3ppp/5n2/4q3/2P5/3n4/PP1NNPPP/R2QKB1R w KQ -" ) );
+					  countMoves( "r1b2rk1/pp3ppp/5n2/4q3/2P5/3n4/PP1NNPPP/R2QKB1R w KQ -" ) );
 		//	http://www.chessgames.com/perl/chessgame?gid=1124489
 		assertEquals( 0L,
 					  countMoves( "6rk/2pRPNpp/2p5/p4p2/6n1/q5P1/P3PP1P/6K1 b - -" ) );

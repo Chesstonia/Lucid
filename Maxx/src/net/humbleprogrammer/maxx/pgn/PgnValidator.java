@@ -53,6 +53,7 @@ public class PgnValidator extends PgnAdapter
     //  -----------------------------------------------------------------------
     //	DECLARATIONS
     //	-----------------------------------------------------------------------
+
     /** Nested variations. */
     private final Stack<Variation> _variations = new Stack<>();
 
@@ -61,7 +62,7 @@ public class PgnValidator extends PgnAdapter
     /** First move number in the current variation. */
     private int       _iMoveNum = 0;
     /** Current variation, or <c>null</c> if ignoring variation. */
-    private Variation _pv       = new Variation();
+    protected Variation _pv       = new Variation();
 
     //  -----------------------------------------------------------------------
     //	INTERFACE: IPgnListener
@@ -83,11 +84,8 @@ public class PgnValidator extends PgnAdapter
         assert strSAN != null;
         assert strSuffix != null;
 
-        if (_pv == null)
-            return true;
-        /*
-        **  CODE
-        */
+        if (_pv == null) return true;
+        //	-----------------------------------------------------------------
         if (_pv.isEmpty())
             {
             if (_variations.isEmpty())
@@ -147,12 +145,8 @@ public class PgnValidator extends PgnAdapter
     public boolean onMoveNumber( final int iMoveNumber )
         {
         assert iMoveNumber > 0;
-
-        if (_pv == null)
-            return true;
-        /*
-        **  CODE
-        */
+        if (_pv == null) return true;
+        //	-----------------------------------------------------------------
         if (_pv.isEmpty())
             {
             _player = WHITE;
@@ -171,11 +165,8 @@ public class PgnValidator extends PgnAdapter
     @Override
     public boolean onMovePlaceholder()
         {
-        if (_pv == null)
-            return true;
-        /*
-        **  CODE
-        */
+        if (_pv == null) return true;
+        //	-----------------------------------------------------------------
         if (_pv.isEmpty())
             {
             if (_player == BLACK)
@@ -195,9 +186,8 @@ public class PgnValidator extends PgnAdapter
      */
     public boolean onNullMove()
         {
-        if (_variations.isEmpty())
-            return false;
-
+        if (_variations.isEmpty()) return false;
+        //	-----------------------------------------------------------------
         _pv = null;
         return true;
         }
@@ -213,9 +203,7 @@ public class PgnValidator extends PgnAdapter
     public boolean onResult( final Result result )
         {
         assert result != null;
-        /*
-        **  CODE
-        */
+        //	-----------------------------------------------------------------
         if (_pv != null)
             {
             if (_pv.getResult() != null)
@@ -241,9 +229,7 @@ public class PgnValidator extends PgnAdapter
         {
         assert PgnParser.isValidTagName( strName );
         assert PgnParser.isValidTagValue( strValue );
-        /*
-        **  CODE
-        */
+        //	-----------------------------------------------------------------
         return (!strName.equalsIgnoreCase( PgnParser.TAG_FEN ) ||
                _pv.setStartingPosition( strValue ));
         }
@@ -263,9 +249,18 @@ public class PgnValidator extends PgnAdapter
     public void onVariationExit()
         {
         assert _variations.size() > 0;
-        /*
-        **  CODE
-        */
+        //	-----------------------------------------------------------------
         _pv = _variations.pop();
+        }
+
+	/**
+	 * Starts a new game
+     */
+    public void reset()
+        {
+        _iMoveNum = 0;
+        _player = INVALID;
+        _variations.clear();
+        _pv = new Variation();
         }
     } /* end of class PgnValidator */
