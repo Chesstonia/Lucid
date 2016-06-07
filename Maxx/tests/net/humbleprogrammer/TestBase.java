@@ -23,10 +23,10 @@
  ******************************************************************************/
 package net.humbleprogrammer;
 
+import net.humbleprogrammer.humble.StrUtil;
 import net.humbleprogrammer.maxx.Parser;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 
 import java.io.*;
 import java.nio.file.*;
@@ -34,7 +34,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /** The {@link TestBase} class contains all of the test configuration information. */
-@SuppressWarnings( "unused" )
+@SuppressWarnings( { "unused", "WeakerAccess" } )
 public abstract class TestBase
 	{
 
@@ -42,7 +42,7 @@ public abstract class TestBase
 	//	CONSTANTS
 	//	-----------------------------------------------------------------------
 
-	public enum Duration
+	protected enum Duration
 		{
 			QUICK,
 			NORMAL,
@@ -139,7 +139,7 @@ public abstract class TestBase
 	//	    a   b   c   d   e   f   g   h
 	//
 	/** Test position expressed as an EPD string, after 17. f4 */
-	protected static final String EPD_TEST =
+	private static final   String EPD_TEST =
 		"r3k2r/ppq1b3/2p1pn2/2Pp1p1p/3P1Pp1/3BP2P/PP1NQ1P1/R4RK1 b kq f3";
 	/** Test position expressed as an FEN string, after 17. f4 . */
 	protected static final String FEN_TEST = EPD_TEST + " 0 17";
@@ -193,11 +193,8 @@ public abstract class TestBase
 			{
 			String strDuration = System.getenv( "TEST_DURATION" );
 
-			if (strDuration != null &&
-				Duration.valueOf( strDuration ) != null)
-				{
+			if (!StrUtil.isBlank( strDuration ))
 				return Duration.valueOf( strDuration );
-				}
 			}
 		catch (Exception ignored)
 			{
@@ -281,12 +278,12 @@ public abstract class TestBase
 	 * Opens a reader for a file in the system Test Data directory.
 	 *
 	 * @param strFilename
-	 *     Name of file to open.
+	 * 	Name of file to open.
 	 *
 	 * @return Reader object if file found, <code>null</code> otherwise.
 	 */
 
-	protected static BufferedReader openTestFile( final String strFilename )
+	private static BufferedReader openTestFile( final String strFilename )
 		{
 		BufferedReader reader = null;
 

@@ -77,5 +77,5 @@ public class BitUtil
      *     Bitboard to test.
      */
     public static boolean singleton( long bb )
-        { return ((bb & (bb - 1)) == 0L); }
+        { return (bb != 0L && (bb & (bb - 1)) == 0L); }
     }   /* end of class BitUtil */
