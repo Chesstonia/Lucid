@@ -1,4 +1,4 @@
-/*****************************************************************************
+/* ****************************************************************************
  **
  ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
@@ -12,7 +12,7 @@
  **	--------------------- [Disclaimer of Warranty] --------------------------
  **	There is no warranty for the program, to the extent permitted by applicable
  **	law.  Except when otherwise stated in writing the copyright holders and/or
- **	other parties provide the program “as is” without warranty of any kind,
+ **	other parties provide the program "as is" without warranty of any kind,
  **	either expressed or implied, including, but not limited to, the implied
  **	warranties of merchantability and fitness for a particular purpose.  The
  **	entire risk as to the quality and performance of the program is with you.
@@ -54,7 +54,6 @@ public class TestParser extends TestBase
         assertEquals( "en-US", Parser.getLanguage() );
         }
 
-    @Test
     public void t_matchFEN()
         {
         final Collection<String> listFEN = getFEN();
@@ -79,6 +78,58 @@ public class TestParser extends TestBase
         assertEquals( 'R', Parser.pieceTypeToGlyph( ROOK ) );
         assertEquals( 'Q', Parser.pieceTypeToGlyph( QUEEN ) );
         assertEquals( 'K', Parser.pieceTypeToGlyph( KING ) );
+        }
+
+    @Test
+    public void t_pieceToGlyph()
+        {
+        assertEquals( 'P', Parser.pieceToGlyph(  Piece.W_PAWN ) );
+        assertEquals( 'p', Parser.pieceToGlyph(  Piece.B_PAWN ) );
+        assertEquals( 'N', Parser.pieceToGlyph(  Piece.W_KNIGHT ) );
+        assertEquals( 'n', Parser.pieceToGlyph(  Piece.B_KNIGHT ) );
+        assertEquals( 'B', Parser.pieceToGlyph(  Piece.W_BISHOP ) );
+        assertEquals( 'b', Parser.pieceToGlyph(  Piece.B_BISHOP ) );
+        assertEquals( 'R', Parser.pieceToGlyph(  Piece.W_ROOK ) );
+        assertEquals( 'r', Parser.pieceToGlyph(  Piece.B_ROOK ) );
+        assertEquals( 'Q', Parser.pieceToGlyph(  Piece.W_QUEEN ) );
+        assertEquals( 'q', Parser.pieceToGlyph(  Piece.B_QUEEN ) );
+        assertEquals( 'K', Parser.pieceToGlyph(  Piece.W_KING ) );
+        assertEquals( 'k', Parser.pieceToGlyph(  Piece.B_KING ) );
+        }
+
+    @Test
+    public void t_pieceToGlyph_fail_low()
+        {
+        for (int idx = SQ_LO; idx < Piece.FIRST; ++idx)
+        	assertEquals( '\0', Parser.pieceToGlyph(  idx ) );
+        }
+
+    @Test
+    public void t_pieceToGlyph_fail_high()
+        {
+        for (int idx = Piece.LAST + 1; idx < SQ_HI; ++idx)
+        	assertEquals( '\0', Parser.pieceToGlyph(  idx ) );
+        }
+
+    @Test
+    public void t_playerToGlyph()
+        {
+        assertEquals( 'w', Parser.playerToGlyph(  WHITE ) );
+        assertEquals( 'b', Parser.playerToGlyph(  BLACK ) );
+        }
+
+    @Test
+    public void t_playerToGlyph_fail_low()
+        {
+        for (int idx = SQ_LO; idx < WHITE; ++idx)
+        	assertEquals( '\0', Parser.playerToGlyph(  idx ) );
+        }
+
+    @Test
+    public void t_playerToGlyph_fail_high()
+        {
+        for (int idx = BLACK + 1; idx < SQ_HI; ++idx)
+        	assertEquals( '\0', Parser.playerToGlyph(  idx ) );
         }
 
     //  -----------------------------------------------------------------------

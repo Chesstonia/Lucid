@@ -12,7 +12,7 @@
  *	--------------------- [Disclaimer of Warranty] --------------------------
  *	There is no warranty for the program, to the extent permitted by applicable
  *	law.  Except when otherwise stated in writing the copyright holders and/or
- *	other parties provide the program “as is” without warranty of any kind,
+ *	other parties provide the program "as is" without warranty of any kind,
  *	either expressed or implied, including, but not limited to, the implied
  *	warranties of merchantability and fitness for a particular purpose.  The
  *	entire risk as to the quality and performance of the program is with you.
@@ -34,10 +34,12 @@ package net.humbleprogrammer.maxx;
 
 import net.humbleprogrammer.TestBase;
 import net.humbleprogrammer.maxx.factories.BoardFactory;
+
+import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 import static net.humbleprogrammer.maxx.Constants.*;
-import static org.junit.Assert.assertEquals;
 
 public class TestBitboards extends TestBase
     {
@@ -86,46 +88,62 @@ public class TestBitboards extends TestBase
     //	-----------------------------------------------------------------------
 
     @Test
-    public void t_getAttackedBy()
+    public void t_getAttackedBy_white()
         {
-        long[] map = new long[MAP_LENGTH];
         Board bd = BoardFactory.createFromFEN( FEN_TEST );
 
-        assert bd != null;
-        bd.copyPieceMap( map );
+        assertNotNull( bd );
 
         for ( int iSq = 0; iSq < Math.min( 64, s_bbAttacks.length ); ++iSq )
             {
-            long bbAttacks = s_bbAttacks[ iSq ];
-
             assertEquals( "White attacking " + Square.toString( iSq ),
-                          (s_bbPieces[ WHITE ] & bbAttacks),
-                          Bitboards.getAttackedBy( map, iSq, WHITE ) );
-
-            assertEquals( "Black attacking " + Square.toString( iSq ),
-                          (s_bbPieces[ BLACK ] & bbAttacks),
-                          Bitboards.getAttackedBy( map, iSq, BLACK ) );
+                          (s_bbPieces[ WHITE ] & s_bbAttacks[ iSq ]),
+                          Bitboards.getAttackedBy( bd.map, iSq, WHITE ) );
             }
         }
 
     @Test
-    public void t_isAttackedBy()
+    public void t_getAttackedBy_black()
         {
-        long[] map = new long[MAP_LENGTH];
         Board bd = BoardFactory.createFromFEN( FEN_TEST );
 
-        assert bd != null;
-        bd.copyPieceMap( map );
+        assertNotNull( bd );
+
+        for ( int iSq = 0; iSq < Math.min( 64, s_bbAttacks.length ); ++iSq )
+            {
+            assertEquals( "Black attacking " + Square.toString( iSq ),
+                          (s_bbPieces[ BLACK ] & s_bbAttacks[ iSq ]),
+                          Bitboards.getAttackedBy( bd.map, iSq, BLACK ) );
+            }
+        }
+
+    @Test
+    public void t_isAttackedBy_black()
+        {
+        Board bd = BoardFactory.createFromFEN( FEN_TEST );
+
+        assertNotNull( bd );
+
+        for ( int iSq = 0; iSq < 64; ++iSq )
+            {
+            assertEquals( "Black attacking " + Square.toString( iSq ),
+                          ((s_bbAttacks[ iSq ] & s_bbPieces[ BLACK ]) != 0L),
+                          Bitboards.isAttackedBy( bd.map, iSq, BLACK ) );
+            }
+        }
+
+    @Test
+    public void t_isAttackedBy_white()
+        {
+        Board bd = BoardFactory.createFromFEN( FEN_TEST );
+
+        assertNotNull( bd );
 
         for ( int iSq = 0; iSq < 64; ++iSq )
             {
             assertEquals( "White attacking " + Square.toString( iSq ),
                           ((s_bbAttacks[ iSq ] & s_bbPieces[ WHITE ]) != 0L),
-                          Bitboards.isAttackedBy( map, iSq, WHITE ) );
-
-            assertEquals( "Black attacking " + Square.toString( iSq ),
-                          ((s_bbAttacks[ iSq ] & s_bbPieces[ BLACK ]) != 0L),
-                          Bitboards.isAttackedBy( map, iSq, BLACK ) );
+                          Bitboards.isAttackedBy( bd.map, iSq, WHITE ) );
             }
         }
 

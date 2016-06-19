@@ -1,4 +1,4 @@
-/*****************************************************************************
+/* ****************************************************************************
  **
  ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
@@ -12,7 +12,7 @@
  **	--------------------- [Disclaimer of Warranty] --------------------------
  **	There is no warranty for the program, to the extent permitted by applicable
  **	law.  Except when otherwise stated in writing the copyright holders and/or
- **	other parties provide the program “as is” without warranty of any kind,
+ **	other parties provide the program "as is" without warranty of any kind,
  **	either expressed or implied, including, but not limited to, the implied
  **	warranties of merchantability and fitness for a particular purpose.  The
  **	entire risk as to the quality and performance of the program is with you.
@@ -46,77 +46,83 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.fail;
 
 public class TestPgnReader extends TestBase
-    {
-    //  -----------------------------------------------------------------------
-    //	STATIC DECLARATIONS
-    //	-----------------------------------------------------------------------
+	{
+	//  -----------------------------------------------------------------------
+	//	STATIC DECLARATIONS
+	//	-----------------------------------------------------------------------
 
-    /** Total number of games read in. */
-    protected static int  s_iNetGames    = 0;
-    /** Total number of nanoseconds spent generating moves. */
-    protected static long s_lNetNanosecs = 0L;
+	/** Total number of games read in. */
+	protected static int	s_iNetGames		= 0;
+	/** Total number of nanoseconds spent generating moves. */
+	protected static long	s_lNetNanosecs	= 0L;
 
-    //  -----------------------------------------------------------------------
-    //	UNIT TESTS
-    //	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	UNIT TESTS
+	//	-----------------------------------------------------------------------
 
-    @Test( expected = IllegalArgumentException.class )
-    public void t_ctor_fail_null()
-        {
-        new PgnReader( null );
-        }
+	@Test(expected = IllegalArgumentException.class)
+	public void t_ctor_fail_null()
+		{
+		PgnReader pgn = new PgnReader(null);
+		pgn.close();
+		}
 
-    @Test
-    public void t_comprehensive()
-        {
-        Collection<Path> listPGN = getPGN();
-        Stopwatch swatch = new Stopwatch();
+	@Test
+	public void t_comprehensive()
+		{
+		Collection<Path> listPGN = getPGN();
+		Stopwatch swatch = new Stopwatch();
 
-        try
-            {
-            for ( Path path : listPGN )
-                {
-                PgnReader pgn = new PgnReader( new FileReader( path.toFile() ) );
+		try
+			{
+			for ( Path path : listPGN )
+				{
+				PgnReader pgn = new PgnReader(new FileReader(path.toFile()));
 
-                swatch.start();
-                while ( pgn.readGame() != null )
-                    s_iNetGames++;
-                swatch.stop();
+				swatch.start();
+				
+				try
+					{
+					while ( pgn.readGame() != null )
+						s_iNetGames++;
+					}
+				finally
+					{
+					pgn.close();
+					}
 
-                if ((s_lNetNanosecs += swatch.getElapsed()) >= s_lMaxNanosecs)
-                    break;
-                }
-            }
-        catch (IOException ex)
-            {
-            fail( ex.getMessage() );
-            }
-        }
+				swatch.stop();
 
-    //  -----------------------------------------------------------------------
-    //	METHODS
-    //	-----------------------------------------------------------------------
+				if ((s_lNetNanosecs += swatch.getElapsed()) >= s_lMaxNanosecs) break;
+				}
+			}
+		catch ( IOException ex )
+			{
+			fail(ex.getMessage());
+			}
+		}
 
-    @AfterClass
-    public static void displayResults()
-        {
-        long lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs );
+	//  -----------------------------------------------------------------------
+	//	METHODS
+	//	-----------------------------------------------------------------------
 
-        if (lMillisecs > 0L)
-            {
-            s_log.info( String.format( "%s: PgnReader read %,d games in %s (%,d gps)",
-                                       DURATION.toString(),
-                                       s_iNetGames,
-                                       TimeUtil.formatMillisecs( lMillisecs, true ),
-                                       (s_iNetGames * 1000L) / lMillisecs ) );
-            }
-        }
+	@AfterClass
+	public static void displayResults()
+		{
+		long lMillisecs = TimeUnit.NANOSECONDS.toMillis(s_lNetNanosecs);
 
-    @BeforeClass
-    public static void setup()
-        {
-        s_iNetGames = 0;
-        s_lNetNanosecs = 0L;
-        }
+		if (lMillisecs > 0L)
+			{
+			s_log.info(String.format("%s: PgnReader read %,d games in %s (%,d gps)", DURATION.toString(), s_iNetGames,
+					TimeUtil.formatMillisecs(lMillisecs, true), (s_iNetGames * 1000L) / lMillisecs));
+			}
+		}
 
-    }   /* end of class TestPgnReader */
+	@BeforeClass
+	public static void setup()
+		{
+		s_iNetGames = 0;
+		s_lNetNanosecs = 0L;
+		}
+
+	} /* end of class TestPgnReader */

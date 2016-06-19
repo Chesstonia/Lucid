@@ -12,7 +12,7 @@
  *	--------------------- [Disclaimer of Warranty] --------------------------
  *	There is no warranty for the program, to the extent permitted by applicable
  *	law.  Except when otherwise stated in writing the copyright holders and/or
- *	other parties provide the program “as is” without warranty of any kind,
+ *	other parties provide the program "as is" without warranty of any kind,
  *	either expressed or implied, including, but not limited to, the implied
  *	warranties of merchantability and fitness for a particular purpose.  The
  *	entire risk as to the quality and performance of the program is with you.
@@ -34,7 +34,6 @@ package net.humbleprogrammer.maxx;
 
 import static net.humbleprogrammer.maxx.Constants.INVALID;
 
-@SuppressWarnings( { "UnusedDeclaration", "WeakerAccess" } )
 public class Square
 	{
 	//  -----------------------------------------------------------------------
@@ -135,7 +134,6 @@ public class Square
 
 	/** Pre-defined square masks, mostly used in castling logic. */
 
-	@SuppressWarnings( "PointlessBitwiseExpression" )
 	static final long A1_MASK = 1L << A1;
 	static final long B1_MASK = 1L << B1;
 	static final long C1_MASK = 1L << C1;

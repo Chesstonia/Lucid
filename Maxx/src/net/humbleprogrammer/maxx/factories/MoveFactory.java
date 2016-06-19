@@ -12,7 +12,7 @@
  *	--------------------- [Disclaimer of Warranty] --------------------------
  *	There is no warranty for the program, to the extent permitted by applicable
  *	law.  Except when otherwise stated in writing the copyright holders and/or
- *	other parties provide the program “as is” without warranty of any kind,
+ *	other parties provide the program "as is" without warranty of any kind,
  *	either expressed or implied, including, but not limited to, the implied
  *	warranties of merchantability and fitness for a particular purpose.  The
  *	entire risk as to the quality and performance of the program is with you.
@@ -48,7 +48,7 @@ public class MoveFactory
 	//	-----------------------------------------------------------------------
 
 	/** Logger */
-	private static final Logger s_log = LoggerFactory.getLogger( MoveFactory.class );
+	private static final Logger s_log = LoggerFactory.getLogger(MoveFactory.class);
 
 	//  -----------------------------------------------------------------------
 	//	PUBLIC METHODS
@@ -58,62 +58,53 @@ public class MoveFactory
 	 * Converts a SAN string to a move.
 	 *
 	 * @param bd
-	 * 	Current position.
+	 *            Current position.
 	 * @param strSAN
-	 * 	SAN string.
-	 *
+	 *            SAN string.
 	 * @return Move on success; null if move is illegal, ambiguous, or invalid.
 	 */
 	public static Move fromSAN( Board bd, String strSAN )
 		{
-		if (bd == null || StrUtil.isBlank( strSAN )) return null;
+		if (bd == null || StrUtil.isBlank(strSAN)) return null;
 		//	-----------------------------------------------------------------
 		final MoveInfo info = new MoveInfo();
 
-		if (!info.parse( strSAN, bd.getMovingPlayer() )) return null;
+		if (!info.parse(strSAN, bd.getMovingPlayer())) return null;
 		//
 		//  Create a bitboard of moving pieces (candidates) and find all
 		//  legal moves to the target square.
 		//
-		int iSqTo = Square.toIndex( info.iRankTo, info.iFileTo );
-		long bbCandidates = bd.getCandidates( iSqTo, info.iPieceMoving );
+		int iSqTo = Square.toIndex(info.iRankTo, info.iFileTo);
+		long bbCandidates = bd.getCandidates(iSqTo, info.iPieceMoving);
 
-		if (Square.isValidRankOrFile( info.iFileFrom ))
-			bbCandidates &= Bitboards.getFileMask( info.iFileFrom );
-		else if (info.iPieceMoving == PAWN && info.bCapture)
-			bbCandidates &= ~Bitboards.getFileMask( info.iFileFrom );
+		if (Square.isValidRankOrFile(info.iFileFrom))
+			bbCandidates &= Bitboards.getFileMask(info.iFileFrom);
+		else if (info.iPieceMoving == PAWN && info.bCapture) bbCandidates &= ~Bitboards.getFileMask(info.iFileFrom);
 
-		if (Square.isValidRankOrFile( info.iRankFrom ))
-			bbCandidates &= Bitboards.getRankMask( info.iRankFrom );
+		if (Square.isValidRankOrFile(info.iRankFrom)) bbCandidates &= Bitboards.getRankMask(info.iRankFrom);
 
 		if (bbCandidates == 0L)
 			{
-			s_log.debug( "'{}' => '{}' has no candidates.",
-						 bd,
-						 strSAN );
+			s_log.debug("'{}' => '{}' has no candidates.", bd, strSAN);
 			return null;
 			}
 		//
 		//  Look for a matching move.  In a majority of cases (99.99% in over a million legal
 		//	games) only a single move will be returned.
 		//
-		MoveList moves = MoveList.generate( bd, bbCandidates, iSqTo );
+		MoveList moves = MoveList.generate(bd, bbCandidates, iSqTo);
 
-		if (moves.size() == 1)
-			return moves.getAt( 0 );
+		if (moves.size() == 1) return moves.getAt(0);
 		//
 		//	Promotions have to be searched to find the matching piece type.
 		//
 		if (moves.size() > 1 && info.iType >= Move.Type.PROMOTION)
 			{
 			for ( Move move : moves )
-				if (move.iType == info.iType)
-					return move;
+				if (move.iType == info.iType) return move;
 			}
 
-		s_log.debug( "'{}' => '{}' is ambiguous.",
-					 bd,
-					 strSAN );
+		s_log.debug("'{}' => '{}' is ambiguous.", bd, strSAN);
 
 		return null;
 		}
@@ -124,64 +115,61 @@ public class MoveFactory
 
 	/**
 	 * The MoveInfo class extracts information from a SAN move string.
-	 *
-	 * This code is loosely based on v1.6.2 of StockFish by Tord Romstad, Marco Costalba, et
+	 * This code is loosely based on v1.6.2 of StockFish by Tord Romstad, Marco
+	 * Costalba, et
 	 * al.
 	 */
 	private static class MoveInfo
 		{
-		private static final int STATE_START      = 0;
-		private static final int STATE_FILE       = 1;
-		private static final int STATE_RANK       = 2;
-		private static final int STATE_PROMOTION  = 3;
-		private static final int STATE_CHECK      = 4;
-		private static final int STATE_SUFFIX     = 5;
-		private static final int STATE_ANNOTATION = 6;
+		private static final int	STATE_START			= 0;
+		private static final int	STATE_FILE			= 1;
+		private static final int	STATE_RANK			= 2;
+		private static final int	STATE_PROMOTION		= 3;
+		private static final int	STATE_CHECK			= 4;
+		private static final int	STATE_SUFFIX		= 5;
+		private static final int	STATE_ANNOTATION	= 6;
 
-		private boolean bCapture;
-		private boolean bCheck;
+		private boolean				bCapture;
+		private boolean				bCheck;
 
-		private int iFileFrom;
-		private int iFileTo;
-		private int iRankFrom;
-		private int iRankTo;
+		private int					iFileFrom;
+		private int					iFileTo;
+		private int					iRankFrom;
+		private int					iRankTo;
 
-		private int iPieceMoving;
-		private int iType;
+		private int					iPieceMoving;
+		private int					iType;
 
 		/**
 		 * Parses a SAN string.
 		 *
 		 * @param strIn
-		 * 	SAN string.
+		 *            SAN string.
 		 * @param player
-		 * 	Moving player color [WHITE|BLACK]
+		 *            Moving player color [WHITE|BLACK]
 		 */
 		boolean parse( String strIn, int player )
 			{
-			if (StrUtil.isBlank( strIn ) || !Character.isLetter( strIn.charAt( 0 ) ))
-				return false;
+			if (StrUtil.isBlank(strIn) || !Character.isLetter(strIn.charAt(0))) return false;
 			//	-----------------------------------------------------------------
 			reset();
 
-			int index = parseCastling( strIn, player );
+			int index = parseCastling(strIn, player);
 			int iState = (index == 0) ? STATE_START : STATE_CHECK;
 
 			while ( index < strIn.length() )
 				{
-				int ch = strIn.codePointAt( index++ );
-				if (Character.isSupplementaryCodePoint( ch ))
-					index++;
+				int ch = strIn.codePointAt(index++);
+				if (Character.isSupplementaryCodePoint(ch)) index++;
 
 				if (ch >= 'a' && ch <= 'h')
-					iState = parseFile( iState, (ch - 'a') );
+					iState = parseFile(iState, (ch - 'a'));
 				else if (ch >= '1' && ch <= '8')
-					iState = parseRank( iState, (ch - '1') );
+					iState = parseRank(iState, (ch - '1'));
 				else
-					iState = parseSpecial( iState, ch );
+					iState = parseSpecial(iState, ch);
 
-				if (iState < STATE_START)
-					return false;
+				if (iState < STATE_START) return false;
 				}
 			//
 			//  If we ran out of input prematurely, the state will be set to something .LT.
@@ -192,8 +180,7 @@ public class MoveFactory
 			if (iPieceMoving == PAWN)
 				{
 				//	Non-capturing pawn moves must start from the same file.
-				if (!bCapture)
-					iFileFrom = iFileTo;
+				if (!bCapture) iFileFrom = iFileTo;
 				//
 				//	Handle cases where a pawn is being promoted -- but the promotion piece
 				//	isn't specified --  by "auto-promoting" to a Queen.
@@ -201,7 +188,7 @@ public class MoveFactory
 				if (iType == Move.Type.NORMAL && (iRankTo == 0 || iRankTo == 7))
 					{
 					iType = Move.Type.PROMOTION;
-					s_log.debug( "'{}' => auto-promoting to a Queen.", strIn );
+					s_log.debug("'{}' => auto-promoting to a Queen.", strIn);
 					}
 				}
 
@@ -212,25 +199,26 @@ public class MoveFactory
 		 * Parses a castling move ("O-O" or "O-O-O")
 		 *
 		 * @param strIn
-		 * 	Input string.
+		 *            Input string.
 		 * @param player
-		 * 	Moving player color [BLACK|WHITE] return Length of parsed move, or zero on error.
+		 *            Moving player color [BLACK|WHITE] return Length of parsed
+		 *            move, or zero on error.
 		 */
 		private int parseCastling( String strIn, int player )
 			{
 			assert strIn != null;
 			assert (player & ~0x01) == 0;
 
-			if (strIn.charAt( 0 ) != 'O') return 0;
+			if (strIn.charAt(0) != 'O') return 0;
 			//	-----------------------------------------------------------------
 			int iLen;
 
-			if (strIn.startsWith( Parser.STR_CASTLE_LONG ))
+			if (strIn.startsWith(Parser.STR_CASTLE_LONG))
 				{
 				iFileTo = 2;
 				iLen = Parser.STR_CASTLE_LONG.length();
 				}
-			else if (strIn.startsWith( Parser.STR_CASTLE_SHORT ))
+			else if (strIn.startsWith(Parser.STR_CASTLE_SHORT))
 				{
 				iFileTo = 6;
 				iLen = Parser.STR_CASTLE_SHORT.length();
@@ -249,10 +237,9 @@ public class MoveFactory
 		 * Parse a file indicator (a-h)
 		 *
 		 * @param iState
-		 * 	Current parse state.
+		 *            Current parse state.
 		 * @param iFile
-		 * 	File [0..7]
-		 *
+		 *            File [0..7]
 		 * @return New state, or INVALID on error.
 		 */
 		private int parseFile( int iState, int iFile )
@@ -261,8 +248,7 @@ public class MoveFactory
 				iPieceMoving = PAWN;
 			else if (iState == STATE_RANK && iFileFrom < 0)
 				iFileFrom = iFileTo;
-			else if (iState != STATE_FILE)
-				return INVALID;
+			else if (iState != STATE_FILE) return INVALID;
 
 			iFileTo = iFile;
 			return STATE_RANK;
@@ -272,10 +258,9 @@ public class MoveFactory
 		 * Parse a rank indicator (1-8)
 		 *
 		 * @param iState
-		 * 	Current parse state.
+		 *            Current parse state.
 		 * @param iRank
-		 * 	Rank [0..7]
-		 *
+		 *            Rank [0..7]
 		 * @return New state, or INVALID on error.
 		 */
 		private int parseRank( int iState, int iRank )
@@ -299,41 +284,32 @@ public class MoveFactory
 		 * Parse all other characters.
 		 *
 		 * @param iState
-		 * 	Current parse state.
+		 *            Current parse state.
 		 * @param ch
-		 * 	Character to parse.
-		 *
+		 *            Character to parse.
 		 * @return New state, or INVALID on error.
 		 */
 		private int parseSpecial( int iState, int ch )
 			{
-			switch (ch)
+			switch ( ch )
 				{
 				case '=':
 				case ':':
-					return (iState == STATE_SUFFIX && iPieceMoving == PAWN)
-						   ? STATE_PROMOTION
-						   : INVALID;
+					return (iState == STATE_SUFFIX && iPieceMoving == PAWN) ? STATE_PROMOTION : INVALID;
 
 				case '+':
 					if (bCheck) return INVALID;
 
 					bCheck = true;
-					return (iState == STATE_CHECK || iState == STATE_SUFFIX)
-						   ? STATE_CHECK
-						   : INVALID;
+					return (iState == STATE_CHECK || iState == STATE_SUFFIX) ? STATE_CHECK : INVALID;
 
 				case '#':
 					bCheck = true;
-					return (iState >= STATE_CHECK)
-						   ? STATE_ANNOTATION
-						   : INVALID;
+					return (iState >= STATE_CHECK) ? STATE_ANNOTATION : INVALID;
 
 				case '!':
 				case '?':
-					return (iState >= STATE_CHECK)
-						   ? STATE_ANNOTATION
-						   : INVALID;
+					return (iState >= STATE_CHECK) ? STATE_ANNOTATION : INVALID;
 
 				case 'x':
 				case 'X':
@@ -347,18 +323,15 @@ public class MoveFactory
 						return STATE_FILE;
 						}
 
-					return (iState == STATE_FILE)
-						   ? STATE_FILE
-						   : INVALID;
+					return (iState == STATE_FILE) ? STATE_FILE : INVALID;
 				}
 			//
 			//  Handle everything else, which should be a piece type: either the
 			//  moving piece, or the piece being promoted to.
 			//
-			int pt = Parser.pieceTypeFromGlyph( ch );
+			int pt = Parser.pieceTypeFromGlyph(ch);
 
-			if (pt <= PAWN || pt > KING)
-				return INVALID;
+			if (pt <= PAWN || pt > KING) return INVALID;
 
 			if (iState == STATE_START)
 				{
@@ -369,9 +342,8 @@ public class MoveFactory
 			//  If we got a piece type -- but didn't see the promotion separator -- make sure
 			//  this is really a promotion move.
 			//
-			if (iState == STATE_PROMOTION ||
-				(iState == STATE_SUFFIX && iPieceMoving == PAWN &&
-				 (iRankTo == 0 || iRankTo == 7)))
+			if (iState == STATE_PROMOTION
+					|| (iState == STATE_SUFFIX && iPieceMoving == PAWN && (iRankTo == 0 || iRankTo == 7)))
 				{
 				if (pt == QUEEN)
 					iType = Move.Type.PROMOTION;
@@ -398,6 +370,6 @@ public class MoveFactory
 			iType = Move.Type.NORMAL;
 			}
 
-		}   /* end of nested class MoveInfo */
+		} /* end of nested class MoveInfo */
 
-	}   /* end of class MoveFactory */
+	} /* end of class MoveFactory */

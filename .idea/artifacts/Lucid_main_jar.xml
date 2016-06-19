@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="Lucid_main:jar">
+    <output-path>$PROJECT_DIR$/classes/artifacts/Lucid_main_jar</output-path>
+    <root id="archive" name="Lucid_main.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.13/7fcf30c25b8f4a9379b9dad0d3f487b25272c026/slf4j-api-1.7.13.jar" path-in-jar="/" />
+      <element id="module-output" name="Lucid" />
+      <element id="dir-copy" path="$PROJECT_DIR$/e4/src/net/humbleprogrammer/e4/resources" />
+    </root>
+  </artifact>
+</component>

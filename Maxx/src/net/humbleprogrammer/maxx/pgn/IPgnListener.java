@@ -1,4 +1,4 @@
-/*****************************************************************************
+/* ****************************************************************************
  **
  ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
@@ -12,7 +12,7 @@
  **	--------------------- [Disclaimer of Warranty] --------------------------
  **	There is no warranty for the program, to the extent permitted by applicable
  **	law.  Except when otherwise stated in writing the copyright holders and/or
- **	other parties provide the program “as is” without warranty of any kind,
+ **	other parties provide the program "as is" without warranty of any kind,
  **	either expressed or implied, including, but not limited to, the implied
  **	warranties of merchantability and fitness for a particular purpose.  The
  **	entire risk as to the quality and performance of the program is with you.
@@ -35,96 +35,93 @@ package net.humbleprogrammer.maxx.pgn;
 import net.humbleprogrammer.maxx.*;
 
 /**
- * The {@link IPgnListener} interface describes the behavior of listeners attached to the {@link
- * PgnParser} class must implement.
+ * The {@link IPgnListener} interface describes the behavior of listeners
+ * attached to the {@link PgnParser} class must implement.
  */
 interface IPgnListener
-    {
-    /**
-     * A Numeric Annotation Glyph (NAG) has been parsed.
-     *
-     * @param strAnnotation
-     *     NAG, including the leading '$'.
-     */
-    void onAnnotation( final String strAnnotation );
+	{
+	/**
+	 * A Numeric Annotation Glyph (NAG) has been parsed.
+	 *
+	 * @param strAnnotation
+	 *            NAG, including the leading '$'.
+	 */
+	void onAnnotation( final String strAnnotation );
 
-    /**
-     * A comment has been parsed.
-     *
-     * @param strComment
-     *     Comment text, excluding opening/closing markers.
-     */
-    void onComment( final String strComment );
+	/**
+	 * A comment has been parsed.
+	 *
+	 * @param strComment
+	 *            Comment text, excluding opening/closing markers.
+	 */
+	void onComment( final String strComment );
 
-    /**
-     * A move has been parsed.
-     *
-     * @param strSAN
-     *     Move string.
-     * @param strSuffix
-     *     Optional suffix string.
-     *
-     * @return .T. if parsing should continue; .F. to abort parsing.
-     */
-    boolean onMove( final String strSAN, final String strSuffix );
+	/**
+	 * A move has been parsed.
+	 *
+	 * @param strSAN
+	 *            Move string.
+	 * @param strSuffix
+	 *            Optional suffix string.
+	 * @return .T. if parsing should continue; .F. to abort parsing.
+	 */
+	boolean onMove( final String strSAN, final String strSuffix );
 
-    /**
-     * A move number has been parsed.
-     *
-     * @param iMoveNumber
-     *     Move number.
-     *
-     * @return .T. if parsing should continue; .F. to abort parsing.
-     */
-    boolean onMoveNumber( final int iMoveNumber );
+	/**
+	 * A move number has been parsed.
+	 *
+	 * @param iMoveNumber
+	 *            Move number.
+	 * @return .T. if parsing should continue; .F. to abort parsing.
+	 */
+	boolean onMoveNumber( final int iMoveNumber );
 
-    /**
-     * A move placeholder ("..") has been parsed.
-     *
-     * @return .T. if move placeholder is valid; .F. to abort parsing.
-     */
-    boolean onMovePlaceholder();
+	/**
+	 * A move placeholder ("..") has been parsed.
+	 *
+	 * @return .T. if move placeholder is valid; .F. to abort parsing.
+	 */
+	boolean onMovePlaceholder();
 
-    /**
-     * A null move ("--") has been parsed.
-     *
-     * @return .T. if parsing should continue; .F. to abort parsing.
-     */
-    boolean onNullMove();
+	/**
+	 * A null move ("--") has been parsed.
+	 *
+	 * @return .T. if parsing should continue; .F. to abort parsing.
+	 */
+	boolean onNullMove();
 
-    /**
-     * A move number has been parsed.
-     *
-     * @param result
-     *     Result
-     *
-     * @return .T. if parsing should continue; .F. to abort parsing.
-     */
-    boolean onResult( final Result result );
+	/**
+	 * A move number has been parsed.
+	 *
+	 * @param result
+	 *            Result
+	 * @return .T. if parsing should continue; .F. to abort parsing.
+	 */
+	boolean onResult( final Result result );
 
-    /**
-     * A tag name/value pair has been parsed.
-     *
-     * @param strName
-     *     Tag name.
-     * @param strValue
-     *     Tag value.
-     *
-     * @return .T. if parsing should continue; .F. to abort parsing.
-     */
-    boolean onTag( final String strName, final String strValue );
+	/**
+	 * A tag name/value pair has been parsed.
+	 *
+	 * @param strName
+	 *            Tag name.
+	 * @param strValue
+	 *            Tag value.
+	 * @return .T. if parsing should continue; .F. to abort parsing.
+	 */
+	boolean onTag( final String strName, final String strValue );
 
-    /**
-     * A variation open marker '(' was parsed.
-     */
-    void onVariationEnter();
+	/**
+	 * A variation open marker '(' was parsed.
+	 */
+	void onVariationEnter();
 
-    /**
-     * A variation close marker ')' was parsed.
-     */
-    void onVariationExit();
-    /**
-     * A new game is being started.
-     */
-    void reset();
-    }   /* end of interface IPgnListener */
+	/**
+	 * A variation close marker ')' was parsed.
+	 */
+	void onVariationExit();
+
+	/**
+	 * A new game is being started.
+	 */
+	void reset();
+	} /* end of interface IPgnListener */

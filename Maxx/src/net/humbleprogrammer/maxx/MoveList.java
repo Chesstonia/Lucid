@@ -12,7 +12,7 @@
  *	--------------------- [Disclaimer of Warranty] --------------------------
  *	There is no warranty for the program, to the extent permitted by applicable
  *	law.  Except when otherwise stated in writing the copyright holders and/or
- *	other parties provide the program “as is” without warranty of any kind,
+ *	other parties provide the program "as is" without warranty of any kind,
  *	either expressed or implied, including, but not limited to, the implied
  *	warranties of merchantability and fitness for a particular purpose.  The
  *	entire risk as to the quality and performance of the program is with you.
@@ -39,7 +39,6 @@ import net.humbleprogrammer.humble.DBC;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
-@SuppressWarnings( { "unused", "WeakerAccess" } )
 public class MoveList implements Iterable<Move>
 	{
 
@@ -49,8 +48,6 @@ public class MoveList implements Iterable<Move>
 
 	/** Maximum possible moves in a single position. */
 	private static final int     MAX_MOVE_COUNT = 224;
-	/** Controls how _map[] array is restored in addMoveIfLegal() */
-	private static final boolean USE_ARRAY_COPY = true;
 
 	//  -----------------------------------------------------------------------
 	//	DECLARATIONS
@@ -113,7 +110,7 @@ public class MoveList implements Iterable<Move>
 		//	-----------------------------------------------------------------
 		_bAllMoves = true;
 		_board = bd;
-		_board.copyPieceMap( _map );
+		System.arraycopy(_board.map, 0, _map, 0, MAP_LENGTH);
 
 		_player = _board.getMovingPlayer();
 		_opponent = _player ^ 1;
@@ -134,6 +131,16 @@ public class MoveList implements Iterable<Move>
 	//	PUBLIC METHODS
 	//	-----------------------------------------------------------------------
 
+	/**
+         @param bd
+	      Position to look for mate on
+
+	 @return true if mate
+	 */
+	public static boolean isMate( Board bd )
+	        {
+		return false;
+                }
 	/**
 	 * Generate all legal moves for a given position.
 	 *
@@ -185,22 +192,6 @@ public class MoveList implements Iterable<Move>
 	public boolean hasLegalMove()
 		{
 		return (_iCount > 0);
-		}
-
-	/**
-	 * Determines if the current position is mate.
-	 *
-	 * @param bd
-	 * 	Position to test.
-	 *
-	 * @return .T. if moving player is in check but has no legal moves; .F. otherwise.
-	 */
-	public static boolean isMate( Board bd )
-		{
-		if (bd == null) return false;
-		//	-----------------------------------------------------------------
-		return (bd.isInCheck() &&
-				generate( bd ).size() == 0);
 		}
 
 	//  -----------------------------------------------------------------------
@@ -301,7 +292,7 @@ public class MoveList implements Iterable<Move>
 				bInCheck = Bitboards.isAttackedBy( _map, _iSqKing, _opponent );
 				}
 
-			_board.copyPieceMap( _map );
+			System.arraycopy(_board.map, 0, _map, 0, MAP_LENGTH);
 
 			if (bInCheck) return false;
 			}
@@ -442,7 +433,12 @@ public class MoveList implements Iterable<Move>
 		}
 
 	/**
-	 * Generate all legal moves.
+	 * Generate a subset of legal moves.
+	 * 
+	 * @param bbCandidates 
+	 *	Bitboard of "From" pieces.
+	 * @param iSqTo 
+	 *	"To" square, in 8x8 format.
 	 */
 	private void generate( long bbCandidates, int iSqTo )
 		{
@@ -458,10 +454,8 @@ public class MoveList implements Iterable<Move>
 		//  move on top of the "bad" move.  The current index is decremented so that the next
 		//  iteration of the loop will test the copied move, which is now in the same element.
 		//
-		int iToMask = Move.pack( 0, iSqTo );
-
 		for ( int index = 0; index < _iCount; ++index )
-			if ((_moves[ index ] & Move.MASK_TO_SQ) != iToMask && --_iCount > index)
+			if (Move.unpackToSq(_moves[ index ]) != iSqTo && --_iCount > index)
 				_moves[ index-- ] = _moves[ _iCount ];
 		}
 

@@ -1,4 +1,4 @@
-/*****************************************************************************
+/* ****************************************************************************
  **
  ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
@@ -12,7 +12,7 @@
  **	--------------------- [Disclaimer of Warranty] --------------------------
  **	There is no warranty for the program, to the extent permitted by applicable
  **	law.  Except when otherwise stated in writing the copyright holders and/or
- **	other parties provide the program “as is” without warranty of any kind,
+ **	other parties provide the program "as is" without warranty of any kind,
  **	either expressed or implied, including, but not limited to, the implied
  **	warranties of merchantability and fitness for a particular purpose.  The
  **	entire risk as to the quality and performance of the program is with you.
@@ -34,25 +34,46 @@ package net.humbleprogrammer.maxx;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class TestMove extends net.humbleprogrammer.TestBase
-    {
+	{
 
-    //  -----------------------------------------------------------------------
-    //	UNIT TESTS
-    //	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	UNIT TESTS
+	//	-----------------------------------------------------------------------
 
-    @Test
-    public void t_constants()
-        {
-        assertEquals( Move.Type.NORMAL, (Move.Type.NORMAL & Move.MASK_TYPE) );
-        assertEquals( Move.Type.CASTLING, (Move.Type.CASTLING & Move.MASK_TYPE) );
-        assertEquals( Move.Type.EN_PASSANT, (Move.Type.EN_PASSANT & Move.MASK_TYPE) );
-        assertEquals( Move.Type.PAWN_PUSH, (Move.Type.PAWN_PUSH & Move.MASK_TYPE) );
-        assertEquals( Move.Type.PROMOTION, (Move.Type.PROMOTION & Move.MASK_TYPE) );
-        assertEquals( Move.Type.PROMOTE_BISHOP, (Move.Type.PROMOTE_BISHOP & Move.MASK_TYPE));
-        assertEquals( Move.Type.PROMOTE_KNIGHT, (Move.Type.PROMOTE_KNIGHT & Move.MASK_TYPE));
-        assertEquals( Move.Type.PROMOTE_ROOK, (Move.Type.PROMOTE_ROOK & Move.MASK_TYPE));
-        }
-    }   /* end of class TestMove */
+	@Test
+	public void t_constants()
+		{
+		assertEquals(Move.Type.NORMAL, (Move.Type.NORMAL & Move.MASK_TYPE));
+		assertEquals(Move.Type.CASTLING, (Move.Type.CASTLING & Move.MASK_TYPE));
+		assertEquals(Move.Type.EN_PASSANT, (Move.Type.EN_PASSANT & Move.MASK_TYPE));
+		assertEquals(Move.Type.PAWN_PUSH, (Move.Type.PAWN_PUSH & Move.MASK_TYPE));
+		assertEquals(Move.Type.PROMOTION, (Move.Type.PROMOTION & Move.MASK_TYPE));
+		assertEquals(Move.Type.PROMOTE_BISHOP, (Move.Type.PROMOTE_BISHOP & Move.MASK_TYPE));
+		assertEquals(Move.Type.PROMOTE_KNIGHT, (Move.Type.PROMOTE_KNIGHT & Move.MASK_TYPE));
+		assertEquals(Move.Type.PROMOTE_ROOK, (Move.Type.PROMOTE_ROOK & Move.MASK_TYPE));
+		}
+
+	@Test
+	public void t_unpackFromSq()
+		{
+		for ( int iSq = 0; iSq < 64; ++iSq )
+			{
+			int packed = Move.pack(iSq, Square.A1);
+			assertEquals(iSq, Move.unpackFromSq(packed));
+			}
+		}
+
+	@Test
+	public void t_unpackToSq()
+		{
+		for ( int iSq = 0; iSq < 64; ++iSq )
+			{
+			int packed = Move.pack(Square.A1, iSq);
+			assertEquals(iSq, Move.unpackToSq(packed));
+			}
+		}
+
+	} /* end of class TestMove */

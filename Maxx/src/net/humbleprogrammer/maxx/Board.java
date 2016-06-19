@@ -12,7 +12,7 @@
  *	--------------------- [Disclaimer of Warranty] --------------------------
  *	There is no warranty for the program, to the extent permitted by applicable
  *	law.  Except when otherwise stated in writing the copyright holders and/or
- *	other parties provide the program “as is” without warranty of any kind,
+ *	other parties provide the program "as is" without warranty of any kind,
  *	either expressed or implied, including, but not limited to, the implied
  *	warranties of merchantability and fitness for a particular purpose.  The
  *	entire risk as to the quality and performance of the program is with you.
@@ -34,6 +34,7 @@ package net.humbleprogrammer.maxx;
 
 import net.humbleprogrammer.humble.BitUtil;
 import net.humbleprogrammer.humble.DBC;
+import net.humbleprogrammer.maxx.exceptions.IllegalMoveException;
 import net.humbleprogrammer.maxx.factories.BoardFactory;
 
 import java.util.Arrays;
@@ -66,7 +67,6 @@ import static net.humbleprogrammer.maxx.Constants.*;
  * position has occurred</li> <li>If the game has reached a verdict.</li> </ul> * pawn advances
  * can be inferred by the existence of an e.p. square
  */
-@SuppressWarnings( { "unused", "WeakerAccess" } )
 public class Board
 	{
 
@@ -82,9 +82,9 @@ public class Board
 	//	-----------------------------------------------------------------------
 
 	/** Array of bitboards. */
-	private final long[] _map = new long[ MAP_LENGTH ];
+	final long[] map = new long[ MAP_LENGTH ];
 	/** Array of pieces */
-	private final int[]  _sq  = new int[ 64 ];
+	final int[]  sq  = new int[ 64 ];
 
 	/** Current castling privileges. */
 	private int _castling   = CastlingFlags.NONE;
@@ -138,7 +138,25 @@ public class Board
 	 */
 	public Board( Board src )
 		{
+		DBC.requireNotNull(src, "Board");
+		//	-----------------------------------------------------------------
 		copyFrom( src );
+		}
+
+	/**
+	 * Alternate CTOR for the {@link Board} class.
+	 *
+	 * @param src
+	 * 	Board to copy from.
+	 * @param move
+	 *	Move to apply.
+	 */
+	Board( Board src, Move move )
+		{
+		assert src != null;
+		//	-----------------------------------------------------------------
+		copyFrom( src );
+		makeMove(move);
 		}
 
 	//  -----------------------------------------------------------------------
@@ -197,75 +215,18 @@ public class Board
 	public static int computePly( final int iMoveNum, final int player )
 		{
 		return (iMoveNum >= 1)
-			   ? (((iMoveNum - 1) << 1) + (player & 0x01))
+			   ? (((iMoveNum - 1) << 1) + (player & 1))
 			   : INVALID;
 		}
 
 	/**
 	 * Determines if the moving player is currently in check.
 	 *
-	 * @return .T. if moveing player in check; .F. otherwise.
+	 * @return .T. if moving player in check; .F. otherwise.
 	 */
 	public boolean isInCheck()
 		{
-		return Bitboards.isAttackedBy( _map, getKingSquare( _player ), (_player ^ 1) );
-		}
-
-	/**
-	 * Tests a board for validity.
-	 *
-	 * In order to be valid, all of the following must be <i>true</i>: <ul> <li>Neither side can
-	 * have more than 16 pieces.</li> <li>Each side must have one (and only one) King.</li>
-	 * <li>Neither side can have more than 8 pawns.</li> <li>No pawns on the first or last
-	 * rank.</li> <li>The player "on the move" cannot be able to capture the opposing King.</li>
-	 * </ul>
-	 *
-	 * @return .T. if the position is valid; .F. otherwise.
-	 */
-	public boolean isLegal()
-		{
-		//  Test 1 -- neither player can have more than 16 pieces on the board.
-		if (BitUtil.count( _map[ MAP_W_ALL ] ) > 16 || BitUtil.count( _map[ MAP_B_ALL ] ) > 16)
-			return false;
-
-		//  Test 2 -- both players must have one (and only one) king on the board.
-		if (!BitUtil.singleton( _map[ MAP_W_KING ] ) ||
-			!BitUtil.singleton( _map[ MAP_B_KING ] ))
-			return false;
-
-		// Test 3 -- neither player can have more than 8 pawns on the board.
-		final int iWPawns = BitUtil.count( _map[ MAP_W_PAWN ] );
-		final int iBPawns = BitUtil.count( _map[ MAP_B_PAWN ] );
-
-		if (iWPawns > 8 || iBPawns > 8)
-			return false;
-
-		// Test 4 -- no pawns on the first or last rank.
-		if (((_map[ MAP_W_PAWN ] | _map[ MAP_B_PAWN ]) & 0xFF000000000000FFL) != 0L)
-			return false;
-
-		//  Test 5 -- no more than 9 queens + pawns
-		if ((BitUtil.count( _map[ MAP_W_QUEEN ] ) + iWPawns) > 9 ||
-			(BitUtil.count( _map[ MAP_B_QUEEN ] ) + iBPawns) > 9)
-			{
-			return false;
-			}
-
-		//  Test 6 -- no more than 10 minor pieces + pawns
-		if ((BitUtil.count( _map[ MAP_W_KNIGHT ] ) + iWPawns) > 10 ||   // white knights
-			(BitUtil.count( _map[ MAP_B_KNIGHT ] ) + iBPawns) > 10 ||   // black knights
-			(BitUtil.count( _map[ MAP_W_BISHOP ] ) + iWPawns) > 10 ||   // white bishops
-			(BitUtil.count( _map[ MAP_B_BISHOP ] ) + iBPawns) > 10 ||   // black bishops
-			(BitUtil.count( _map[ MAP_W_ROOK ] ) + iWPawns) > 10 ||   // white rooks
-			(BitUtil.count( _map[ MAP_B_ROOK ] ) + iBPawns) > 10)     // black rooks
-			{
-			return false;
-			}
-
-		// Test 7 -- moving player's king can't be in check.
-		return (_player == WHITE)
-			   ? !Bitboards.isAttackedBy( _map, getKingSquare( WHITE ), BLACK )
-			   : !Bitboards.isAttackedBy( _map, getKingSquare( BLACK ), WHITE );
+		return Bitboards.isAttackedBy( map, getKingSquare( _player ), (_player ^ 1) );
 		}
 
 	/**
@@ -294,21 +255,27 @@ public class Board
 		int iSqFrom = move.iSqFrom;
 		int iSqTo = move.iSqTo;
 
-		if (_sq[ iSqTo ] != EMPTY)
+		if (sq[ iSqTo ] != EMPTY)
 			{
 			_iHalfMoves = 0;
 			removePiece( iSqTo );
 			}
-		else if (_sq[ iSqFrom ] <= MAP_B_PAWN)
+		else if (Piece.getType( sq[ iSqFrom ] ) == PAWN)
 			_iHalfMoves = 0;
 		else
 			_iHalfMoves++;
 
+		_iSqEP = INVALID;
+
 		switch (move.iType)
 			{
 			case Move.Type.NORMAL:
+				movePiece( iSqFrom, iSqTo );
+				break;
+
 			case Move.Type.PAWN_PUSH:
 				movePiece( iSqFrom, iSqTo );
+				_iSqEP = (iSqFrom + iSqTo) >>> 1;
 				break;
 
 			case Move.Type.CASTLING:
@@ -356,10 +323,6 @@ public class Board
 		if ((_player ^= 1) == WHITE)
 			_iFullMoves++;
 
-		_iSqEP = (move.iType == Move.Type.PAWN_PUSH)
-				 ? (iSqFrom + iSqTo) >>> 1
-				 : INVALID;
-
 		_hashExtra = ZobristHash.getExtraHash( _castling, _iSqEP, _player );
 		}
 
@@ -377,7 +340,7 @@ public class Board
 	 */
 	public int get( final int iSq )
 		{
-		return Square.isValid( iSq ) ? _sq[ iSq ] : EMPTY;
+		return Square.isValid( iSq ) ? sq[ iSq ] : EMPTY;
 		}
 
 	/**
@@ -394,9 +357,9 @@ public class Board
 		{
 		if (!Square.isValid( iSq ) || piece < MAP_W_PAWN || piece > MAP_B_KING) return false;
 		//	-----------------------------------------------------------------
-		if (_sq[ iSq ] != piece)
+		if (sq[ iSq ] != piece)
 			{
-			if (_sq[ iSq ] != EMPTY)
+			if (sq[ iSq ] != EMPTY)
 				removePiece( iSq );
 
 			if (piece != EMPTY)
@@ -424,33 +387,30 @@ public class Board
 			{
 			case PAWN:
 				return (_player == WHITE)
-					   ? (_map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] |
-												Bitboards.fileMask[ iSqTo & 0x07 ]))
-					   : (_map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] |
-												Bitboards.fileMask[ iSqTo & 0x07 ]));
+					   ? (map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]))
+					   : (map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]));
 
 			case KNIGHT:
-				return _map[ MAP_W_KNIGHT + _player ] & Bitboards.knight[ iSqTo ];
+				return map[ MAP_W_KNIGHT + _player ] & Bitboards.knight[ iSqTo ];
 
 			case BISHOP:
 				return Bitboards.getDiagonalAttackers( iSqTo,
-													   _map[ MAP_W_BISHOP + _player ],
-													   (_map[ MAP_W_ALL ] |
-														_map[ MAP_B_ALL ]) );
+													   map[ MAP_W_BISHOP + _player ],
+													   (map[ MAP_W_ALL ] | map[ MAP_B_ALL ]) );
 
 			case ROOK:
 				return Bitboards.getLateralAttackers( iSqTo,
-													  _map[ MAP_W_ROOK + _player ],
-													  (_map[ MAP_W_ALL ] | _map[ MAP_B_ALL ]) );
+													  map[ MAP_W_ROOK + _player ],
+													  (map[ MAP_W_ALL ] | map[ MAP_B_ALL ]) );
 
 			case QUEEN:
-				return _map[ MAP_W_QUEEN + _player ] &
+				return map[ MAP_W_QUEEN + _player ] &
 					   Bitboards.getQueenMovesFrom( iSqTo,
-													(_map[ MAP_W_ALL ] | _map[ MAP_B_ALL ]) );
+													(map[ MAP_W_ALL ] | map[ MAP_B_ALL ]) );
 
 			case KING:
 				//  Don't mask against Bitboards.king[] because that excludes castling moves.
-				return _map[ MAP_W_KING + _player ];
+				return map[ MAP_W_KING + _player ];
 			}
 
 		return 0L;
@@ -478,25 +438,25 @@ public class Board
 		//
 		//  Check White player's King and Rooks
 		//
-		if (_sq[ Square.E1 ] != Piece.W_KING)
+		if (sq[ Square.E1 ] != Piece.W_KING)
 			castling &= ~CastlingFlags.WHITE_BOTH;
 		else
 			{
-			if (_sq[ Square.A1 ] != Piece.W_ROOK)
+			if (sq[ Square.A1 ] != Piece.W_ROOK)
 				castling &= ~CastlingFlags.WHITE_LONG;
-			if (_sq[ Square.H1 ] != Piece.W_ROOK)
+			if (sq[ Square.H1 ] != Piece.W_ROOK)
 				castling &= ~CastlingFlags.WHITE_SHORT;
 			}
 		//
 		//  And the same for Black
 		//
-		if (_sq[ Square.E8 ] != Piece.B_KING)
+		if (sq[ Square.E8 ] != Piece.B_KING)
 			castling &= ~CastlingFlags.BLACK_BOTH;
 		else
 			{
-			if (_sq[ Square.A8 ] != Piece.B_ROOK)
+			if (sq[ Square.A8 ] != Piece.B_ROOK)
 				castling &= ~CastlingFlags.BLACK_LONG;
-			if (_sq[ Square.H8 ] != Piece.B_ROOK)
+			if (sq[ Square.H8 ] != Piece.B_ROOK)
 				castling &= ~CastlingFlags.BLACK_SHORT;
 			}
 
@@ -525,16 +485,16 @@ public class Board
 	 */
 	public void setEnPassantSquare( int iSq )
 		{
-		if (Square.isValid( iSq ) && _sq[ iSq ] == EMPTY)
+		if (Square.isValid( iSq ) && sq[ iSq ] == EMPTY)
 			{
 			if (_player == WHITE)
 				{
-				if (Square.getRank( iSq ) != 5 || _sq[ iSq - 8 ] != Piece.B_PAWN)
+				if (Square.getRank( iSq ) != 5 || sq[ iSq - 8 ] != Piece.B_PAWN)
 					iSq = INVALID;
 				}
 			else // if (_player == BLACK)
 				{
-				if (Square.getRank( iSq ) != 2 || _sq[ iSq + 8 ] != Piece.W_PAWN)
+				if (Square.getRank( iSq ) != 2 || sq[ iSq + 8 ] != Piece.W_PAWN)
 					iSq = INVALID;
 				}
 			}
@@ -572,14 +532,14 @@ public class Board
 	/**
 	 * Gets the square occupied by a player's King.
 	 *
-	 * @param iPlayer
+	 * @param player
 	 * 	Player color [WHITE|BLACK].
 	 *
 	 * @return King square in 8x8 format, or INVALID if no king on the board.
 	 */
-	public int getKingSquare( final int iPlayer )
+	public int getKingSquare( final int player )
 		{
-		return BitUtil.first( _map[ MAP_W_KING + (iPlayer & 0x01) ] );
+		return BitUtil.first( map[ MAP_W_KING + (player & 1) ] );
 		}
 
 	/**
@@ -665,17 +625,9 @@ public class Board
 			{
 			_hashPawns = src._hashPawns;
 			_hashPieces = src._hashPieces;
-			System.arraycopy( src._map, 0, _map, 0, MAP_LENGTH );
-			System.arraycopy( src._sq, 0, _sq, 0, 64 );
+			System.arraycopy( src.map, 0, map, 0, MAP_LENGTH );
+			System.arraycopy( src.sq, 0, sq, 0, 64 );
 			}
-		}
-
-	void copyPieceMap( long[] xmap )
-		{
-		assert xmap != null;
-		assert xmap.length >= MAP_LENGTH;
-		//	-----------------------------------------------------------------
-		System.arraycopy( _map, 0, xmap, 0, MAP_LENGTH );
 		}
 
 	/**
@@ -691,19 +643,19 @@ public class Board
 		assert Square.isValid( iSqFrom );
 		assert Square.isValid( iSqTo );
 
-		assert _sq[ iSqFrom ] != EMPTY;
-		assert _sq[ iSqTo ] == EMPTY;
+		assert sq[ iSqFrom ] != EMPTY;
+		assert sq[ iSqTo ] == EMPTY;
 		//	-----------------------------------------------------------------
-		final int piece = _sq[ iSqFrom ];
+		final int piece = sq[ iSqFrom ];
 		final long bbSqMask = (1L << iSqFrom) | (1L << iSqTo);
 
-		_map[ piece ] ^= bbSqMask;
-		_map[ piece & 1 ] ^= bbSqMask;
+		map[ piece ] ^= bbSqMask;
+		map[ piece & 1 ] ^= bbSqMask;
 
-		_sq[ iSqFrom ] = EMPTY;
-		_sq[ iSqTo ] = piece;
+		sq[ iSqFrom ] = EMPTY;
+		sq[ iSqTo ] = piece;
 
-		if (piece <= Piece.B_PAWN)
+		if (Piece.getType(piece) == PAWN)
 			_hashPawns ^= ZobristHash.getPieceHash( iSqFrom, iSqTo, piece );
 		else
 			_hashPieces ^= ZobristHash.getPieceHash( iSqFrom, iSqTo, piece );
@@ -724,12 +676,12 @@ public class Board
 		//	-----------------------------------------------------------------
 		final long bbMask = 1L << iSq;
 
-		_map[ piece ] |= bbMask;
-		_map[ piece & 1 ] |= bbMask;
+		map[ piece ] |= bbMask;
+		map[ piece & 1 ] |= bbMask;
 
-		_sq[ iSq ] = piece;
+		sq[ iSq ] = piece;
 
-		if (piece <= Piece.B_PAWN)
+		if (Piece.getType(piece) == PAWN)
 			_hashPawns ^= ZobristHash.getPieceHash( iSq, piece );
 		else
 			_hashPieces ^= ZobristHash.getPieceHash( iSq, piece );
@@ -745,15 +697,15 @@ public class Board
 		{
 		assert Square.isValid( iSq );
 		//	-----------------------------------------------------------------
-		final int piece = _sq[ iSq ];
+		final int piece = sq[ iSq ];
 		final long bbNotMask = ~(1L << iSq);
 
-		_map[ piece ] &= bbNotMask;
-		_map[ piece & 1 ] &= bbNotMask;
+		map[ piece ] &= bbNotMask;
+		map[ piece & 1 ] &= bbNotMask;
 
-		_sq[ iSq ] = EMPTY;
+		sq[ iSq ] = EMPTY;
 
-		if (piece <= Piece.B_PAWN)
+		if (Piece.getType(piece) == PAWN)
 			_hashPawns ^= ZobristHash.getPieceHash( iSq, piece );
 		else
 			_hashPieces ^= ZobristHash.getPieceHash( iSq, piece );
@@ -769,7 +721,6 @@ public class Board
 		public static final int NONE = 0;
 
 		/** White can castle king-side (short). */
-		@SuppressWarnings( "PointlessBitwiseExpression" )
 		public static final int WHITE_SHORT = 1 << 0;
 		/** White can castling queen-side (long). */
 		public static final int WHITE_LONG  = 1 << 1;

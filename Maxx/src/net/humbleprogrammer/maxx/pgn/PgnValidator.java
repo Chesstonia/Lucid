@@ -1,4 +1,4 @@
-/*****************************************************************************
+/* ****************************************************************************
  **
  ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
@@ -12,7 +12,7 @@
  **	--------------------- [Disclaimer of Warranty] --------------------------
  **	There is no warranty for the program, to the extent permitted by applicable
  **	law.  Except when otherwise stated in writing the copyright holders and/or
- **	other parties provide the program “as is” without warranty of any kind,
+ **	other parties provide the program "as is" without warranty of any kind,
  **	either expressed or implied, including, but not limited to, the implied
  **	warranties of merchantability and fitness for a particular purpose.  The
  **	entire risk as to the quality and performance of the program is with you.
@@ -42,225 +42,211 @@ import java.util.Stack;
 import static net.humbleprogrammer.maxx.Constants.*;
 
 public class PgnValidator extends PgnAdapter
-    {
-    //  -----------------------------------------------------------------------
-    //	STATIC DECLARATIONS
-    //	-----------------------------------------------------------------------
+	{
+	//  -----------------------------------------------------------------------
+	//	STATIC DECLARATIONS
+	//	-----------------------------------------------------------------------
 
-    /** Logger */
-    private static final Logger s_log = LoggerFactory.getLogger( PgnParser.class );
+	/** Logger */
+	private static final Logger		s_log		= LoggerFactory.getLogger(PgnParser.class);
 
-    //  -----------------------------------------------------------------------
-    //	DECLARATIONS
-    //	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	DECLARATIONS
+	//	-----------------------------------------------------------------------
 
-    /** Nested variations. */
-    private final Stack<Variation> _variations = new Stack<>();
+	/** Nested variations. */
+	private final Stack<Variation>	_variations	= new Stack<>();
 
-    /** Player color of first move in the current variation. */
-    private int       _player   = INVALID;
-    /** First move number in the current variation. */
-    private int       _iMoveNum = 0;
-    /** Current variation, or <c>null</c> if ignoring variation. */
-    protected Variation _pv       = new Variation();
+	/** Player color of first move in the current variation. */
+	private int						_player		= INVALID;
+	/** First move number in the current variation. */
+	private int						_iMoveNum	= 0;
+	/** Current variation, or <c>null</c> if ignoring variation. */
+	protected Variation				_pv			= new Variation();
 
-    //  -----------------------------------------------------------------------
-    //	INTERFACE: IPgnListener
-    //	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	INTERFACE: IPgnListener
+	//	-----------------------------------------------------------------------
 
-    /**
-     * A move has been parsed.
-     *
-     * @param strSAN
-     *     Move string.
-     * @param strSuffix
-     *     Optional suffix string.
-     *
-     * @return .T. if parsing is to continue; .F. to abort parsing.
-     */
-    @Override
-    public boolean onMove( final String strSAN, final String strSuffix )
-        {
-        assert strSAN != null;
-        assert strSuffix != null;
+	/**
+	 * A move has been parsed.
+	 *
+	 * @param strSAN
+	 *            Move string.
+	 * @param strSuffix
+	 *            Optional suffix string.
+	 * @return .T. if parsing is to continue; .F. to abort parsing.
+	 */
+	@Override
+	public boolean onMove( final String strSAN, final String strSuffix )
+		{
+		assert strSAN != null;
+		assert strSuffix != null;
 
-        if (_pv == null) return true;
-        //	-----------------------------------------------------------------
-        if (_pv.isEmpty())
-            {
-            if (_variations.isEmpty())
-                {
-                final Board bd = _pv.getCurrentPosition();
-                //
-                //  If there are no previous variations, this must be the main line.
-                //  The starting position must already have been set, either by
-                //  default of by a FEN tag.
-                //
-                if (_iMoveNum != bd.getMoveNumber() || _player != bd.getMovingPlayer())
-                    return false;
-                }
-            else
-                {
-                //
-                //  Try to get the position matching the move number and player from
-                //  the previous variation.
-                //
-                final Variation pv = _variations.peek();
-                final Board bd = (pv != null)
-                                 ? pv.getPosition( _iMoveNum, _player )
-                                 : null;
-                if (bd == null)
-                    return false;
+		if (_pv == null) return true;
+		//	-----------------------------------------------------------------
+		if (_pv.isEmpty())
+			{
+			if (_variations.isEmpty())
+				{
+				final Board bd = _pv.getCurrentPosition();
+				//
+				//  If there are no previous variations, this must be the main line.
+				//  The starting position must already have been set, either by
+				//  default of by a FEN tag.
+				//
+				if (_iMoveNum != bd.getMoveNumber() || _player != bd.getMovingPlayer()) return false;
+				}
+			else
+				{
+				//
+				//  Try to get the position matching the move number and player from
+				//  the previous variation.
+				//
+				final Variation pv = _variations.peek();
+				final Board bd = (pv != null) ? pv.getPosition(_iMoveNum, _player) : null;
+				if (bd == null) return false;
 
-                _pv.setStartingPosition( bd );
-                }
-            }
-        //
-        //  Try to find the move based on the current position.  This will fail if the
-        //  move is nonsensical, illegal, or ambiguous.
-        //
-        final Move moveFound = MoveFactory.fromSAN( _pv.getCurrentPosition(), strSAN );
+				_pv.setStartingPosition(bd);
+				}
+			}
+		//
+		//  Try to find the move based on the current position.  This will fail if the
+		//  move is nonsensical, illegal, or ambiguous.
+		//
+		final Move moveFound = MoveFactory.fromSAN(_pv.getCurrentPosition(), strSAN);
 
-        if (moveFound != null)
-            return _pv.appendMove( moveFound );
+		if (moveFound != null) return _pv.appendMove(moveFound);
 
-        s_log.debug( "{} => '{}' is illegal or ambiguous.",
-                     _pv.getCurrentPosition(),
-                     strSAN );
+		s_log.debug("{} => '{}' is illegal or ambiguous.", _pv.getCurrentPosition(), strSAN);
 
-        // MoveFactory.fromSAN( _pv.getCurrentPosition(), strSAN );
+		// MoveFactory.fromSAN( _pv.getCurrentPosition(), strSAN );
 
-        return false;
-        }
+		return false;
+		}
 
-    /**
-     * A move number has been parsed.
-     *
-     * @param iMoveNumber
-     *     Move number.
-     *
-     * @return .T. if parsing is to continue; .F. to abort parsing.
-     */
-    @Override
-    public boolean onMoveNumber( final int iMoveNumber )
-        {
-        assert iMoveNumber > 0;
-        if (_pv == null) return true;
-        //	-----------------------------------------------------------------
-        if (_pv.isEmpty())
-            {
-            _player = WHITE;
-            _iMoveNum = iMoveNumber;
-            return true;
-            }
+	/**
+	 * A move number has been parsed.
+	 *
+	 * @param iMoveNumber
+	 *            Move number.
+	 * @return .T. if parsing is to continue; .F. to abort parsing.
+	 */
+	@Override
+	public boolean onMoveNumber( final int iMoveNumber )
+		{
+		assert iMoveNumber > 0;
+		if (_pv == null) return true;
+		//	-----------------------------------------------------------------
+		if (_pv.isEmpty())
+			{
+			_player = WHITE;
+			_iMoveNum = iMoveNumber;
+			return true;
+			}
 
-        return (iMoveNumber == _pv.getCurrentPosition().getMoveNumber());
-        }
+		return (iMoveNumber == _pv.getCurrentPosition().getMoveNumber());
+		}
 
-    /**
-     * A move placeholder ("..") has been parsed.
-     *
-     * @return .T. if move placeholder is valid; .F. to abort parsing.
-     */
-    @Override
-    public boolean onMovePlaceholder()
-        {
-        if (_pv == null) return true;
-        //	-----------------------------------------------------------------
-        if (_pv.isEmpty())
-            {
-            if (_player == BLACK)
-                return false;
+	/**
+	 * A move placeholder ("..") has been parsed.
+	 *
+	 * @return .T. if move placeholder is valid; .F. to abort parsing.
+	 */
+	@Override
+	public boolean onMovePlaceholder()
+		{
+		if (_pv == null) return true;
+		//	-----------------------------------------------------------------
+		if (_pv.isEmpty())
+			{
+			if (_player == BLACK) return false;
 
-            _player = BLACK;
-            return true;
-            }
+			_player = BLACK;
+			return true;
+			}
 
-        return (_pv.getCurrentPosition().getMovingPlayer() == BLACK);
-        }
+		return (_pv.getCurrentPosition().getMovingPlayer() == BLACK);
+		}
 
-    /**
-     * A null move ("--") has been parsed.
-     *
-     * @return .T. if parsing is to continue; .F. to abort parsing.
-     */
-    public boolean onNullMove()
-        {
-        if (_variations.isEmpty()) return false;
-        //	-----------------------------------------------------------------
-        _pv = null;
-        return true;
-        }
+	/**
+	 * A null move ("--") has been parsed.
+	 *
+	 * @return .T. if parsing is to continue; .F. to abort parsing.
+	 */
+	public boolean onNullMove()
+		{
+		if (_variations.isEmpty()) return false;
+		//	-----------------------------------------------------------------
+		_pv = null;
+		return true;
+		}
 
-    /**
-     * A move number has been parsed.
-     *
-     * @param result
-     *     Result
-     *
-     * @return .T. if parsing is to continue; .F. to abort parsing.
-     */
-    public boolean onResult( final Result result )
-        {
-        assert result != null;
-        //	-----------------------------------------------------------------
-        if (_pv != null)
-            {
-            if (_pv.getResult() != null)
-                return false;
+	/**
+	 * A move number has been parsed.
+	 *
+	 * @param result
+	 *            Result
+	 * @return .T. if parsing is to continue; .F. to abort parsing.
+	 */
+	public boolean onResult( final Result result )
+		{
+		assert result != null;
+		//	-----------------------------------------------------------------
+		if (_pv != null)
+			{
+			if (_pv.getResult() != null) return false;
 
-            _pv.setResult( result );
-            }
+			_pv.setResult(result);
+			}
 
-        return true;
-        }
+		return true;
+		}
 
-    /**
-     * A tag name/value pair has been parsed.
-     *
-     * @param strName
-     *     Tag name.
-     * @param strValue
-     *     Tag value.
-     *
-     * @return .T. if parsing should continue; .F. to abort parsing.
-     */
-    public boolean onTag( final String strName, final String strValue )
-        {
-        assert PgnParser.isValidTagName( strName );
-        assert PgnParser.isValidTagValue( strValue );
-        //	-----------------------------------------------------------------
-        return (!strName.equalsIgnoreCase( PgnParser.TAG_FEN ) ||
-               _pv.setStartingPosition( strValue ));
-        }
+	/**
+	 * A tag name/value pair has been parsed.
+	 *
+	 * @param strName
+	 *            Tag name.
+	 * @param strValue
+	 *            Tag value.
+	 * @return .T. if parsing should continue; .F. to abort parsing.
+	 */
+	public boolean onTag( final String strName, final String strValue )
+		{
+		assert PgnParser.isValidTagName(strName);
+		assert PgnParser.isValidTagValue(strValue);
+		//	-----------------------------------------------------------------
+		return (!strName.equalsIgnoreCase(PgnParser.TAG_FEN) || _pv.setStartingPosition(strValue));
+		}
 
-    /**
-     * A variation open marker '(' was parsed.
-     */
-    public void onVariationEnter()
-        {
-        _variations.push( _pv );
-        _pv = new Variation();
-        }
+	/**
+	 * A variation open marker '(' was parsed.
+	 */
+	public void onVariationEnter()
+		{
+		_variations.push(_pv);
+		_pv = new Variation();
+		}
 
-    /**
-     * A variation close marker ')' was parsed.
-     */
-    public void onVariationExit()
-        {
-        assert _variations.size() > 0;
-        //	-----------------------------------------------------------------
-        _pv = _variations.pop();
-        }
+	/**
+	 * A variation close marker ')' was parsed.
+	 */
+	public void onVariationExit()
+		{
+		assert _variations.size() > 0;
+		//	-----------------------------------------------------------------
+		_pv = _variations.pop();
+		}
 
 	/**
 	 * Starts a new game
-     */
-    public void reset()
-        {
-        _iMoveNum = 0;
-        _player = INVALID;
-        _variations.clear();
-        _pv = new Variation();
-        }
-    } /* end of class PgnValidator */
+	 */
+	public void reset()
+		{
+		_iMoveNum = 0;
+		_player = INVALID;
+		_variations.clear();
+		_pv = new Variation();
+		}
+	} /* end of class PgnValidator */

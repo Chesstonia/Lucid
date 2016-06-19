@@ -1,4 +1,4 @@
-/*****************************************************************************
+/* ****************************************************************************
  **
  ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
@@ -12,7 +12,7 @@
  **	--------------------- [Disclaimer of Warranty] --------------------------
  **	There is no warranty for the program, to the extent permitted by applicable
  **	law.  Except when otherwise stated in writing the copyright holders and/or
- **	other parties provide the program “as is” without warranty of any kind,
+ **	other parties provide the program "as is" without warranty of any kind,
  **	either expressed or implied, including, but not limited to, the implied
  **	warranties of merchantability and fitness for a particular purpose.  The
  **	entire risk as to the quality and performance of the program is with you.
@@ -34,6 +34,7 @@ package net.humbleprogrammer.maxx.factories;
 
 import net.humbleprogrammer.TestBase;
 import net.humbleprogrammer.humble.Stopwatch;
+import net.humbleprogrammer.humble.TimeUtil;
 import net.humbleprogrammer.maxx.*;
 import net.humbleprogrammer.maxx.factories.BoardFactory;
 import org.junit.Test;
@@ -42,12 +43,53 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
+import static net.humbleprogrammer.maxx.Constants.*;
+
 public class TestBoardFactory extends TestBase
     {
 
     //  -----------------------------------------------------------------------
     //	UNIT TESTS
     //	-----------------------------------------------------------------------
+
+    @Test
+    public void t_createBlank()
+        {
+        Board bd = BoardFactory.createBlank();
+
+        assertNotNull( bd );
+
+        assertEquals( Board.CastlingFlags.NONE, bd.getCastlingFlags() );
+        assertEquals( INVALID, bd.getEnPassantSquare() );
+        assertEquals( WHITE, bd.getMovingPlayer() );
+        assertEquals( HASH_BLANK, bd.getZobristHash() );
+
+        for ( int iSq = 0; iSq < 64; ++iSq )
+            assertEquals( EMPTY, bd.get( iSq ) );
+        }
+
+    @Test
+    public void t_createCopy()
+        {
+        final Board bdSrc = BoardFactory.createFromFEN( FEN_TEST );
+
+        assertNotNull( bdSrc );
+
+        final Board bdDst = BoardFactory.createCopy( bdSrc );
+
+        assertNotNull( bdDst );
+
+        assertEquals( bdSrc.getCastlingFlags(), bdDst.getCastlingFlags() );
+        assertEquals( bdSrc.getEnPassantSquare(), bdDst.getEnPassantSquare() );
+        assertEquals( bdSrc.getHalfMoveClock(), bdDst.getHalfMoveClock() );
+        assertEquals( bdSrc.getMoveNumber(), bdDst.getMoveNumber() );
+        assertEquals( bdSrc.getMovingPlayer(), bdDst.getMovingPlayer() );
+        assertEquals( bdSrc.getZobristHash(), bdDst.getZobristHash() );
+
+        for ( int iSq = 0; iSq < 64; ++iSq )
+            assertEquals( bdSrc.get( iSq ), bdDst.get( iSq ) );
+
+        }
 
     @Test
     public void t_createFromFEN()
@@ -59,11 +101,27 @@ public class TestBoardFactory extends TestBase
 
         for ( String strFEN : listFEN )
             {
-            assertNotNull( strFEN, BoardFactory.createFromFEN( strFEN ) );
-
+            Board bd = BoardFactory.createFromFEN(strFEN);
+            
+            assertNotNull( strFEN, bd );
+            assertTrue( strFEN, Arbiter.isLegalPosition(bd) );
+            
             if ((++iCount % 1000) == 0 && swatch.getElapsed() > s_lMaxNanosecs)
                 break;
             }
+        //
+        //	Display some simple metrics.
+        //
+		long lMillisecs = swatch.getElapsedMillisecs();
+
+		if (iCount > 0 && lMillisecs > 0)
+			{
+			s_log.info( String.format( "%s: Parsed %,d FEN strings in %s (%,d /sec)",
+									   DURATION.toString(),
+									   iCount,
+									   TimeUtil.formatMillisecs( lMillisecs, true ),
+									   (iCount * 1000L) / lMillisecs ) );
+			}
         }
 
     @Test
@@ -133,7 +191,7 @@ public class TestBoardFactory extends TestBase
             Board bd = BoardFactory.createFromFEN( str );
 
             assertNotNull( str, bd );
-            assertTrue( str, bd.isLegal() );
+            assertTrue( str, Arbiter.isLegalPosition(bd) );
             assertFalse( str, Square.isValid( bd.getEnPassantSquare() ) );
             }
         }
@@ -213,5 +271,19 @@ public class TestBoardFactory extends TestBase
 
         for ( String str : strFEN )
             assertNull( str, BoardFactory.createFromFEN( str ) );
+        }
+
+    @Test
+    public void t_createInitial()
+        {
+        Board bd = BoardFactory.createInitial();
+
+        assertNotNull( bd );
+
+        assertEquals( Board.CastlingFlags.ALL, bd.getCastlingFlags() );
+        assertEquals( INVALID, bd.getEnPassantSquare() );
+        assertEquals( 1, bd.getMoveNumber() );
+        assertEquals( WHITE, bd.getMovingPlayer() );
+        assertEquals( HASH_INITIAL, bd.getZobristHash() );
         }
     }

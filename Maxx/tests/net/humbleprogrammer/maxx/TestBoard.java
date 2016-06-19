@@ -1,4 +1,4 @@
-/*****************************************************************************
+/* ****************************************************************************
  **
  ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
@@ -12,7 +12,7 @@
  **	--------------------- [Disclaimer of Warranty] --------------------------
  **	There is no warranty for the program, to the extent permitted by applicable
  **	law.  Except when otherwise stated in writing the copyright holders and/or
- **	other parties provide the program “as is” without warranty of any kind,
+ **	other parties provide the program "as is" without warranty of any kind,
  **	either expressed or implied, including, but not limited to, the implied
  **	warranties of merchantability and fitness for a particular purpose.  The
  **	entire risk as to the quality and performance of the program is with you.
@@ -39,72 +39,117 @@ import org.junit.Test;
 import static net.humbleprogrammer.maxx.Constants.*;
 import static org.junit.Assert.*;
 
+@SuppressWarnings("unused")
 public class TestBoard extends TestBase
-    {
+	{
 
-    //  -----------------------------------------------------------------------
-    //	UNIT TESTS
-    //	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	UNIT TESTS
+	//	-----------------------------------------------------------------------
 
-    @Test
-    public void t_createBlank()
-        {
-        Board bd = BoardFactory.createBlank();
+	@Test(expected = IllegalArgumentException.class)
+	public void t_ctor_fail()
+		{
+		Board bd = new Board(null);
+		}
+	
+	@Test
+	public void t_get()
+		{
+		Board bd = BoardFactory.createFromFEN(FEN_TEST);
 
-        assertNotNull( bd );
+		assertEquals(Piece.W_ROOK, bd.get(Square.A1));
+		assertEquals(Piece.W_ROOK, bd.get(Square.F1));
+		assertEquals(Piece.W_KING, bd.get(Square.G1));
 
-        assertEquals( Board.CastlingFlags.NONE, bd.getCastlingFlags() );
-        assertEquals( INVALID, bd.getEnPassantSquare() );
-        assertEquals( WHITE, bd.getMovingPlayer() );
-        assertEquals( HASH_BLANK, bd.getZobristHash() );
+		assertEquals(Piece.W_PAWN, bd.get(Square.A2));
+		assertEquals(Piece.W_PAWN, bd.get(Square.B2));
+		assertEquals(Piece.W_KNIGHT, bd.get(Square.D2));
+		assertEquals(Piece.W_QUEEN, bd.get(Square.E2));
+		assertEquals(Piece.W_PAWN, bd.get(Square.G2));
 
-        for ( int iSq = 0; iSq < 64; ++iSq )
-            assertEquals( EMPTY, bd.get( iSq ) );
-        }
+		assertEquals(Piece.W_BISHOP, bd.get(Square.D3));
+		assertEquals(Piece.W_PAWN, bd.get(Square.E3));
+		assertEquals(Piece.W_PAWN, bd.get(Square.H3));
 
-    @Test
-    public void t_createCopy()
-        {
-        final Board bdSrc = BoardFactory.createFromFEN( FEN_TEST );
+		assertEquals(Piece.W_PAWN, bd.get(Square.D4));
+		assertEquals(Piece.W_PAWN, bd.get(Square.F4));
+		assertEquals(Piece.B_PAWN, bd.get(Square.G4));
 
-        assertNotNull( bdSrc );
+		assertEquals(Piece.W_PAWN, bd.get(Square.C5));
+		assertEquals(Piece.B_PAWN, bd.get(Square.D5));
+		assertEquals(Piece.B_PAWN, bd.get(Square.F5));
+		assertEquals(Piece.B_PAWN, bd.get(Square.H5));
 
-        final Board bdDst = BoardFactory.createCopy( bdSrc );
+		assertEquals(Piece.B_PAWN, bd.get(Square.C6));
+		assertEquals(Piece.B_PAWN, bd.get(Square.E6));
+		assertEquals(Piece.B_KNIGHT, bd.get(Square.F6));
 
-        assertNotNull( bdDst );
+		assertEquals(Piece.B_PAWN, bd.get(Square.A7));
+		assertEquals(Piece.B_PAWN, bd.get(Square.B7));
+		assertEquals(Piece.B_QUEEN, bd.get(Square.C7));
+		assertEquals(Piece.B_BISHOP, bd.get(Square.E7));
 
-        assertEquals( bdSrc.getCastlingFlags(), bdDst.getCastlingFlags() );
-        assertEquals( bdSrc.getEnPassantSquare(), bdDst.getEnPassantSquare() );
-        assertEquals( bdSrc.getHalfMoveClock(), bdDst.getHalfMoveClock() );
-        assertEquals( bdSrc.getMoveNumber(), bdDst.getMoveNumber() );
-        assertEquals( bdSrc.getMovingPlayer(), bdDst.getMovingPlayer() );
-        assertEquals( bdSrc.getZobristHash(), bdDst.getZobristHash() );
+		assertEquals(Piece.B_ROOK, bd.get(Square.A8));
+		assertEquals(Piece.B_KING, bd.get(Square.E8));
+		assertEquals(Piece.B_ROOK, bd.get(Square.H8));
+		}
 
-        for ( int iSq = 0; iSq < 64; ++iSq )
-            assertEquals( bdSrc.get( iSq ), bdDst.get( iSq ) );
+	@Test
+	public void t_get_fail_low()
+		{
+		Board bd = BoardFactory.createInitial();
 
-        }
+		for ( int iSq = SQ_LO; iSq < Square.A1; ++iSq )
+			assertEquals(EMPTY, bd.get(iSq));
+		}
 
-    @Test
-    public void t_createInitial()
-        {
-        Board bd = BoardFactory.createInitial();
+	@Test
+	public void t_get_fail_high()
+		{
+		Board bd = BoardFactory.createInitial();
 
-        assertNotNull( bd );
+		for ( int iSq = Square.H8 + 1; iSq < SQ_HI; ++iSq )
+			assertEquals(EMPTY, bd.get(iSq));
+		}
 
-        assertEquals( Board.CastlingFlags.ALL, bd.getCastlingFlags() );
-        assertEquals( INVALID, bd.getEnPassantSquare() );
-        assertEquals( 1, bd.getMoveNumber() );
-        assertEquals( WHITE, bd.getMovingPlayer() );
-        assertEquals( HASH_INITIAL, bd.getZobristHash() );
-        }
+	@Test
+	public void t_getZobristHash()
+		{
+		Board bd = BoardFactory.createFromFEN(FEN_TEST);
+		Board bdCopy = new Board(bd);
 
-    @Test
-    public void t_isLegal()
-        {
-        final Board bd = BoardFactory.createFromFEN( FEN_TEST );
+		assertEquals(bd.hashCode(), bdCopy.hashCode());
+		assertEquals(bd.getZobristHash(), bdCopy.getZobristHash());
 
-        assertNotNull( bd );
-        assertTrue( bd.isLegal() );
-        }
-    }   /* end of class TestBoard */
+		bdCopy.setCastlingFlags(Board.CastlingFlags.NONE);
+		assertNotEquals(bd.hashCode(), bdCopy.hashCode());
+		assertNotEquals(bd.getZobristHash(), bdCopy.getZobristHash());
+		bdCopy.copyFrom(bd);
+
+		bdCopy.setEnPassantSquare(INVALID);
+		assertNotEquals(bd.hashCode(), bdCopy.hashCode());
+		assertNotEquals(bd.getZobristHash(), bdCopy.getZobristHash());
+		bdCopy.copyFrom(bd);
+
+		bdCopy.setMovingPlayer(bd.getMovingPlayer() ^ 1);
+		assertNotEquals(bd.hashCode(), bdCopy.hashCode());
+		assertNotEquals(bd.getZobristHash(), bdCopy.getZobristHash());
+		bdCopy.copyFrom(bd);
+		//
+		//	The move clocks do not affect the Zobrist hash.
+		//
+		bdCopy.setHalfMoveClock( bdCopy.getHalfMoveClock() + 1);
+		assertNotEquals(bd.hashCode(), bdCopy.hashCode());
+		assertEquals(bd.getZobristHash(), bdCopy.getZobristHash());
+		bdCopy.copyFrom(bd);
+
+		bdCopy.setMoveNumber( bdCopy.getMoveNumber() + 1);
+		assertNotEquals(bd.hashCode(), bdCopy.hashCode());
+		assertEquals(bd.getZobristHash(), bdCopy.getZobristHash());
+		bdCopy.copyFrom(bd);
+
+		assertEquals(bd.hashCode(), bdCopy.hashCode());
+		assertEquals(bd.getZobristHash(), bdCopy.getZobristHash());
+		}
+	} /* end of class TestBoard */
