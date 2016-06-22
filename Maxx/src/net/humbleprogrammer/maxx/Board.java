@@ -219,15 +219,6 @@ public class Board
 			   : INVALID;
 		}
 
-	/**
-	 * Determines if the moving player is currently in check.
-	 *
-	 * @return .T. if moving player in check; .F. otherwise.
-	 */
-	public boolean isInCheck()
-		{
-		return Bitboards.isAttackedBy( map, getKingSquare( _player ), (_player ^ 1) );
-		}
 
 	/**
 	 * Tests a move for legality against the current position.

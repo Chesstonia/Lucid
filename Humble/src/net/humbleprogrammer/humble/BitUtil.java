@@ -70,6 +70,15 @@ public class BitUtil
         { return (bb != 0L) ? Long.numberOfTrailingZeros( bb ) : -1; }
 
     /**
+     * Tests a bitboard to determine if more than one bit is set.
+     *
+     * @param bb
+     *     Bitboard to test.
+     */
+    public static boolean multiple( long bb )
+        { return (bb != 0L && (bb & (bb - 1)) != 0L); }
+
+    /**
      * Tests a bitboard to determine if one (and only one) bit is set.
      *
      * @param bb

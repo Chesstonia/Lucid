@@ -123,5 +123,10 @@ interface IPgnListener
 	/**
 	 * A new game is being started.
 	 */
-	void reset();
+	void onGameStart();
+
+	/**
+	 * The current game is completed.
+	 */
+	void onGameOver();
 	} /* end of interface IPgnListener */

@@ -39,6 +39,7 @@ import net.humbleprogrammer.humble.DBC;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
+@SuppressWarnings( { "unused", "WeakerAccess" } )
 public class MoveList implements Iterable<Move>
 	{
 
@@ -47,7 +48,7 @@ public class MoveList implements Iterable<Move>
 	//	-----------------------------------------------------------------------
 
 	/** Maximum possible moves in a single position. */
-	private static final int     MAX_MOVE_COUNT = 224;
+	private static final int MAX_MOVE_COUNT = 224;
 
 	//  -----------------------------------------------------------------------
 	//	DECLARATIONS
@@ -110,7 +111,7 @@ public class MoveList implements Iterable<Move>
 		//	-----------------------------------------------------------------
 		_bAllMoves = true;
 		_board = bd;
-		System.arraycopy(_board.map, 0, _map, 0, MAP_LENGTH);
+		System.arraycopy( _board.map, 0, _map, 0, MAP_LENGTH );
 
 		_player = _board.getMovingPlayer();
 		_opponent = _player ^ 1;
@@ -131,16 +132,6 @@ public class MoveList implements Iterable<Move>
 	//	PUBLIC METHODS
 	//	-----------------------------------------------------------------------
 
-	/**
-         @param bd
-	      Position to look for mate on
-
-	 @return true if mate
-	 */
-	public static boolean isMate( Board bd )
-	        {
-		return false;
-                }
 	/**
 	 * Generate all legal moves for a given position.
 	 *
@@ -292,7 +283,7 @@ public class MoveList implements Iterable<Move>
 				bInCheck = Bitboards.isAttackedBy( _map, _iSqKing, _opponent );
 				}
 
-			System.arraycopy(_board.map, 0, _map, 0, MAP_LENGTH);
+			System.arraycopy( _board.map, 0, _map, 0, MAP_LENGTH );
 
 			if (bInCheck) return false;
 			}
@@ -434,11 +425,11 @@ public class MoveList implements Iterable<Move>
 
 	/**
 	 * Generate a subset of legal moves.
-	 * 
-	 * @param bbCandidates 
-	 *	Bitboard of "From" pieces.
-	 * @param iSqTo 
-	 *	"To" square, in 8x8 format.
+	 *
+	 * @param bbCandidates
+	 * 	Bitboard of "From" pieces.
+	 * @param iSqTo
+	 * 	"To" square, in 8x8 format.
 	 */
 	private void generate( long bbCandidates, int iSqTo )
 		{
@@ -455,7 +446,7 @@ public class MoveList implements Iterable<Move>
 		//  iteration of the loop will test the copied move, which is now in the same element.
 		//
 		for ( int index = 0; index < _iCount; ++index )
-			if (Move.unpackToSq(_moves[ index ]) != iSqTo && --_iCount > index)
+			if (Move.unpackToSq( _moves[ index ] ) != iSqTo && --_iCount > index)
 				_moves[ index-- ] = _moves[ _iCount ];
 		}
 
@@ -576,13 +567,14 @@ public class MoveList implements Iterable<Move>
 		addPawnMoves( 9, (((bbPawns & 0xFEFEFEFEFEFEFEFEL) >>> 9) & _bbOpponent) );
 
 		//	Normal moves.
-		long bbUnblocked = (bbPawns >>> 8) & ~_bbAll;
+		long bbEmpty = ~_bbAll;
+		long bbUnblocked = (bbPawns >>> 8) & bbEmpty;
 
 		addPawnMoves( 8, bbUnblocked );
 
 		//	Pawn Advances (double moves)
 		if ((bbUnblocked &= Bitboards.rankMask[ 5 ]) != 0)
-			addPawnMoves( 16, ((bbUnblocked >>> 8) & ~_bbAll) );
+			addPawnMoves( 16, ((bbUnblocked >>> 8) & bbEmpty) );
 		}
 
 	/**
@@ -602,13 +594,14 @@ public class MoveList implements Iterable<Move>
 		addPawnMoves( -7, (((bbPawns & 0xFEFEFEFEFEFEFEFEL) << 7) & _bbOpponent) );
 
 		//	Normal moves.
-		long bbUnblocked = (bbPawns << 8) & ~_bbAll;
+		long bbEmpty = ~_bbAll;
+		long bbUnblocked = (bbPawns << 8) & bbEmpty;
 
 		addPawnMoves( -8, bbUnblocked );
 
 		//	Pawn Advances (double moves)
 		if ((bbUnblocked &= Bitboards.rankMask[ 2 ]) != 0)
-			addPawnMoves( -16, ((bbUnblocked << 8) & ~_bbAll) );
+			addPawnMoves( -16, ((bbUnblocked << 8) & bbEmpty) );
 		}
 
 	/**
@@ -642,12 +635,10 @@ public class MoveList implements Iterable<Move>
 			//  Find pinned pieces.  This is done by finding all of the opposing pieces that
 			//  could attack the King if the moving player's pieces were removed.
 			//
-			long bbDiagonal =
-				_map[ MAP_W_QUEEN + _opponent ] | _map[ MAP_W_BISHOP + _opponent ];
-			long bbLateral = _map[ MAP_W_QUEEN + _opponent ] | _map[ MAP_W_ROOK + _opponent ];
-			long bbPinners =
-				Bitboards.getDiagonalAttackers( _iSqKing, bbDiagonal, _bbOpponent ) |
-				Bitboards.getLateralAttackers( _iSqKing, bbLateral, _bbOpponent );
+			long bbDiagonal =	_map[ MAP_W_QUEEN + _opponent ] | _map[ MAP_W_BISHOP + _opponent ];
+			long bbLateral =	_map[ MAP_W_QUEEN + _opponent ] | _map[ MAP_W_ROOK + _opponent ];
+			long bbPinners =	Bitboards.getDiagonalAttackers( _iSqKing, bbDiagonal, _bbOpponent ) |
+								Bitboards.getLateralAttackers( _iSqKing, bbLateral, _bbOpponent );
 
 			for ( long bb = bbPinners & ~Bitboards.king[ _iSqKing ]; bb != 0L; bb &= (bb - 1) )
 				{
@@ -657,8 +648,7 @@ public class MoveList implements Iterable<Move>
 				//	Pinned pieces may still be able to move (except for Knights) but need to
 				//	test for check when they do so.
 				//
-				long bbBetween =
-					_bbPlayer & Bitboards.getSquaresBetween( _iSqKing, BitUtil.first( bb ) );
+				long bbBetween = _bbPlayer & Bitboards.getSquaresBetween( _iSqKing, BitUtil.first( bb ) );
 
 				if (BitUtil.singleton( bbBetween ))
 					_bbUnpinned ^= bbBetween;

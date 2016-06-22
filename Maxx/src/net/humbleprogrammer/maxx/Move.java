@@ -34,24 +34,25 @@ package net.humbleprogrammer.maxx;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
-public class Move {
+public class Move
+	{
 	// -----------------------------------------------------------------------
 	// CONSTANTS
 	// -----------------------------------------------------------------------
 
 	static final int MASK_FROM_SQ = 0x003F00;
-	static final int MASK_TO_SQ = 0x3F0000;
-	static final int MASK_TYPE = 0x000007;
-	static final int MASK_ALL = MASK_FROM_SQ | MASK_TO_SQ | MASK_TYPE;
+	static final int MASK_TO_SQ   = 0x3F0000;
+	static final int MASK_TYPE    = 0x000007;
+	static final int MASK_ALL     = MASK_FROM_SQ | MASK_TO_SQ | MASK_TYPE;
 
 	/** Black castling O-O-O */
-	static final int BLACK_CASTLE_LONG = pack(Square.E8, Square.C8, Type.CASTLING);
+	static final int BLACK_CASTLE_LONG  = pack( Square.E8, Square.C8, Type.CASTLING );
 	/** Black castling O-O */
-	static final int BLACK_CASTLE_SHORT = pack(Square.E8, Square.G8, Type.CASTLING);
+	static final int BLACK_CASTLE_SHORT = pack( Square.E8, Square.G8, Type.CASTLING );
 	/** White castling O-O-O */
-	static final int WHITE_CASTLE_LONG = pack(Square.E1, Square.C1, Type.CASTLING);
+	static final int WHITE_CASTLE_LONG  = pack( Square.E1, Square.C1, Type.CASTLING );
 	/** White castling O-O */
-	static final int WHITE_CASTLE_SHORT = pack(Square.E1, Square.G1, Type.CASTLING);
+	static final int WHITE_CASTLE_SHORT = pack( Square.E1, Square.G1, Type.CASTLING );
 
 	// -----------------------------------------------------------------------
 	// DECLARATIONS
@@ -75,132 +76,167 @@ public class Move {
 	 * Default CTOR.
 	 *
 	 * @param iPacked
-	 *            Packed move.
+	 * 	Packed move.
 	 * @param hash
-	 *            Zobrist hash of the board prior to the move being made.
+	 * 	Zobrist hash of the board prior to the move being made.
 	 */
-	Move(int iPacked, long hash) {
+	Move( int iPacked, long hash )
+		{
 		hashBefore = hash;
 
 		iSqFrom = (iPacked >>> 8) & 0x3F;
 		iSqTo = (iPacked >>> 16) & 0x3F;
 		iType = iPacked & MASK_TYPE;
-	}
+		}
+
+	// -----------------------------------------------------------------------
+	// PUBLIC METHODS
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Returns the piece if this move is a promotion.
+	 *
+	 * @return EMPTY if not a promotion, piece type otherwise.
+	 */
+	public int getPromotionPiece()
+		{
+		switch (iType)
+			{
+			case Type.PROMOTION:
+				return QUEEN;
+			case Type.PROMOTE_ROOK:
+				return ROOK;
+			case Type.PROMOTE_BISHOP:
+				return BISHOP;
+			case Type.PROMOTE_KNIGHT:
+				return KNIGHT;
+			}
+
+		return EMPTY;
+		}
 
 	// -----------------------------------------------------------------------
 	// IMPLEMENTATION
 	// -----------------------------------------------------------------------
 
 	/**
-	 * Packs the "From" square, "To" square, and move type into a 32-bit
-	 * integer.
+	 * Packs the "From" square, "To" square, and move type into a 32-bit integer.
 	 *
 	 * @param iSqFrom
-	 *            "From" square in 8x8 format.
+	 * 	"From" square in 8x8 format.
 	 * @param iSqTo
-	 *            "To" square in 8x8 format.
+	 * 	"To" square in 8x8 format.
 	 *
 	 * @return packed move.
 	 */
 
-	static int pack(int iSqFrom, int iSqTo) {
+	static int pack( int iSqFrom, int iSqTo )
+		{
 		return ((iSqTo << 16) | (iSqFrom << 8)) & MASK_ALL;
-	}
+		}
 
 	/**
-	 * Packs the "From" square, "To" square, and move type into a 32-bit
-	 * integer.
+	 * Packs the "From" square, "To" square, and move type into a 32-bit integer.
 	 *
 	 * @param iSqFrom
-	 *            "From" square in 8x8 format.
+	 * 	"From" square in 8x8 format.
 	 * @param iSqTo
-	 *            "To" square in 8x8 format.
+	 * 	"To" square in 8x8 format.
 	 * @param iMoveType
-	 *            Move type.
+	 * 	Move type.
 	 *
 	 * @return packed move.
 	 */
-	static int pack(int iSqFrom, int iSqTo, int iMoveType) {
+	static int pack( int iSqFrom, int iSqTo, int iMoveType )
+		{
 		return ((iSqTo << 16) | (iSqFrom << 8) | iMoveType) & MASK_ALL;
-	}
+		}
 
 	/**
 	 * Unpacks the "From" square from a packed move.
 	 *
 	 * @param packed
-	 *            Packed move.
+	 * 	Packed move.
 	 *
 	 * @return "From" square, in 8x8 format.
 	 */
-	static int unpackFromSq(int packed) {
+	static int unpackFromSq( int packed )
+		{
 		return (packed >>> 8) & 0x3F;
-	}
+		}
 
 	/**
 	 * Unpacks the "To" square from a packed move.
 	 *
 	 * @param packed
-	 *            Packed move.
+	 * 	Packed move.
 	 *
 	 * @return "To" square, in 8x8 format.
 	 */
-	static int unpackToSq(int packed) {
+	static int unpackToSq( int packed )
+		{
 		return (packed >>> 16) & 0x3F;
-	}
+		}
 
 	// -----------------------------------------------------------------------
 	// OVERRIDES
 	// -----------------------------------------------------------------------
 
-	public boolean equals(Move move) {
-		return (move != null && move.iSqFrom == iSqFrom && move.iSqTo == iSqTo && move.iType == iType);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return ((obj instanceof Board) && equals((Board) obj));
-	}
-
-	@Override
-	public String toString() {
-		String str = Square.toString(iSqFrom) + Square.toString(iSqTo);
-
-		if (iType >= Type.PROMOTION) {
-			if (iType == Type.PROMOTION)
-				str += Character.toLowerCase(Parser.pieceTypeToGlyph(QUEEN));
-			else if (iType == Type.PROMOTE_KNIGHT)
-				str += Character.toLowerCase(Parser.pieceTypeToGlyph(KNIGHT));
-			else if (iType == Type.PROMOTE_BISHOP)
-				str += Character.toLowerCase(Parser.pieceTypeToGlyph(BISHOP));
-			else
-				str += Character.toLowerCase(Parser.pieceTypeToGlyph(ROOK));
+	public boolean equals( Move move )
+		{
+		return (move != null && move.iSqFrom == iSqFrom && move.iSqTo == iSqTo &&
+				move.iType == iType);
 		}
+
+	@Override
+	public boolean equals( Object obj )
+		{
+		return ((obj instanceof Board) && equals( (Board) obj ));
+		}
+
+	@Override
+	public String toString()
+		{
+		String str = Square.toString( iSqFrom ) + Square.toString( iSqTo );
+
+		if (iType >= Type.PROMOTION)
+			{
+			if (iType == Type.PROMOTION)
+				str += Character.toLowerCase( Parser.pieceTypeToGlyph( QUEEN ) );
+			else if (iType == Type.PROMOTE_KNIGHT)
+				str += Character.toLowerCase( Parser.pieceTypeToGlyph( KNIGHT ) );
+			else if (iType == Type.PROMOTE_BISHOP)
+				str += Character.toLowerCase( Parser.pieceTypeToGlyph( BISHOP ) );
+			else
+				str += Character.toLowerCase( Parser.pieceTypeToGlyph( ROOK ) );
+			}
 
 		return str;
 
-	}
+		}
 
 	// -----------------------------------------------------------------------
 	// NESTED CLASS: Type
 	// -----------------------------------------------------------------------
 
-	public static class Type {
+	public static class Type
+		{
 		/** Normal move. */
-		public static final int NORMAL = 0;
+		public static final int NORMAL         = 0;
 		/** Initial pawn advance. */
-		public static final int PAWN_PUSH = 1;
+		public static final int PAWN_PUSH      = 1;
 		/** Castling move (O-O or O-O-O). */
-		public static final int EN_PASSANT = 2;
+		public static final int EN_PASSANT     = 2;
 		/** En Passant capture. */
-		public static final int CASTLING = 3;
+		public static final int CASTLING       = 3;
 		/** Promote to Queen. */
-		public static final int PROMOTION = 4;
+		public static final int PROMOTION      = 4;
 		/** Under-promote to a Rook. */
-		public static final int PROMOTE_ROOK = 5;
+		public static final int PROMOTE_ROOK   = 5;
 		/** Under-promote to a Bishop. */
 		public static final int PROMOTE_BISHOP = 6;
 		/** Under-promote to a Knight. */
 		public static final int PROMOTE_KNIGHT = 7;
-	} /* end of nested class Type */
+		} /* end of nested class Type */
 
-} /* end of class Move */
+	} /* end of class Move */

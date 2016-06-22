@@ -240,10 +240,13 @@ public class PgnValidator extends PgnAdapter
 		}
 
 	/**
-	 * Starts a new game
+	 * A new game is being started.
 	 */
-	public void reset()
+	@Override
+	public void onGameStart()
 		{
+		super.onGameStart();
+		//	-----------------------------------------------------------------
 		_iMoveNum = 0;
 		_player = INVALID;
 		_variations.clear();

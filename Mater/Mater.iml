@@ -10,5 +10,6 @@
     <orderEntry type="library" name="slf4j-1.7" level="project" />
     <orderEntry type="module" module-name="Maxx" />
     <orderEntry type="library" name="junit-4" level="project" />
+    <orderEntry type="module" module-name="Humble" />
   </component>
 </module>
