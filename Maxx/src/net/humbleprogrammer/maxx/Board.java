@@ -67,6 +67,7 @@ import static net.humbleprogrammer.maxx.Constants.*;
  * position has occurred</li> <li>If the game has reached a verdict.</li> </ul> * pawn advances
  * can be inferred by the existence of an e.p. square
  */
+@SuppressWarnings( "WeakerAccess" )
 public class Board
 	{
 
@@ -138,7 +139,7 @@ public class Board
 	 */
 	public Board( Board src )
 		{
-		DBC.requireNotNull(src, "Board");
+		DBC.requireNotNull( src, "Board" );
 		//	-----------------------------------------------------------------
 		copyFrom( src );
 		}
@@ -149,14 +150,14 @@ public class Board
 	 * @param src
 	 * 	Board to copy from.
 	 * @param move
-	 *	Move to apply.
+	 * 	Move to apply.
 	 */
 	Board( Board src, Move move )
 		{
 		assert src != null;
 		//	-----------------------------------------------------------------
 		copyFrom( src );
-		makeMove(move);
+		makeMove( move );
 		}
 
 	//  -----------------------------------------------------------------------
@@ -377,8 +378,10 @@ public class Board
 			{
 			case PAWN:
 				return (_player == WHITE)
-					   ? (map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]))
-					   : (map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] | Bitboards.fileMask[ iSqTo & 0x07 ]));
+					   ? (map[ MAP_W_PAWN ] & (Bitboards.pawnDownwards[ iSqTo ] |
+											   Bitboards.fileMask[ iSqTo & 0x07 ]))
+					   : (map[ MAP_B_PAWN ] & (Bitboards.pawnUpwards[ iSqTo ] |
+											   Bitboards.fileMask[ iSqTo & 0x07 ]));
 
 			case KNIGHT:
 				return map[ MAP_W_KNIGHT + _player ] & Bitboards.knight[ iSqTo ];
@@ -645,7 +648,7 @@ public class Board
 		sq[ iSqFrom ] = EMPTY;
 		sq[ iSqTo ] = piece;
 
-		if (Piece.getType(piece) == PAWN)
+		if (Piece.getType( piece ) == PAWN)
 			_hashPawns ^= ZobristHash.getPieceHash( iSqFrom, iSqTo, piece );
 		else
 			_hashPieces ^= ZobristHash.getPieceHash( iSqFrom, iSqTo, piece );
@@ -671,7 +674,7 @@ public class Board
 
 		sq[ iSq ] = piece;
 
-		if (Piece.getType(piece) == PAWN)
+		if (Piece.getType( piece ) == PAWN)
 			_hashPawns ^= ZobristHash.getPieceHash( iSq, piece );
 		else
 			_hashPieces ^= ZobristHash.getPieceHash( iSq, piece );
@@ -695,7 +698,7 @@ public class Board
 
 		sq[ iSq ] = EMPTY;
 
-		if (Piece.getType(piece) == PAWN)
+		if (Piece.getType( piece ) == PAWN)
 			_hashPawns ^= ZobristHash.getPieceHash( iSq, piece );
 		else
 			_hashPieces ^= ZobristHash.getPieceHash( iSq, piece );
@@ -705,6 +708,7 @@ public class Board
 	//	NESTED CLASS: CastlingFlags
 	//	-----------------------------------------------------------------------
 
+	@SuppressWarnings( "PointlessBitwiseExpression" )
 	public static class CastlingFlags
 		{
 		/** No castling is possible in the current position. */

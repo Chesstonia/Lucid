@@ -40,6 +40,7 @@ import static net.humbleprogrammer.maxx.Constants.*;
  * The {@link Variation} class extends a {@link PV} to include move validation,
  * and the ability to return the position at any point in the sequence.
  */
+@SuppressWarnings( "unused" )
 public class Variation extends PV
 	{
 	private static final long	serialVersionUID	= 20161628L;
@@ -81,7 +82,7 @@ public class Variation extends PV
 
 	/**
 	 * Creates a variation from a PV.
-	 * 
+	 *
 	 * @param bd
 	 *            Starting position.
 	 * @param pv

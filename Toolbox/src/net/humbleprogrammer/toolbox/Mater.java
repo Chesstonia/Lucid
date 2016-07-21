@@ -42,6 +42,9 @@ import net.humbleprogrammer.maxx.*;
 import net.humbleprogrammer.maxx.factories.*;
 import net.humbleprogrammer.maxx.pgn.*;
 
+import static net.humbleprogrammer.maxx.Constants.*;
+
+@SuppressWarnings( "unused" )
 public class Mater extends ToolboxApp
 	{
 
@@ -49,25 +52,27 @@ public class Mater extends ToolboxApp
 	//	CONSTANTS
 	//	-----------------------------------------------------------------------
 
-	private static final boolean	EXACT_ONLY	= true;
-	private static final int		MATE_IN_X	= 2;
-	private static final int		STOP_AFTER	= 0;
+	private static final boolean EXACT_ONLY = true;
+	private static final int     MATE_IN_X  = 2;
+	private static final int     STOP_AFTER = 10;
 
 	//  -----------------------------------------------------------------------
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
 	/** Array of PGN files. */
-	private final List<Path>		_listPGN;
+	private final List<Path> _listPGN;
 
 	/** .T. to display parser errors; .F. to ignore them */
-	private boolean					_bShowErrors;
+	private boolean _bShowErrors;
 	/** Number of results found so far. */
-	private int						_iResultsFound;
+	private int     _iResultsFound;
+	/** Hash of the previous solution seen. */
+	private long	_hashPrevious = HASH_INVALID;
 	/** Best move string */
-	private String					_strBM;
+	private String	_strBM;
 	/** Current position */
-	private Board					_board;
+	private Board	_board;
 
 	//  -----------------------------------------------------------------------
 	//	CTOR
@@ -77,21 +82,23 @@ public class Mater extends ToolboxApp
 	 * Default CTOR.
 	 *
 	 * @param strArgs
-	 *            Command-line arguments.
+	 * 	Command-line arguments.
 	 */
-	private Mater(String[] strArgs)
+	private Mater( String[] strArgs )
 		{
 		assert strArgs != null;
 		//	-----------------------------------------------------------------
-		String strPath = (strArgs.length > 0) ? strArgs[0] : "P:\\Chess\\PGN\\Assorted"; // "P:\\Chess\\PGN\\TWIC";
+		String strPath = (strArgs.length > 0)
+						 ? strArgs[ 0 ]
+						 : "P:\\Chess\\PGN\\Assorted"; // "P:\\Chess\\PGN\\TWIC";
 
-		_listPGN = getPGN(strPath);
+		_listPGN = getPGN( strPath );
 
-		printLine("# Found %,d *.pgn %s", 
-				_listPGN.size(), 
-				StrUtil.pluralize(_listPGN.size(), "file", null));
+		printLine( "# Found %,d *.pgn %s",
+				   _listPGN.size(),
+				   StrUtil.pluralize( _listPGN.size(), "file", null ) );
 
-		if (_listPGN.isEmpty()) throw new RuntimeException("No *.pgn files found.");
+		if (_listPGN.isEmpty()) throw new RuntimeException( "No *.pgn files found." );
 		}
 
 	//  -----------------------------------------------------------------------
@@ -102,17 +109,17 @@ public class Mater extends ToolboxApp
 	 * Entry point for the application.
 	 *
 	 * @param strArgs
-	 *            Command-line parameters.
+	 * 	Command-line parameters.
 	 */
 	public static void main( String[] strArgs )
 		{
 		try
 			{
-			new Mater(strArgs).run(MATE_IN_X, STOP_AFTER);
+			new Mater( strArgs ).run( MATE_IN_X, STOP_AFTER );
 			}
-		catch ( Exception ex )
+		catch (Exception ex)
 			{
-			s_log.warn("Caught fatal exception.", ex);
+			s_log.warn( "Caught fatal exception.", ex );
 			}
 		}
 
@@ -126,68 +133,69 @@ public class Mater extends ToolboxApp
 		//	-----------------------------------------------------------------
 		try
 			{
-			MaterListener listener = new MaterListener(iMaxMoves);
+			MaterListener listener = new MaterListener( iMaxMoves );
 
 			for ( Path path : _listPGN )
 				{
-				try (PgnReader pgn = new PgnReader(new FileReader(path.toFile())))
+				try (PgnReader pgn = new PgnReader( new FileReader( path.toFile() ) ))
 					{
 					String strPGN;
 
-					printLine("# " + path.toString());
+					printLine( "# " + path.toString() );
 
 					while ( (strPGN = pgn.readGame()) != null )
-						if (PgnParser.parse(listener, strPGN))
+						if (PgnParser.parse( listener, strPGN ))
 							{
 							if (iMaxCount > 0 && _iResultsFound >= iMaxCount)
 								{
-								printLine("# Stopped after %,d results.", _iResultsFound);
+								printLine( "# Stopped after %,d results.", _iResultsFound );
 								return;
 								}
 							}
 						else if (_bShowErrors)
 							{
-							s_log.warn(String.format("%s:\n%s", path.toFile(), strPGN));
+							s_log.warn( String.format( "%s:\n%s", path.toFile(), strPGN ) );
 							}
 					}
 				}
 			}
-		catch ( IOException ex )
+		catch (IOException ex)
 			{
-			s_log.error(ex.getMessage());
+			s_log.error( ex.getMessage() );
 			}
 		}
 
-	private void saveSolutions( Board bdStart, List<PV> solutions )
+	private void saveSolutions( final Board bdStart, final List<PV> solutions )
 		{
 		assert bdStart != null;
 		assert solutions != null;
 
-		if (solutions.isEmpty()) return;
+		if (solutions.isEmpty() || bdStart.getZobristHash() == _hashPrevious) return;
 		//	-----------------------------------------------------------------
-		String strPrefix = BoardFactory.exportEPD(bdStart) + "; bm ";
+		String strPrefix = BoardFactory.exportEPD( bdStart ) + "; bm ";
 
+		_hashPrevious = bdStart.getZobristHash();
 		_iResultsFound += solutions.size();
 
 		for ( PV pv : solutions )
 			{
 			boolean bFirst = true;
-			Board bd = new Board(bdStart);
+			Board bd = new Board( bdStart );
 
-			print(strPrefix);
+			print( strPrefix );
 
 			for ( Move mv : pv )
 				{
 				if (bFirst)
 					bFirst = false;
 				else
-					print(" ");
+					print( " " );
 
-				print(MoveFactory.toSAN(bd, mv, true));
-				bd.makeMove(mv);
+				print( MoveFactory.toSAN( bd, mv, true ) );
+				bd.makeMove( mv );
 				}
 
-			printLine("");
+			printLine( "" );
 			}
 		}
 
@@ -199,9 +207,9 @@ public class Mater extends ToolboxApp
 		{
 		private final int _iMaxMoves;
 
-		MaterListener(int iMaxMoves)
+		MaterListener( int iMaxMoves )
 			{
-			DBC.requireGreaterThanZero(iMaxMoves, "Mate Depth");
+			DBC.requireGreaterThanZero( iMaxMoves, "Mate Depth" );
 			//	-------------------------------------------------------------
 			_iMaxMoves = iMaxMoves;
 			}
@@ -210,19 +218,20 @@ public class Mater extends ToolboxApp
 		 * A move has been parsed.
 		 *
 		 * @param strSAN
-		 *            Move string.
+		 * 	Move string.
 		 * @param strSuffix
-		 *            Optional suffix string.
+		 * 	Optional suffix string.
+		 *
 		 * @return .T. if parsing is to continue; .F. to abort parsing.
 		 */
 		@Override
 		public boolean onMove( final String strSAN, final String strSuffix )
 			{
-			if (!super.onMove(strSAN, strSuffix)) return false;
+			if (!super.onMove( strSAN, strSuffix )) return false;
 			//	-----------------------------------------------------------------
 			final Board bd = _pv.getCurrentPosition();
 
-			saveSolutions(bd, Evaluator.findMateIn(bd, _iMaxMoves, EXACT_ONLY));
+			saveSolutions( bd, Evaluator.findMateIn( bd, _iMaxMoves, EXACT_ONLY ) );
 
 			return true;
 			}
@@ -242,8 +251,8 @@ public class Mater extends ToolboxApp
 			super.onGameOver();
 			if (_board == null) return;
 			//	-----------------------------------------------------------------
-			print(_board.toString());
-			printLine(_strBM);
+			print( _board.toString() );
+			printLine( _strBM );
 			}
 		}
 	} /* end of class App */

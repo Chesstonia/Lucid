@@ -36,6 +36,7 @@ import net.humbleprogrammer.humble.BitUtil;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
+@SuppressWarnings( "WeakerAccess" )
 public class Arbiter
 	{
 
@@ -68,7 +69,7 @@ public class Arbiter
 		if (bd == null) return false;
 		//	-----------------------------------------------------------------
 		int player = bd.getMovingPlayer();
-		
+
 		return Bitboards.isAttackedBy( bd.map, bd.getKingSquare( player ), (player ^ 1) );
 		}
 
@@ -98,7 +99,7 @@ public class Arbiter
 		if (BitUtil.count(bd.map[MAP_W_ALL]) > 16 || BitUtil.count(bd.map[MAP_B_ALL]) > 16) return false;
 
 		//  Test 2 -- both players must have one (and only one) king on the board.
-		if (!(BitUtil.singleton(bd.map[MAP_W_KING]) && BitUtil.singleton(bd.map[MAP_B_KING]))) 
+		if (!(BitUtil.singleton(bd.map[MAP_W_KING]) && BitUtil.singleton(bd.map[MAP_B_KING])))
 			{ return false; }
 
 		// Test 3 -- neither player can have more than 8 pawns on the board.
@@ -108,12 +109,12 @@ public class Arbiter
 		if (iWPawns > 8 || iBPawns > 8) return false;
 
 		// Test 4 -- no pawns on the first or last rank.
-		if (((bd.map[MAP_W_PAWN] | bd.map[MAP_B_PAWN]) & Square.NO_PAWN_ZONE) != 0L) 
+		if (((bd.map[MAP_W_PAWN] | bd.map[MAP_B_PAWN]) & Square.NO_PAWN_ZONE) != 0L)
 			{ return false; }
 
 		//  Test 5 -- no more than 9 queens + pawns
-		if ((BitUtil.count(bd.map[MAP_W_QUEEN]) + iWPawns) > 9 || 
-			(BitUtil.count(bd.map[MAP_B_QUEEN]) + iBPawns) > 9) 
+		if ((BitUtil.count(bd.map[MAP_W_QUEEN]) + iWPawns) > 9 ||
+			(BitUtil.count(bd.map[MAP_B_QUEEN]) + iBPawns) > 9)
 			{ return false; }
 
 		//  Test 6 -- no more than 10 minor pieces + pawns
@@ -144,8 +145,7 @@ public class Arbiter
 		{
 		if (bd == null) return false;
 		//	-----------------------------------------------------------------
-		return (isInCheck(bd) &&
-				MoveList.generate(bd).isEmpty());
+		return (isInCheck(bd) && !MoveList.hasLegalMove( bd ));
 		}
 
 	/**
@@ -160,8 +160,7 @@ public class Arbiter
 		{
 		if (bd == null) return false;
 		//	-----------------------------------------------------------------
-		return (!isInCheck(bd) &&
-				MoveList.generate(bd).isEmpty());
+		return !(isInCheck(bd) || MoveList.hasLegalMove( bd ));
 		}
 
 	} /* end of class Arbiter */

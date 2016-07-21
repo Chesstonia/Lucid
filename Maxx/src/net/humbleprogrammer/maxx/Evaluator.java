@@ -40,6 +40,7 @@ import net.humbleprogrammer.maxx.interfaces.IMoveScorer;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
+@SuppressWarnings( "WeakerAccess" )
 public class Evaluator
 	{
 
@@ -55,26 +56,27 @@ public class Evaluator
 
 	/**
 	 * Returns the material score, from the perspective of the moving player.
-	 * 
+	 *
 	 * @param bd
-	 *            Position to evaluate.
+	 * 	Position to evaluate.
+	 *
 	 * @return Material difference.
 	 */
 	public static int getMaterialScore( Board bd )
 		{
-		DBC.requireNotNull(bd, "Board");
+		DBC.requireNotNull( bd, "Board" );
 		//	-----------------------------------------------------------------
 		//	@formatter:off
-		int iScore = ((BitUtil.count(bd.map[MAP_W_PAWN]) * s_pieceValue[PAWN]) + 
-					  (BitUtil.count(bd.map[MAP_W_KNIGHT]) * s_pieceValue[KNIGHT]) + 
-					  (BitUtil.count(bd.map[MAP_W_BISHOP]) * s_pieceValue[BISHOP]) + 
-					  (BitUtil.count(bd.map[MAP_W_ROOK]) * s_pieceValue[ROOK]) + 
-					  (BitUtil.count(bd.map[MAP_W_QUEEN]) * s_pieceValue[QUEEN])) -
-				     ((BitUtil.count(bd.map[MAP_B_PAWN]) * s_pieceValue[PAWN]) + 
-					  (BitUtil.count(bd.map[MAP_B_KNIGHT]) * s_pieceValue[KNIGHT]) + 
-					  (BitUtil.count(bd.map[MAP_B_BISHOP]) * s_pieceValue[BISHOP]) + 
-					  (BitUtil.count(bd.map[MAP_B_ROOK]) * s_pieceValue[ROOK]) + 
-					  (BitUtil.count(bd.map[MAP_B_QUEEN]) * s_pieceValue[QUEEN]));
+		int iScore = ((BitUtil.count( bd.map[ MAP_W_PAWN ] ) * s_pieceValue[ PAWN ]) +
+					  (BitUtil.count( bd.map[ MAP_W_KNIGHT ] ) * s_pieceValue[ KNIGHT ]) +
+					  (BitUtil.count( bd.map[ MAP_W_BISHOP ] ) * s_pieceValue[ BISHOP ]) +
+					  (BitUtil.count( bd.map[ MAP_W_ROOK ] ) * s_pieceValue[ ROOK ]) +
+					  (BitUtil.count( bd.map[ MAP_W_QUEEN ] ) * s_pieceValue[ QUEEN ])) -
+					 ((BitUtil.count( bd.map[ MAP_B_PAWN ] ) * s_pieceValue[ PAWN ]) +
+					  (BitUtil.count( bd.map[ MAP_B_KNIGHT ] ) * s_pieceValue[ KNIGHT ]) +
+					  (BitUtil.count( bd.map[ MAP_B_BISHOP ] ) * s_pieceValue[ BISHOP ]) +
+					  (BitUtil.count( bd.map[ MAP_B_ROOK ] ) * s_pieceValue[ ROOK ]) +
+					  (BitUtil.count( bd.map[ MAP_B_QUEEN ] ) * s_pieceValue[ QUEEN ]));
 		//	@formatter:on
 
 		return (bd.getMovingPlayer() == WHITE) ? iScore : -iScore;
@@ -82,21 +84,23 @@ public class Evaluator
 
 	/**
 	 * Gets the value of a piece by type.
-	 * 
+	 *
 	 * @param pt
-	 *            Piece type (PAWN, KNIGHT, BISHOP, etc.)
+	 * 	Piece type (PAWN, KNIGHT, BISHOP, etc.)
+	 *
 	 * @return Piece value.
 	 */
 	public static int getPieceValue( int pt )
 		{
-		return (pt >= PAWN && pt < KING) ? s_pieceValue[pt] : 0;
+		return (pt >= PAWN && pt < KING) ? s_pieceValue[ pt ] : 0;
 		}
 
 	/**
 	 * Finds all "en prise" pieces for a given position.
-	 * 
+	 *
 	 * @param bd
-	 *            Position to examine.
+	 * 	Position to examine.
+	 *
 	 * @return Bitboard of pieces that are attacked, but not defended.
 	 */
 	public static long findEnPrisePieces( Board bd )
@@ -106,11 +110,11 @@ public class Evaluator
 		long bbEnPrise = 0L;
 		int opponent = bd.getMovingPlayer() ^ 1;
 
-		for ( long bb = bd.map[opponent]; bb != 0L; bb &= (bb - 1) )
+		for ( long bb = bd.map[ opponent ]; bb != 0L; bb &= (bb - 1) )
 			{
-			int iSq = BitUtil.first(bb);
+			int iSq = BitUtil.first( bb );
 
-			if (isEnPrise(bd, iSq)) bbEnPrise |= Square.getMask(iSq);
+			if (isEnPrise( bd, iSq )) bbEnPrise |= Square.getMask( iSq );
 			}
 
 		return bbEnPrise;
@@ -118,65 +122,71 @@ public class Evaluator
 
 	/**
 	 * Find all "Mate in X" moves.
-	 * 
+	 *
 	 * @param bd
-	 *            Position to analyze
+	 * 	Position to analyze
 	 * @param iMaxMoves
-	 *            Maximum number of moves, which must be .GT. zero.
+	 * 	Maximum number of moves, which must be .GT. zero.
+	 *
 	 * @return List of Variations.
 	 */
 	public static List<PV> findMateIn( final Board bd, int iMaxMoves )
 		{
-		return findMateIn(bd, iMaxMoves, true);
+		return findMateIn( bd, iMaxMoves, true );
 		}
 
 	/**
 	 * Find all "Mate in X" moves.
-	 * 
+	 *
 	 * @param bd
-	 *            Position to analyze
+	 * 	Position to analyze
 	 * @param iMaxMoves
-	 *            Maximum number of moves, which must be .GT. zero.
+	 * 	Maximum number of moves, which must be .GT. zero.
+	 *
 	 * @return List of variations.
 	 */
 	public static List<PV> findMateIn( final Board bd, int iMaxMoves, boolean bExactDepth )
 		{
 		final int iPlies = (iMaxMoves * 2) - 1;
 
-		return (bd != null && iPlies > 0) ? new MateSearch().search(bd, iPlies, bExactDepth) : new ArrayList<PV>();
+		return (bd != null && iPlies > 0) ? new MateSearch().search( bd, iPlies, bExactDepth )
+										  : new ArrayList<PV>();
 		}
 
 	/**
 	 * Determines if the piece on a given square is "en prise", i.e., it is
 	 * attacked, but not defended.
-	 * 
+	 *
 	 * @param bd
-	 *            Position to examine.
-	 * @return <code>.T.</code> if square is attacked but not defended;
-	 *         <code>false</code> otherwise.
+	 * 	Position to examine.
+	 *
+	 * @return <code>.T.</code> if square is attacked but not defended; <code>false</code>
+	 * otherwise.
 	 */
 	public static boolean isEnPrise( Board bd, int iSqTarget )
 		{
-		if (bd == null || !Square.isValid(iSqTarget)) return false;
+		if (bd == null || !Square.isValid( iSqTarget )) return false;
 		//	-----------------------------------------------------------------
-		MoveList moves = MoveList.generateCaptures(bd, iSqTarget);
+		MoveList moves = MoveList.generateCaptures( bd, iSqTarget );
 
 		for ( Move mv : moves )
-			if (MoveList.generateCaptures(new Board(bd, mv), iSqTarget).isEmpty()) return true;
+			if (MoveList.generateCaptures( new Board( bd, mv ), iSqTarget ).isEmpty())
+				return true;
 
 		return false;
 		}
 
 	/**
 	 * Determines if a score is a forced mate.
-	 * 
+	 *
 	 * @param iScore
-	 *            Score to test.
+	 * 	Score to test.
+	 *
 	 * @return .T. if a mate, .F. otherwise.
 	 */
 	public static boolean isMateScore( int iScore )
 		{
-		return (Math.abs(iScore) > (MAX_SCORE - MAX_MATE_DEPTH)); // ~32,255
+		return (Math.abs( iScore ) > (MAX_SCORE - MAX_MATE_DEPTH)); // ~32,255
 		}
 
 	//  -----------------------------------------------------------------------
@@ -185,9 +195,10 @@ public class Evaluator
 
 	/**
 	 * Force a score to the allowable range.
-	 * 
+	 *
 	 * @param iScore
-	 *            Score to clamp.
+	 * 	Score to clamp.
+	 *
 	 * @return Clamped score, in the range [MIN_SCORE..MAX_SCORE]
 	 */
 	static int clampScore( int iScore )
@@ -205,17 +216,18 @@ public class Evaluator
 	private static class MateSearch implements IMoveScorer
 		{
 		/** Maximum search depth, in plies. */
-		private int		_iMaxDepth;
+		private int  _iMaxDepth;
 		/** Pre-allocated array of lines. */
-		private PV[]	_pv;
+		private PV[] _pv;
 
 		/**
 		 * Root of the mate search.
-		 * 
+		 *
 		 * @param bd
-		 *            Position to search.
+		 * 	Position to search.
 		 * @param bExactDepth
-		 *            .T. for exact depth only, .F. for shorter mates.
+		 * 	.T. for exact depth only, .F. for shorter mates.
+		 *
 		 * @return List of solutions.
 		 */
 		List<PV> search( final Board bd, int iMaxDepth, boolean bExactDepth )
@@ -223,48 +235,56 @@ public class Evaluator
 			assert bd != null;
 			assert iMaxDepth > 0;
 			//	-------------------------------------------------------------
-			int iAlpha = MIN_SCORE;
-			int iBeta = MAX_SCORE;
 			List<PV> solutions = new ArrayList<>();
-			MoveList moves = MoveList.generate(bd);
+			MoveList moves = MoveList.generate( bd );
 
 			_iMaxDepth = iMaxDepth + 1;
-			_pv = new PV[_iMaxDepth + 1];
+			_pv = new PV[ _iMaxDepth + 1 ];
 			for ( int idx = 0; idx < _pv.length; ++idx )
-				_pv[idx] = new PV();
+				_pv[ idx ] = new PV();
 
-			moves.sort(this);
+			moves.sort( this );
 
 			for ( Move move : moves )
 				{
-				int iScore = -search(new Board(bd, move), 1, -iBeta, -iAlpha);
+				int iScore = -search( new Board( bd, move ), 1, MIN_SCORE, MAX_SCORE );
 
-				if (iScore > iAlpha)
+				if (isMateScore( iScore ))
 					{
-					if (isMateScore(iScore))
-						{
-						_pv[0].build(move, _pv[1]);
-						//
-						//	If we find a shorter solution -- but we're looking for
-						//	a longer one -- return an empty set, because who would
-						//	opt for a "Mate in 2" if there was a "Mate in 1" available?
-						//
-						if (bExactDepth && _pv[0].size() < iMaxDepth)
-							{
-							solutions.clear();
-							return solutions;
-							}
+					PV pv = new PV( move, _pv[ 1 ] );
 
-						solutions.add(_pv[0]);
+					if (pv.size() < iMaxDepth)
+						{
+						solutions.clear();
+
+						if (bExactDepth)
+							return solutions;
+
+						//	New max depth...
+						iMaxDepth = pv.size();
 						}
 
-					iAlpha = iScore;
+					solutions.add( pv );
 					}
 				}
 
 			return solutions;
 			}
 
+		/**
+		 * Non-root (recursive) part of the mate search.
+		 *
+		 * @param bd
+		 * 	Position to search.
+		 * @param iDepth
+		 * 	Current depth, which should always be .GT. zero.
+		 * @param iAlpha
+		 * 	Alpha value (low cut off)
+		 * @param iBeta
+		 * 	Beta value (high cut off)
+		 *
+		 * @return Score.
+		 */
 		private int search( final Board bd, int iDepth, int iAlpha, int iBeta )
 			{
 			assert bd != null;
@@ -274,45 +294,38 @@ public class Evaluator
 			final int iDeeper = iDepth + 1;
 			final int scoreMate = MAX_SCORE - iDepth;
 
-			_pv[iDepth].clear();
-			
-			if (iDeeper >= _iMaxDepth && !Arbiter.isInCheck(bd))
-				return Evaluator.getMaterialScore(bd);
+			_pv[ iDepth ].clear();
 			//
-			//	If we're close to mate, this will trim the window a bit.
+			//	If this is a leaf node, the only thing we care about is whether or not the
+			//	player has been mated.
 			//
-			if (iAlpha < -scoreMate) iAlpha = -scoreMate;
-			if (iBeta > scoreMate) iBeta = scoreMate;
-			if (iAlpha >= iBeta) return iAlpha;
-			//
-			//	Are there any legal moves?
-			//
-			MoveList moves = MoveList.generate(bd);
-
-			if (moves.isEmpty()) 
-				return Arbiter.isInCheck(bd) ? -scoreMate : 0;
+			if (iDeeper >= _iMaxDepth)
+				{
+				return Arbiter.isMated( bd )
+					   ? -scoreMate
+					   : Evaluator.getMaterialScore( bd );
+				}
 			//
 			//	Now try the moves.
 			//
-			moves.sort(this);
+			MoveList moves = MoveList.generate( bd );
 
-			for ( Move move : moves )
+			if (moves.isEmpty())
+				return Arbiter.isInCheck( bd ) ? -scoreMate : 0;
+
+			for ( Move move : moves.sort( this ) )
 				{
-				if (move.getPromotionPiece() == BISHOP || move.getPromotionPiece() == ROOK) 
+				if (move.getPromotionPiece() == BISHOP || move.getPromotionPiece() == ROOK)
 					continue; // ignore underpromotions for mate-in-x problems
 
-				Board bdDeeper = new Board(bd, move);
-				int iScore = (iDeeper < _iMaxDepth) 
-						? -search(bdDeeper, iDeeper, -iBeta, -iAlpha)
-						: -Evaluator.getMaterialScore(bdDeeper);
+				int iScore = -search( new Board( bd, move ), iDeeper, -iBeta, -iAlpha );
 
 				if (iScore > iAlpha)
 					{
 					if (iScore >= iBeta) return iBeta;
 
-					_pv[iDepth].build(move, _pv[iDeeper]);
-
 					iAlpha = iScore;
+					_pv[ iDepth ].build( move, _pv[ iDeeper ] );
 					}
 				}
 
@@ -323,33 +336,33 @@ public class Evaluator
 		public int scoreMove( final Board bd, final Move move )
 			{
 			assert bd != null;
-			assert bd.isLegalMove(move);
+			assert bd.isLegalMove( move );
 			//	-----------------------------------------------------
-			final Board bdAfter = new Board(bd, move);
+			final Board bdAfter = new Board( bd, move );
 
-			int score = Arbiter.isInCheck(bdAfter)
-					? (MAX_SCORE >> 2) // BIG bonus for checking moves.
-					: 0;
+			int score = Arbiter.isInCheck( bdAfter )
+						? (MAX_SCORE >> 2) // BIG bonus for checking moves.
+						: 0;
 			//
 			//	Bonus for capturing stuff, because that means fewer defenders.
 			//
-			int victim = Piece.getType(bd.sq[move.iSqTo]);
+			int victim = Piece.getType( bd.sq[ move.iSqTo ] );
 
-			if (victim != EMPTY) 
-				score += getPieceValue(victim);
+			if (victim != EMPTY)
+				score += getPieceValue( victim );
 			//
 			//	Bonus for promoting a pawn, because we can always use bigger pieces...
 			//
-			if (move.isPromotion()) 
-				score += getPieceValue(move.getPromotionPiece()) - getPieceValue(PAWN);
+			if (move.isPromotion())
+				score += getPieceValue( move.getPromotionPiece() ) - getPieceValue( PAWN );
 
 			//	Penalize distance from opponent's King (-8 pts for every square away)
 			int player = bd.getMovingPlayer();
-			int opposingKingSq = bd.getKingSquare(player ^ 1);
+			int opposingKingSq = bd.getKingSquare( player ^ 1 );
 
-			score -= (Square.distance(move.iSqTo, opposingKingSq) - 1) << 3;
+			score -= (Square.distance( move.iSqTo, opposingKingSq ) - 1) << 3;
 
-			return score;
+			return clampScore( score );
 			}
 		}
 	}
