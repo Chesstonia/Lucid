@@ -66,6 +66,15 @@ public final class Constants
     /** It's good to be the King! */
     public static final int KING    = 6;
     //
+    //	Score values
+    //
+	/** Maximum allowable score. */
+	public static final int	MAX_SCORE		= 32767;
+	/** Minimum allowable score. */
+	public static final int	MIN_SCORE		= -32767;
+	/** Maximum mate in X depth */
+	static final int		MAX_MATE_DEPTH	= 512;
+    //
     //  Special Zobrist hash values
     //
     /** Zobrist hash for an empty board. */

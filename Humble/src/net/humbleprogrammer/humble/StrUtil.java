@@ -38,88 +38,93 @@ import java.util.Arrays;
  * The {@link StrUtil} class implements string-related utiltiy methods.
  */
 public class StrUtil
-    {
+	{
 
-    //  -----------------------------------------------------------------------
-    //	PUBLIC METHODS
-    //	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	PUBLIC METHODS
+	//	-----------------------------------------------------------------------
 
-    /**
-     * Create a string that contains a repeated character
-     *
-     * @param ch
-     *     Character to fill with.
-     * @param iCount
-     *     Count.
-     *
-     * @return String containing <c>iCount</c> characters.
-     */
-    public static String create( char ch, int iCount )
-        {
-        if (ch == 0 || iCount <= 0)
-            return "";
+	/**
+	 * Create a string that contains a repeated character
+	 *
+	 * @param ch
+	 *            Character to fill with.
+	 * @param iCount
+	 *            Count.
+	 * @return String containing <c>iCount</c> characters.
+	 */
+	public static String create( char ch, int iCount )
+		{
+		if (ch == 0 || iCount <= 0) return "";
 
-        assert iCount < (1024 * 1024); // 1MB sanity check
-        /*
-        **  CODE
-        */
-        char[] array = new char[ iCount ];
+		assert iCount < (1024 * 1024); // 1MB sanity check
+		//	-----------------------------------------------------------------
+		char[] array = new char[iCount];
 
-        Arrays.fill( array, ch );
+		Arrays.fill(array, ch);
 
-        return new String( array );
-        }
+		return new String(array);
+		}
 
-    /**
-     * Searchs a string array for a given value.
-     *
-     * @param array
-     *     Array to search
-     * @param strKey
-     *     Desired value.
-     *
-     * @return <c>true</c> if found; <c>false</c> otherwise.
-     */
-    public static boolean contains( final String[] array, final String strKey )
-        {
-        if (array == null || strKey == null)
-            return false;
-        /*
-        **  CODE
-        */
-        for ( final String str : array )
-            if (strKey.equals( str ))
-                return true;
+	/**
+	 * Searchs a string array for a given value.
+	 *
+	 * @param array
+	 *            Array to search
+	 * @param strKey
+	 *            Desired value.
+	 * @return <c>true</c> if found; <c>false</c> otherwise.
+	 */
+	public static boolean contains( final String[] array, final String strKey )
+		{
+		if (array == null || strKey == null) return false;
+		//	-----------------------------------------------------------------
+		for ( final String str : array )
+			if (strKey.equals(str)) return true;
 
-        return false;
-        }
+		return false;
+		}
 
-    /**
-     * Tests a string to see if it is blank, empty, or null.
-     *
-     * @param str
-     *     String to test.
-     *
-     * @return <c>true</c> if null, empty, or consists of only whitepace; <c>false</c> otherwise.
-     */
-    public static boolean isBlank( final String str )
-        {
-        if (str == null)
-            return true;
-        /*
-        **  CODE
-        */
-        for ( int idx = 0; idx < str.length(); ++idx )
-            {
-            final int ch = str.codePointAt( idx );
+	/**
+	 * Tests a string to see if it is blank, empty, or null.
+	 *
+	 * @param str
+	 *            String to test.
+	 * @return <c>true</c> if null, empty, or consists of only whitepace;
+	 *         <c>false</c> otherwise.
+	 */
+	public static boolean isBlank( final String str )
+		{
+		if (str == null) return true;
+		//	-----------------------------------------------------------------
+		for ( int idx = 0; idx < str.length(); ++idx )
+			{
+			final int ch = str.codePointAt(idx);
 
-            if (!Character.isWhitespace( ch ))
-                return false;
+			if (!Character.isWhitespace(ch)) return false;
 
-            if (Character.isSupplementaryCodePoint( ch ))
-                idx++;
-            }
+			if (Character.isSupplementaryCodePoint(ch)) idx++;
+			}
 
-        return true;
-        }
-    }   /* end of class StrUtil */
+		return true;
+		}
+
+	/**
+	 * Returns the singular or plural form of a string, based on the count.
+	 * 
+	 * @param count
+	 *            Number of elements.
+	 * @param singular
+	 *            Singular form.
+	 * @param plural
+	 *            Plural form, or null if plural is singular + 's'
+	 * @return Correct form.
+	 */
+	public static String pluralize( int count, final String singular, final String plural )
+		{
+		if (count == 1) return singular;
+		//	-----------------------------------------------------------------
+		return (plural != null) ? plural : singular + 's';
+		}
+
+	} /* end of class StrUtil */

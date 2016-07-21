@@ -36,7 +36,6 @@ import net.humbleprogrammer.humble.BitUtil;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
-@SuppressWarnings( { "unused", "WeakerAccess" } )
 public class Arbiter
 	{
 
@@ -44,7 +43,9 @@ public class Arbiter
 	//	CTOR
 	//	-----------------------------------------------------------------------
 
-	/** Default CTOR. */
+	/**
+	 * Default CTOR.
+	 */
 	private Arbiter()
 		{
 		/*
@@ -56,26 +57,34 @@ public class Arbiter
 	//	PUBLIC METHODS
 	//	-----------------------------------------------------------------------
 
+
 	/**
 	 * Determines if the moving player is currently in check.
 	 *
 	 * @return .T. if moving player in check; .F. otherwise.
 	 */
-	public static boolean isInCheck( Board bd )
+	public static boolean isInCheck(final Board bd)
 		{
 		if (bd == null) return false;
 		//	-----------------------------------------------------------------
 		int player = bd.getMovingPlayer();
-
+		
 		return Bitboards.isAttackedBy( bd.map, bd.getKingSquare( player ), (player ^ 1) );
 		}
 
 	/**
-	 * Tests a board for validity. In order to be valid, all of the following must be
-	 * <i>true</i>: <ul> <li>Neither side can have more than 16 pieces.</li> <li>Each side must
-	 * have one (and only one) King.</li> <li>Neither side can have more than 8 pawns.</li>
-	 * <li>No pawns on the first or last rank.</li> <li>The player "on the move" cannot be able
-	 * to capture the opposing King. </li> </ul>
+	 * Tests a board for validity.
+	 * In order to be valid, all of the following must be <i>true</i>:
+	 * <ul>
+	 * <li>Neither side can
+	 * have more than 16 pieces.</li>
+	 * <li>Each side must have one (and only one) King.</li>
+	 * <li>Neither side can have more than 8 pawns.</li>
+	 * <li>No pawns on the first or last
+	 * rank.</li>
+	 * <li>The player "on the move" cannot be able to capture the opposing King.
+	 * </li>
+	 * </ul>
 	 *
 	 * @return .T. if the position is valid; .F. otherwise.
 	 */
@@ -86,42 +95,40 @@ public class Arbiter
 		//	@formatter:off
 
 		//  Test 1 -- neither player can have more than 16 pieces on the board.
-		if (BitUtil.count( bd.map[ MAP_W_ALL ] ) > 16 ||
-			BitUtil.count( bd.map[ MAP_B_ALL ] ) > 16) return false;
+		if (BitUtil.count(bd.map[MAP_W_ALL]) > 16 || BitUtil.count(bd.map[MAP_B_ALL]) > 16) return false;
 
 		//  Test 2 -- both players must have one (and only one) king on the board.
-		if (!(BitUtil.singleton( bd.map[ MAP_W_KING ] ) &&
-			  BitUtil.singleton( bd.map[ MAP_B_KING ] )))
+		if (!(BitUtil.singleton(bd.map[MAP_W_KING]) && BitUtil.singleton(bd.map[MAP_B_KING]))) 
 			{ return false; }
 
 		// Test 3 -- neither player can have more than 8 pawns on the board.
-		final int iWPawns = BitUtil.count( bd.map[ MAP_W_PAWN ] );
-		final int iBPawns = BitUtil.count( bd.map[ MAP_B_PAWN ] );
+		final int iWPawns = BitUtil.count(bd.map[MAP_W_PAWN]);
+		final int iBPawns = BitUtil.count(bd.map[MAP_B_PAWN]);
 
 		if (iWPawns > 8 || iBPawns > 8) return false;
 
 		// Test 4 -- no pawns on the first or last rank.
-		if (((bd.map[ MAP_W_PAWN ] | bd.map[ MAP_B_PAWN ]) & Square.NO_PAWN_ZONE) != 0L)
+		if (((bd.map[MAP_W_PAWN] | bd.map[MAP_B_PAWN]) & Square.NO_PAWN_ZONE) != 0L) 
 			{ return false; }
 
 		//  Test 5 -- no more than 9 queens + pawns
-		if ((BitUtil.count( bd.map[ MAP_W_QUEEN ] ) + iWPawns) > 9 ||
-			(BitUtil.count( bd.map[ MAP_B_QUEEN ] ) + iBPawns) > 9)
+		if ((BitUtil.count(bd.map[MAP_W_QUEEN]) + iWPawns) > 9 || 
+			(BitUtil.count(bd.map[MAP_B_QUEEN]) + iBPawns) > 9) 
 			{ return false; }
 
 		//  Test 6 -- no more than 10 minor pieces + pawns
-		if ((BitUtil.count( bd.map[ MAP_W_KNIGHT ] ) + iWPawns) > 10 ||    // white knights
-			(BitUtil.count( bd.map[ MAP_B_KNIGHT ] ) + iBPawns) > 10 || // black knights
-			(BitUtil.count( bd.map[ MAP_W_BISHOP ] ) + iWPawns) > 10 || // white bishops
-			(BitUtil.count( bd.map[ MAP_B_BISHOP ] ) + iBPawns) > 10 || // black bishops
-			(BitUtil.count( bd.map[ MAP_W_ROOK ] ) + iWPawns) > 10 ||    // white rooks
-			(BitUtil.count( bd.map[ MAP_B_ROOK ] ) + iBPawns) > 10)        // black rooks
+		if ((BitUtil.count(bd.map[MAP_W_KNIGHT]) + iWPawns) > 10 ||	// white knights
+			(BitUtil.count(bd.map[MAP_B_KNIGHT]) + iBPawns) > 10 || // black knights
+			(BitUtil.count(bd.map[MAP_W_BISHOP]) + iWPawns) > 10 || // white bishops
+			(BitUtil.count(bd.map[MAP_B_BISHOP]) + iBPawns) > 10 || // black bishops
+			(BitUtil.count(bd.map[MAP_W_ROOK]) + iWPawns) > 10 ||	// white rooks
+			(BitUtil.count(bd.map[MAP_B_ROOK]) + iBPawns) > 10)		// black rooks
 			{ return false; }
 
 		// Test 7 -- opposing player's king can't be in check.
 		int player = bd.getMovingPlayer();
 
-		return !Bitboards.isAttackedBy( bd.map, bd.getKingSquare( player ^ 1 ), player );
+		return !Bitboards.isAttackedBy(bd.map, bd.getKingSquare(player ^ 1), player);
 		//	@formatter:on
 		}
 
@@ -129,32 +136,32 @@ public class Arbiter
 	 * Determines if the current position is mate.
 	 *
 	 * @param bd
-	 * 	Position to test.
-	 *
-	 * @return .T. if moving player is in check but has no legal moves; .F. otherwise.
+	 *            Position to test.
+	 * @return .T. if moving player is in check but has no legal moves; .F.
+	 *         otherwise.
 	 */
 	public static boolean isMated( Board bd )
 		{
 		if (bd == null) return false;
 		//	-----------------------------------------------------------------
-		return (isInCheck( bd ) &&
-				!MoveList.generate( bd ).hasLegalMove());
+		return (isInCheck(bd) &&
+				MoveList.generate(bd).isEmpty());
 		}
 
 	/**
 	 * Determines if the current position is stalemated.
 	 *
 	 * @param bd
-	 * 	Position to test.
-	 *
-	 * @return .T. if moving player has no legal moves, but is not in check; .F. otherwise.
+	 *            Position to test.
+	 * @return .T. if moving player has no legal moves, but is not in check; .F.
+	 *         otherwise.
 	 */
 	public static boolean isStalemated( Board bd )
 		{
 		if (bd == null) return false;
 		//	-----------------------------------------------------------------
-		return (!isInCheck( bd ) &&
-				!MoveList.generate( bd ).hasLegalMove());
+		return (!isInCheck(bd) &&
+				MoveList.generate(bd).isEmpty());
 		}
 
 	} /* end of class Arbiter */

@@ -174,6 +174,7 @@ public class PgnValidator extends PgnAdapter
 	 *
 	 * @return .T. if parsing is to continue; .F. to abort parsing.
 	 */
+	@Override
 	public boolean onNullMove()
 		{
 		if (_variations.isEmpty()) return false;
@@ -189,6 +190,7 @@ public class PgnValidator extends PgnAdapter
 	 *            Result
 	 * @return .T. if parsing is to continue; .F. to abort parsing.
 	 */
+	@Override
 	public boolean onResult( final Result result )
 		{
 		assert result != null;
@@ -212,6 +214,7 @@ public class PgnValidator extends PgnAdapter
 	 *            Tag value.
 	 * @return .T. if parsing should continue; .F. to abort parsing.
 	 */
+	@Override
 	public boolean onTag( final String strName, final String strValue )
 		{
 		assert PgnParser.isValidTagName(strName);
@@ -223,6 +226,7 @@ public class PgnValidator extends PgnAdapter
 	/**
 	 * A variation open marker '(' was parsed.
 	 */
+	@Override
 	public void onVariationEnter()
 		{
 		_variations.push(_pv);
@@ -232,6 +236,7 @@ public class PgnValidator extends PgnAdapter
 	/**
 	 * A variation close marker ')' was parsed.
 	 */
+	@Override
 	public void onVariationExit()
 		{
 		assert _variations.size() > 0;
@@ -240,7 +245,7 @@ public class PgnValidator extends PgnAdapter
 		}
 
 	/**
-	 * A new game is being started.
+	 * Starts a new game
 	 */
 	@Override
 	public void onGameStart()

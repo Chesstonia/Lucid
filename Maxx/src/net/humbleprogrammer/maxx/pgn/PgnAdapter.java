@@ -33,6 +33,7 @@
 package net.humbleprogrammer.maxx.pgn;
 
 import net.humbleprogrammer.maxx.Result;
+import net.humbleprogrammer.maxx.interfaces.IPgnListener;
 
 /**
  * The {@link PgnAdapter} class implements the {@link IPgnListener} interface, allowing some or
@@ -161,16 +162,16 @@ public class PgnAdapter implements IPgnListener
     public void onVariationExit()
         { /* STUB METHOD */ }
 
-
-    /**
+	/**
      * A new game is being started.
      */
     public void onGameStart()
-    { /* STUB METHOD */ }
+        { /* STUB METHOD */ }
 
-    /**
-     * The current game is completed.
+	/**
+ 	 * The current game is ending.
      */
     public void onGameOver()
         { /* STUB METHOD */ }
-    }   /* end of class PgnAdapter */
+    
+}   /* end of class PgnAdapter */

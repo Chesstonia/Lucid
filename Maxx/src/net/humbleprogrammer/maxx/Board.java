@@ -219,7 +219,6 @@ public class Board
 			   : INVALID;
 		}
 
-
 	/**
 	 * Tests a move for legality against the current position.
 	 *

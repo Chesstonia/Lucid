@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Humble/Humble.iml" filepath="$PROJECT_DIR$/Humble/Humble.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Mater/Mater.iml" filepath="$PROJECT_DIR$/Mater/Mater.iml" />
       <module fileurl="file://$PROJECT_DIR$/Maxx/Maxx.iml" filepath="$PROJECT_DIR$/Maxx/Maxx.iml" />
       <module fileurl="file://$PROJECT_DIR$/e4.iml" filepath="$PROJECT_DIR$/e4.iml" />
     </modules>

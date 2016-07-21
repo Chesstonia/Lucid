@@ -33,7 +33,9 @@
 package net.humbleprogrammer;
 
 import net.humbleprogrammer.humble.StrUtil;
-import net.humbleprogrammer.maxx.Parser;
+import net.humbleprogrammer.maxx.*;
+import net.humbleprogrammer.maxx.factories.BoardFactory;
+import net.humbleprogrammer.maxx.factories.MoveFactory;
 
 import org.slf4j.*;
 
@@ -69,32 +71,26 @@ public abstract class TestBase
 	/** Default file encoding. */
 	private static final String		ENCODING		= "UTF-8";
 	/** Test file for FEN strings. */
-	private static final String		FEN_TEST_FILE	= "FEN-Test.txt";
+	private static final String		FEN_TEST_FILE	= "P:\\Chess\\Test Data\\FEN-Test.txt";
 	/** Sample game. */
-	protected static final String	SAMPLE_PGN		= 
-			"[Event \"M.I.Chigorin Memorial Open\"]\n" + 
-			"[Site \"St.Petersburg (Russia)\"]\n" + 
-			"[Date \"1998.??.??\"]\n" + 
-			"[Round \"6.10\"]\n" + 
-			"[White \"Rusanov, M \"]\n" + 
-			"[Black \"Voitsekhovsky, S \"]\n" + 
-			"[Result \"0-1\"]\n" + 
-			"[ECO \"A45\"]\n" + 
-			"[Opening \"Trompovsky attack (Ruth, Opovcensky opening)\"]\n" + "\n" + 
-			"1. d4 Nf6 2. Bg5 d5 3. Bxf6 exf6 4. e3 Be6 5. Nd2 c6 6. c3 f5 7. Bd3 Nd7 8. Qf3 \n" + 
-			"g6 9. Ne2 Bd6 10. Nf4 Qc7 11. O-O {castle short} Nf6 12. h3 h5 13. Nxe6 fxe6 14.\n" + 
-			"c4 g5 15. Qe2 g4 16. c5 Be7 17. f4 gxf3 {e.p.} 18. Nxf3 O-O-O {castle long} 19. \n" + 
-			"b4 Rdg8 {file specifier} 20. b5 cxb5 21. Rfb1 Qg3 22. Rxb5 Qxh3 {pawn on g2 is\n" + 
-			"pinned} 23. Ne1 Bd8 24. Rxb7 Bc7 25. Rxc7+ {check} Kxc7 26. Qd2 Kd7 27. Rb1 Ne4 \n" + 
-			"28. Bxe4 fxe4 29. c6+ Ke7 30. Rb2 Qh4 31. Qb4+ Kf6 32. Rf2+ Kg6 33. Qd6 {pawn on\n" + 
-			"e6 is pinned} Re8 34. c7 Qe7 35. c8=N {under-promotion} Qxd6 36. Nxd6 Re7 37. \n" + 
-			"Rc2 Rb8 38. Rc6 Rb2 39. a4 Ra2 40. Nc8 Rb7 41. Rxe6+ Kf7 42. Nd6+ Kxe6 43. Nxb7 \n" + 
-			"h4 44. Kf1 Ke7 45. Nc5 Kd6 46. Nb7+ Kc6 47. Nd8+ Kb6 48. Ne6 Rxa4 49. Nf4 Kc6 \n" + 
-			"50. Ke2 Ra2+ 51. Kd1 Ra1+ 52. Kd2 a5 53. Nc2 Rg1 54. Ne1 a4 55. Nc2 Kb5 56. Kc3 \n" + 
-			"Rxg2 57. Nb4 a3 58. Nxg2 h3 59. Ne1 h2 60. Nec2 Ka4 61. Nxd5 h1=Q {promotion} \n" + 
-			"62. Nb6+ Kb5 63. Nc4 a2 64. N4a3+ {rank specifier} Ka4 65. Kb2 Qh7 66. Kxa2 Qf7+ \n" + 
-			"67. Kb2 Qb7+ 68. Kc3 Qb3+ 69. Kd2 Qd3+ 70. Ke1 Kb3 71. Kf2 Qd1 72. Kg3 Qf3+ 73. \n" + 
-			"Kh4 Qf5 74. Kg3 Kc3 75. Ne1 Kd2 76. Nac2 Ke2 77. Ng2 Qg5+ 0-1\n";
+	protected static final String	SAMPLE_PGN		= "[Event \"M.I.Chigorin Memorial Open\"]\n"
+			+ "[Site \"St.Petersburg (Russia)\"]\n" + "[Date \"1998.??.??\"]\n" + "[Round \"6.10\"]\n"
+			+ "[White \"Rusanov, M \"]\n" + "[Black \"Voitsekhovsky, S \"]\n" + "[Result \"0-1\"]\n" + "[ECO \"A45\"]\n"
+			+ "[Opening \"Trompovsky attack (Ruth, Opovcensky opening)\"]\n" + "\n"
+			+ "1. d4 Nf6 2. Bg5 d5 3. Bxf6 exf6 4. e3 Be6 5. Nd2 c6 6. c3 f5 7. Bd3 Nd7 8. Qf3 \n"
+			+ "g6 9. Ne2 Bd6 10. Nf4 Qc7 11. O-O {castle short} Nf6 12. h3 h5 13. Nxe6 fxe6 14.\n"
+			+ "c4 g5 15. Qe2 g4 16. c5 Be7 17. f4 gxf3 {e.p.} 18. Nxf3 O-O-O {castle long} 19. \n"
+			+ "b4 Rdg8 {file specifier} 20. b5 cxb5 21. Rfb1 Qg3 22. Rxb5 Qxh3 {pawn on g2 is\n"
+			+ "pinned} 23. Ne1 Bd8 24. Rxb7 Bc7 25. Rxc7+ {check} Kxc7 26. Qd2 Kd7 27. Rb1 Ne4 \n"
+			+ "28. Bxe4 fxe4 29. c6+ Ke7 30. Rb2 Qh4 31. Qb4+ Kf6 32. Rf2+ Kg6 33. Qd6 {pawn on\n"
+			+ "e6 is pinned} Re8 34. c7 Qe7 35. c8=N {under-promotion} Qxd6 36. Nxd6 Re7 37. \n"
+			+ "Rc2 Rb8 38. Rc6 Rb2 39. a4 Ra2 40. Nc8 Rb7 41. Rxe6+ Kf7 42. Nd6+ Kxe6 43. Nxb7 \n"
+			+ "h4 44. Kf1 Ke7 45. Nc5 Kd6 46. Nb7+ Kc6 47. Nd8+ Kb6 48. Ne6 Rxa4 49. Nf4 Kc6 \n"
+			+ "50. Ke2 Ra2+ 51. Kd1 Ra1+ 52. Kd2 a5 53. Nc2 Rg1 54. Ne1 a4 55. Nc2 Kb5 56. Kc3 \n"
+			+ "Rxg2 57. Nb4 a3 58. Nxg2 h3 59. Ne1 h2 60. Nec2 Ka4 61. Nxd5 h1=Q {promotion} \n"
+			+ "62. Nb6+ Kb5 63. Nc4 a2 64. N4a3+ {rank specifier} Ka4 65. Kb2 Qh7 66. Kxa2 Qf7+ \n"
+			+ "67. Kb2 Qb7+ 68. Kc3 Qb3+ 69. Kd2 Qd3+ 70. Ke1 Kb3 71. Kf2 Qd1 72. Kg3 Qf3+ 73. \n"
+			+ "Kh4 Qf5 74. Kg3 Kc3 75. Ne1 Kd2 76. Nac2 Ke2 77. Ng2 Qg5+ 0-1\n";
 
 	/** Sample game as a list of SAN moves. */
 	protected static final String[]	SAMPLE_MOVES	= { "d4", "Nf6", "Bg5", "d5", "Bxf6", "exf6", "e3", "Be6", "Nd2",
@@ -108,11 +104,13 @@ public abstract class TestBase
 			"a3", "Nxg2", "h3", "Ne1", "h2", "Nec2", "Ka4", "Nxd5", "h1=Q", "Nb6+", "Kb5", "Nc4", "a2", "N4a3+", "Ka4",
 			"Kb2", "Qh7", "Kxa2", "Qf7+", "Kb2", "Qb7+", "Kc3", "Qb3+", "Kd2", "Qd3+", "Ke1", "Kb3", "Kf2", "Qd1",
 			"Kg3", "Qf3+", "Kh4", "Qf5", "Kg3", "Kc3", "Ne1", "Kd2", "Nac2", "Ke2", "Ng2", "Qg5+" };
-	
+
 	//  -----------------------------------------------------------------------
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
+	/** Maximum perft depth. */
+	protected static final int		s_iMaxDepth;
 	/** Maximum test duration, in nanoseconds. */
 	protected static final long		s_lMaxNanosecs;
 	/** Logger. */
@@ -149,6 +147,7 @@ public abstract class TestBase
 	/** Array of PGN files, populated in {@link getPGN()}. */
 	private static List<Path>		s_listPGN;
 
+	private static List<Move>		s_listMoves;
 	//  -----------------------------------------------------------------------
 	//	CTOR
 	//	-----------------------------------------------------------------------
@@ -160,18 +159,23 @@ public abstract class TestBase
 		switch ( DURATION )
 			{
 			case QUICK:
+				s_iMaxDepth = 3;
 				s_lMaxNanosecs = TimeUnit.SECONDS.toNanos(15);
 				break;
 			case NORMAL:
+				s_iMaxDepth = 4;
 				s_lMaxNanosecs = TimeUnit.MINUTES.toNanos(1);
 				break;
 			case SLOW:
+				s_iMaxDepth = 5;
 				s_lMaxNanosecs = TimeUnit.MINUTES.toNanos(15);
 				break;
 			case EPIC:
+				s_iMaxDepth = 6;
 				s_lMaxNanosecs = TimeUnit.HOURS.toNanos(1);
 				break;
 			default:
+				s_iMaxDepth = 7;
 				s_lMaxNanosecs = Long.MAX_VALUE;
 				break;
 			}
@@ -192,8 +196,7 @@ public abstract class TestBase
 			{
 			String strDuration = System.getenv("TEST_DURATION");
 
-			if (!StrUtil.isBlank(strDuration)) 
-				return Duration.valueOf(strDuration);
+			if (!StrUtil.isBlank(strDuration)) return Duration.valueOf(strDuration);
 			}
 		catch ( Exception ignored )
 			{
@@ -218,8 +221,7 @@ public abstract class TestBase
 			try (BufferedReader reader = openTestFile(FEN_TEST_FILE))
 				{
 				while ( (strFEN = reader.readLine()) != null )
-					if (Parser.matchFEN(strFEN) != null) 
-						list.add(strFEN);
+					if (Parser.matchFEN(strFEN) != null) list.add(strFEN);
 
 				reader.close();
 				}
@@ -233,6 +235,32 @@ public abstract class TestBase
 			}
 
 		return Collections.unmodifiableList(s_listFEN);
+		}
+
+	/**
+	 * Builds a list of valid moves.
+	 * 
+	 * @return Moves
+	 */
+	protected static synchronized List<Move> getMoves()
+		{
+		if (s_listMoves == null)
+			{
+			Board bd = BoardFactory.createInitial();
+			List<Move> list = new ArrayList<>();
+
+			for ( String str : SAMPLE_MOVES )
+				{
+				Move move = MoveFactory.fromSAN(bd, str);
+
+				list.add(move);
+				bd.makeMove(move);
+				}
+
+			s_listMoves = list;
+			}
+
+		return s_listMoves;
 		}
 
 	/**
@@ -284,8 +312,7 @@ public abstract class TestBase
 
 		try
 			{
-			final Path path = Paths.get("P:\\Chess\\Test Data").resolve(strFilename);
-
+			final Path path = Paths.get("").resolve(strFilename);
 			final FileInputStream fis = new FileInputStream(path.toFile());
 			final InputStreamReader isr = new InputStreamReader(fis, ENCODING);
 

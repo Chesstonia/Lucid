@@ -36,6 +36,7 @@ import net.humbleprogrammer.TestBase;
 import net.humbleprogrammer.humble.Stopwatch;
 import net.humbleprogrammer.humble.TimeUtil;
 import net.humbleprogrammer.maxx.factories.BoardFactory;
+import net.humbleprogrammer.maxx.interfaces.IMoveScorer;
 
 import org.junit.*;
 
@@ -68,7 +69,7 @@ public class TestMoveList extends TestBase
 		MoveList moves = MoveList.generate(bd);
 
 		assertEquals(20, moves.size());
-		assertTrue(moves.hasLegalMove());
+		assertFalse(moves.isEmpty());
 		}
 
 	@Test
@@ -78,7 +79,7 @@ public class TestMoveList extends TestBase
 		final MoveList moves = MoveList.generate(bd);
 
 		assertEquals(0, moves.size());
-		assertFalse(moves.hasLegalMove());
+		assertTrue(moves.isEmpty());
 		}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -96,23 +97,46 @@ public class TestMoveList extends TestBase
 		}
 
 	@Test
-	public void t_perft()
+	public void t_perft_black()
 		{
-		boolean bRanTest = true;
-
-		for ( int iDepth = DURATION.ordinal(); bRanTest; ++iDepth )
-			{
-			bRanTest = false;
-			for ( TestPosition position : s_positions )
-				if (position.getMaxDepth() > iDepth)
-					{
-					bRanTest = true;
-					if (position.test(iDepth, WHITE) >= s_lMaxNanosecs || 
-						position.test(iDepth, BLACK) >= s_lMaxNanosecs) { return; }
-					}
-			}
+		for ( TestPosition position : s_positions )
+			position.test(s_iMaxDepth, BLACK);
 		}
 
+	@Test
+	public void t_perft_white()
+		{
+		for ( TestPosition position : s_positions )
+			position.test(s_iMaxDepth, WHITE);
+		}
+
+	@Test
+	public void t_sort()
+		{
+		Board bd = BoardFactory.createFromFEN(FEN_TEST);
+		MoveList moves = MoveList.generate(bd);
+
+		moves.sort(new IMoveScorer()
+			{
+			@Override
+			public int scoreMove( final Board bd, final Move move )
+				{
+				return move.iSqFrom + (move.iSqTo << 6);
+				}
+			});
+
+		Move mvPrev = null;
+
+		for ( Move move : moves )
+			{
+			if (mvPrev != null)
+				{
+				assertTrue(
+						(mvPrev.iSqTo > move.iSqTo) || (mvPrev.iSqTo == move.iSqTo && mvPrev.iSqFrom > move.iSqFrom));
+				}
+			mvPrev = move;
+			}
+		}
 	//  -----------------------------------------------------------------------
 	//	METHODS
 	//	-----------------------------------------------------------------------
@@ -169,24 +193,18 @@ public class TestMoveList extends TestBase
 			_lActual = new long[_lExpected.length];
 			}
 
-		int getMaxDepth()
-			{
-			return _lExpected.length;
-			}
-
 		private void perft( final Board bd, int iDepth, int iMaxDepth )
 			{
 			MoveList moves = MoveList.generate(bd);
 
-			if (moves.hasLegalMove())
-				{
-				_lActual[iDepth] += moves.size();
+			if (moves.isEmpty()) return;
 
-				if (++iDepth <= iMaxDepth)
-					{
-					for ( Move mv : moves )
-						perft(new Board(bd, mv), iDepth, iMaxDepth);
-					}
+			_lActual[iDepth] += moves.size();
+
+			if (++iDepth <= iMaxDepth)
+				{
+				for ( Move mv : moves )
+					perft(new Board(bd, mv), iDepth, iMaxDepth);
 				}
 			}
 
@@ -230,8 +248,7 @@ public class TestMoveList extends TestBase
 			new TestPosition("k7/7p/8/2nKb3/8/8/8/8 w - -",
 					new long[] { 4L, 82L, 433L, 7658L, 43150L, 733006L, 3958415L }),
 
-			new TestPosition("7K/k7/8/P7/6pP/8/8/8 w - -", 
-					new long[] { 5L, 25L, 164L, 909L, 6768L, 41398L, 319954L }),
+			new TestPosition("7K/k7/8/P7/6pP/8/8/8 w - -", new long[] { 5L, 25L, 164L, 909L, 6768L, 41398L, 319954L }),
 			new TestPosition("8/8/8/4p3/5k2/8/4K3/8 w - -",
 					new long[] { 6L, 42L, 224L, 1721L, 10261L, 76965L, 469317L }),
 			new TestPosition("5K2/8/8/8/3k3p/8/7P/8 w - -",
@@ -288,22 +305,16 @@ public class TestMoveList extends TestBase
 			//
 			// http://www.rocechess.ch/perftsuite.zip
 			//
-			new TestPosition("7K/7p/7k/8/8/8/8/8 w - -", 
-					new long[] { 1L, 3L, 12L, 80L, 342L, 2343L, 12377L }),
-			new TestPosition("K7/p7/k7/8/8/8/8/8 w - -", 
-					new long[] { 1L, 3L, 12L, 80L, 342L, 2343L, 12377L }),
-			new TestPosition("8/8/8/8/8/4k3/4P3/4K3 w - -", 
-					new long[] { 2L, 8L, 44L, 282L, 1814L, 11848L, 83195L }),
+			new TestPosition("7K/7p/7k/8/8/8/8/8 w - -", new long[] { 1L, 3L, 12L, 80L, 342L, 2343L, 12377L }),
+			new TestPosition("K7/p7/k7/8/8/8/8/8 w - -", new long[] { 1L, 3L, 12L, 80L, 342L, 2343L, 12377L }),
+			new TestPosition("8/8/8/8/8/4k3/4P3/4K3 w - -", new long[] { 2L, 8L, 44L, 282L, 1814L, 11848L, 83195L }),
 			new TestPosition("6kq/8/8/8/8/8/8/7K w - -",
 					new long[] { 2L, 36L, 143L, 3637L, 14893L, 391507L, 1750864L }),
 			new TestPosition("7K/8/8/8/8/8/8/6kq w - -",
 					new long[] { 2L, 36L, 143L, 3637L, 14893L, 391507L, 1750864L }),
-			new TestPosition("8/8/8/8/8/K7/P7/k7 w - -", 
-					new long[] { 3L, 7L, 43L, 199L, 1347L, 6249L, 45628L }),
-			new TestPosition("8/8/8/8/8/7K/7P/7k w - -", 
-					new long[] { 3L, 7L, 43L, 199L, 1347L, 6249L, 45628L }),
-			new TestPosition("8/8/7k/7p/7P/7K/8/8 w - -", 
-					new long[] { 3L, 9L, 57L, 360L, 1969L, 10724 }),
+			new TestPosition("8/8/8/8/8/K7/P7/k7 w - -", new long[] { 3L, 7L, 43L, 199L, 1347L, 6249L, 45628L }),
+			new TestPosition("8/8/8/8/8/7K/7P/7k w - -", new long[] { 3L, 7L, 43L, 199L, 1347L, 6249L, 45628L }),
+			new TestPosition("8/8/7k/7p/7P/7K/8/8 w - -", new long[] { 3L, 9L, 57L, 360L, 1969L, 10724 }),
 			new TestPosition("8/8/k7/p7/P7/K7/8/8 w - -", new long[] { 3L, 9L, 57L, 360L, 1969L, 10724L, 65679L }),
 			new TestPosition("k7/8/8/3p4/4p3/8/8/7K w - -", new long[] { 3L, 15L, 84L, 573L, 3013L, 22886 }),
 			new TestPosition("4k2r/6K1/8/8/8/8/8/8 w k -",
