@@ -35,6 +35,7 @@ package net.humbleprogrammer.maxx;
 import net.humbleprogrammer.TestBase;
 import net.humbleprogrammer.maxx.factories.BoardFactory;
 
+import org.junit.AfterClass;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -129,6 +130,17 @@ public class TestEvaluator extends TestBase
 		}
 
 	@Test
+	public void t_findMateIn_2_many()
+		{
+		//	Has 19 different mate in 2 solutions!
+		Board bd = BoardFactory.createFromFEN( "8/8/4R3/p7/k2B4/2Q3K1/8/8 w - -" );
+		List<PV> solutions = Evaluator.findMateIn( bd, 2, true );
+
+		assertNotNull( solutions );
+		assertEquals( 19, solutions.size() );
+		}
+
+	@Test
 	public void t_findMateIn_2_multiple()
 		{
 		//	Has five mate in 2 solutions:
@@ -155,5 +167,14 @@ public class TestEvaluator extends TestBase
 
 		for ( PV pv : solutions )
 			assertEquals( 11, pv.size() );
+		}
+
+	@AfterClass
+	public static void displayResults()
+		{
+		s_log.info( String.format( "Nodes: %,16d  NPS: %,12d",
+								   Evaluator.getNodeCount(),
+								   Evaluator.getNPS() ) );
+
 		}
 	} /* end of class TestEvaluator */

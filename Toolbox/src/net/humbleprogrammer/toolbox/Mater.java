@@ -52,9 +52,10 @@ public class Mater extends ToolboxApp
 	//	CONSTANTS
 	//	-----------------------------------------------------------------------
 
-	private static final boolean EXACT_ONLY = true;
-	private static final int     MATE_IN_X  = 2;
-	private static final int     STOP_AFTER = 10;
+	private static final boolean EXACT_ONLY      = false;
+	private static final int     MATE_IN_X       = 3;
+	private static final long    REPORT_INTERVAL = 60L * 1000;    // 60 seconds
+	private static final int     STOP_AFTER      = 0;
 
 	//  -----------------------------------------------------------------------
 	//	DECLARATIONS
@@ -68,11 +69,7 @@ public class Mater extends ToolboxApp
 	/** Number of results found so far. */
 	private int     _iResultsFound;
 	/** Hash of the previous solution seen. */
-	private long	_hashPrevious = HASH_INVALID;
-	/** Best move string */
-	private String	_strBM;
-	/** Current position */
-	private Board	_board;
+	private long _hashPrevious = HASH_INVALID;
 
 	//  -----------------------------------------------------------------------
 	//	CTOR
@@ -115,7 +112,7 @@ public class Mater extends ToolboxApp
 		{
 		try
 			{
-			new Mater( strArgs ).run( MATE_IN_X, STOP_AFTER );
+			new Mater( strArgs ).run( );
 			}
 		catch (Exception ex)
 			{
@@ -127,13 +124,11 @@ public class Mater extends ToolboxApp
 	//	IMPLEMENTATION
 	//	-----------------------------------------------------------------------
 
-	private void run( int iMaxMoves, int iMaxCount )
+	private void run( )
 		{
-		assert iMaxCount >= 0;
-		//	-----------------------------------------------------------------
 		try
 			{
-			MaterListener listener = new MaterListener( iMaxMoves );
+			MaterListener listener = new MaterListener( MATE_IN_X, EXACT_ONLY );
 
 			for ( Path path : _listPGN )
 				{
@@ -146,7 +141,8 @@ public class Mater extends ToolboxApp
 					while ( (strPGN = pgn.readGame()) != null )
 						if (PgnParser.parse( listener, strPGN ))
 							{
-							if (iMaxCount > 0 && _iResultsFound >= iMaxCount)
+							//noinspection ConstantConditions
+							if (STOP_AFTER > 0 && _iResultsFound >= STOP_AFTER)
 								{
 								printLine( "# Stopped after %,d results.", _iResultsFound );
 								return;
@@ -172,7 +168,7 @@ public class Mater extends ToolboxApp
 
 		if (solutions.isEmpty() || bdStart.getZobristHash() == _hashPrevious) return;
 		//	-----------------------------------------------------------------
-		String strPrefix = BoardFactory.exportEPD( bdStart ) + "; bm ";
+		String strPrefix = BoardFactory.exportEPD( bdStart );
 
 		_hashPrevious = bdStart.getZobristHash();
 		_iResultsFound += solutions.size();
@@ -180,9 +176,11 @@ public class Mater extends ToolboxApp
 		for ( PV pv : solutions )
 			{
 			boolean bFirst = true;
+			int iMoves = (pv.size() + 1) / 2;
 			Board bd = new Board( bdStart );
 
 			print( strPrefix );
+			print( "; dm %d; bm ", iMoves );
 
 			for ( Move mv : pv )
 				{
@@ -205,12 +203,15 @@ public class Mater extends ToolboxApp
 
 	private class MaterListener extends PgnValidator
 		{
-		private final int _iMaxMoves;
+		private final boolean _bExactDepth;
+		private final int  _iMaxMoves;
+		private       long _deadline;
 
-		MaterListener( int iMaxMoves )
+		MaterListener( int iMaxMoves, boolean bExactDepth )
 			{
 			DBC.requireGreaterThanZero( iMaxMoves, "Mate Depth" );
 			//	-------------------------------------------------------------
+			_bExactDepth = bExactDepth;
 			_iMaxMoves = iMaxMoves;
 			}
 
@@ -231,28 +232,19 @@ public class Mater extends ToolboxApp
 			//	-----------------------------------------------------------------
 			final Board bd = _pv.getCurrentPosition();
 
-			saveSolutions( bd, Evaluator.findMateIn( bd, _iMaxMoves, EXACT_ONLY ) );
+			saveSolutions( bd, Evaluator.findMateIn( bd, _iMaxMoves, _bExactDepth ) );
+			//
+			//	See if it's time to report our progress...
+			//
+			if (System.currentTimeMillis() >= _deadline)
+				{
+				s_log.info( String.format( "Nodes: %,16d  NPS: %,12d",
+										   Evaluator.getNodeCount(),
+										   Evaluator.getNPS() ) );
+				_deadline = System.currentTimeMillis() + REPORT_INTERVAL;
+				}
 
 			return true;
-			}
-
-		@Override
-		public void onGameStart()
-			{
-			super.onGameStart();
-			//	-----------------------------------------------------------------
-			_board = null;
-			_strBM = null;
-			}
-
-		@Override
-		public void onGameOver()
-			{
-			super.onGameOver();
-			if (_board == null) return;
-			//	-----------------------------------------------------------------
-			print( _board.toString() );
-			printLine( _strBM );
 			}
 		}
 	} /* end of class App */

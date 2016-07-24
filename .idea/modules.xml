@@ -4,7 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Humble/Humble.iml" filepath="$PROJECT_DIR$/Humble/Humble.iml" />
       <module fileurl="file://$PROJECT_DIR$/Maxx/Maxx.iml" filepath="$PROJECT_DIR$/Maxx/Maxx.iml" />
-      <module fileurl="file://$PROJECT_DIR$/e4.iml" filepath="$PROJECT_DIR$/e4.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Toolbox/Toolbox.iml" filepath="$PROJECT_DIR$/Toolbox/Toolbox.iml" />
     </modules>
   </component>
 </project>

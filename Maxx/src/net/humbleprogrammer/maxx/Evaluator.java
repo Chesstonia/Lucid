@@ -34,8 +34,10 @@ package net.humbleprogrammer.maxx;
 
 import java.util.*;
 
-import net.humbleprogrammer.humble.BitUtil;
-import net.humbleprogrammer.humble.DBC;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import net.humbleprogrammer.humble.*;
 import net.humbleprogrammer.maxx.interfaces.IMoveScorer;
 
 import static net.humbleprogrammer.maxx.Constants.*;
@@ -45,10 +47,13 @@ public class Evaluator
 	{
 
 	//  -----------------------------------------------------------------------
-	//	CONSTANTS
+	//	STATIC DECLARATIONS
 	//	-----------------------------------------------------------------------
 
-	static final int[] s_pieceValue = { 0, 100, 325, 325, 500, 900, 0 };
+	/** Piece Value Table */
+	private static final   int[]  s_pieceValue = { 0, 100, 325, 325, 500, 900, 0 };
+	/** Logger */
+	protected static final Logger s_log        = LoggerFactory.getLogger( Evaluator.class );
 
 	//  -----------------------------------------------------------------------
 	//	PUBLIC METHODS
@@ -190,23 +195,55 @@ public class Evaluator
 		}
 
 	//  -----------------------------------------------------------------------
+	//	GETTERS & SETTERS
+	//	-----------------------------------------------------------------------
+
+	/**
+	 * Gets the total node count.
+	 *
+	 * @return Node count.
+	 */
+	public static long getNodeCount()
+		{
+		return MateSearch.s_nodes;
+		}
+
+	/**
+	 * Gets the "Nodes per Second" rate.
+	 *
+	 * @return NPS
+	 */
+	public static long getNPS()
+		{
+		return (MateSearch.s_elapsedMSecs > 0)
+			   ? ((1000L * MateSearch.s_nodes) / MateSearch.s_elapsedMSecs)
+			   : 0L;
+		}
+
+	/**
+	 * Resets the node statistics.
+	 */
+	@SuppressWarnings( "unused" )
+	public static void resetNPS()
+		{ MateSearch.s_elapsedMSecs = MateSearch.s_nodes = 0L; }
+	//  -----------------------------------------------------------------------
 	//	IMPLEMENTATION
 	//	-----------------------------------------------------------------------
 
 	/**
 	 * Force a score to the allowable range.
 	 *
-	 * @param iScore
+	 * @param score
 	 * 	Score to clamp.
 	 *
 	 * @return Clamped score, in the range [MIN_SCORE..MAX_SCORE]
 	 */
-	static int clampScore( int iScore )
+	static int clampScore( int score )
 		{
-		if (iScore > MAX_SCORE) return MAX_SCORE;
-		if (iScore < MIN_SCORE) return MIN_SCORE;
+		if (score > MAX_SCORE) return MAX_SCORE;
+		if (score < MIN_SCORE) return MIN_SCORE;
 
-		return iScore;
+		return score;
 		}
 
 	//  -----------------------------------------------------------------------
@@ -215,8 +252,15 @@ public class Evaluator
 
 	private static class MateSearch implements IMoveScorer
 		{
+		/** Total count of nodes visited */
+		static long s_nodes;
+		/** Elapsed milliseconds */
+		static long s_elapsedMSecs;
+
 		/** Maximum search depth, in plies. */
 		private int  _iMaxDepth;
+		/** Number of nodes tested. */
+		private long _lNodes;
 		/** Pre-allocated array of lines. */
 		private PV[] _pv;
 
@@ -230,43 +274,53 @@ public class Evaluator
 		 *
 		 * @return List of solutions.
 		 */
-		List<PV> search( final Board bd, int iMaxDepth, boolean bExactDepth )
+		List<PV> search( final Board bd, int maxDepth, boolean bExactDepth )
 			{
 			assert bd != null;
-			assert iMaxDepth > 0;
+			assert maxDepth > 0;
 			//	-------------------------------------------------------------
-			List<PV> solutions = new ArrayList<>();
-			MoveList moves = MoveList.generate( bd );
+			final List<PV> solutions = new ArrayList<>();
+			final Stopwatch swatch = Stopwatch.startNew();
 
-			_iMaxDepth = iMaxDepth + 1;
-			_pv = new PV[ _iMaxDepth + 1 ];
+			_iMaxDepth = maxDepth;
+			_lNodes = 0L;
+			_pv = new PV[ _iMaxDepth ];
+
 			for ( int idx = 0; idx < _pv.length; ++idx )
 				_pv[ idx ] = new PV();
+			//
+			//	Try all the top-level (root) moves.
+			//
+			MoveList moves = MoveList.generate( bd );
 
 			moves.sort( this );
 
 			for ( Move move : moves )
 				{
-				int iScore = -search( new Board( bd, move ), 1, MIN_SCORE, MAX_SCORE );
+				int iScore = -search( new Board( bd, move ), 0, MIN_SCORE, MAX_SCORE );
 
-				if (isMateScore( iScore ))
+				if (iScore > (MAX_SCORE - MAX_MATE_DEPTH))
 					{
-					PV pv = new PV( move, _pv[ 1 ] );
+					PV pv = new PV( move, _pv[ 0 ] );
 
-					if (pv.size() < iMaxDepth)
+					if (pv.size() < _iMaxDepth)
 						{
 						solutions.clear();
 
 						if (bExactDepth)
-							return solutions;
+							break;
 
 						//	New max depth...
-						iMaxDepth = pv.size();
+						_iMaxDepth = pv.size();
 						}
 
 					solutions.add( pv );
 					}
 				}
+
+			swatch.stop();
+			s_nodes += _lNodes;
+			s_elapsedMSecs += swatch.getElapsedMillisecs();
 
 			return solutions;
 			}
@@ -288,12 +342,13 @@ public class Evaluator
 		private int search( final Board bd, int iDepth, int iAlpha, int iBeta )
 			{
 			assert bd != null;
-			assert iDepth > 0;
+			assert iDepth >= 0;
 			assert iAlpha < iBeta;
 			//	-------------------------------------------------------------
 			final int iDeeper = iDepth + 1;
 			final int scoreMate = MAX_SCORE - iDepth;
 
+			_lNodes++;
 			_pv[ iDepth ].clear();
 			//
 			//	If this is a leaf node, the only thing we care about is whether or not the
@@ -309,9 +364,6 @@ public class Evaluator
 			//	Now try the moves.
 			//
 			MoveList moves = MoveList.generate( bd );
-
-			if (moves.isEmpty())
-				return Arbiter.isInCheck( bd ) ? -scoreMate : 0;
 
 			for ( Move move : moves.sort( this ) )
 				{
@@ -329,7 +381,9 @@ public class Evaluator
 					}
 				}
 
-			return iAlpha;
+			return moves.isEmpty()
+				? (Arbiter.isInCheck( bd ) ? -scoreMate : 0)
+				: iAlpha;
 			}
 
 		@Override
