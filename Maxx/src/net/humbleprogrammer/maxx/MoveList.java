@@ -298,8 +298,9 @@ public class MoveList implements Iterable<Move>
 	 */
 	public Move getAt( int index )
 		{
-		return (index >= 0 && index < _iCount) ? new Move( _moves[ index ], _hashZobrist )
-											   : null;
+		return (index >= 0 && index < _iCount)
+			   ? new Move( _moves[ index ], _hashZobrist )
+				: null;
 		}
 
 	/**
@@ -328,8 +329,7 @@ public class MoveList implements Iterable<Move>
 
 	/**
 	 * Tests a move to see if the King is left exposed to check. If not, the
-	 * move is legal, and
-	 * is added to the move list.
+	 * move is legal, and is added to the move list.
 	 *
 	 * @param iSqFrom
 	 * 	"From" square in 8x8 format.
@@ -347,18 +347,19 @@ public class MoveList implements Iterable<Move>
 		//	-----------------------------------------------------------------
 		long bbSqFrom = 1L << iSqFrom;
 
-		if (iMoveType == Move.Type.EN_PASSANT || (_bbUnpinned & bbSqFrom) == 0L)
+		if (iMoveType == Move.Type.EN_PASSANT ||
+			(_bbUnpinned & bbSqFrom) == 0L)
 			{
-			int piece = _board.get( iSqFrom );
 			long bbSqBoth = bbSqFrom | (1L << iSqTo);
 			//
 			//	Move the piece to the new square.  If this is an e.p. capture,
 			//	adjust the "To" square to the pawn being captured (which is
 			//	different from the final square of the moving pawn).
 			//
-			int iSqVictim =
-				(iMoveType == Move.Type.EN_PASSANT) ? ((iSqFrom & 0x38) | (iSqTo & 0x07))
-													: iSqTo;
+			int piece = _board.sq[ iSqFrom ];
+			int iSqVictim = (iMoveType == Move.Type.EN_PASSANT)
+				? ((iSqFrom & 0x38) | (iSqTo & 0x07))
+				: iSqTo;
 
 			_map[ piece ] ^= bbSqBoth;
 			_map[ _player ] ^= bbSqBoth;
@@ -366,20 +367,17 @@ public class MoveList implements Iterable<Move>
 			//	See if this is a capturing move.  We have to remove the victim
 			//	from the bitboards, so that it doesn't still generate attacks.
 			//
-			boolean bInCheck;
-			int victim = _board.get( iSqVictim );
+			int victim = _board.sq[ iSqVictim ];
 
-			if (victim == EMPTY)
-				bInCheck = Bitboards.isAttackedBy( _map, _iSqKing, _opponent );
-			else
+			if (victim != EMPTY)
 				{
 				long bbSqVictim = 1L << iSqVictim;
 
 				_map[ victim ] ^= bbSqVictim;
 				_map[ _opponent ] ^= bbSqVictim;
-
-				bInCheck = Bitboards.isAttackedBy( _map, _iSqKing, _opponent );
 				}
+
+			boolean bInCheck = Bitboards.isAttackedBy( _map, _iSqKing, _opponent );
 
 			System.arraycopy( _board.map, 0, _map, 0, MAP_LENGTH );
 

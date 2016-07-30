@@ -34,6 +34,7 @@ package net.humbleprogrammer.maxx;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
+@SuppressWarnings( { "unused", "WeakerAccess" } )
 public class Move
 	{
 	// -----------------------------------------------------------------------
@@ -110,7 +111,7 @@ public class Move
 
 	public boolean isPromotion()
 	{ return iType >= Type.PROMOTION; }
-	
+
 	public int getPromotionPiece()
 		{
 		switch ( iType )
@@ -194,9 +195,9 @@ public class Move
 
 	public boolean equals( Move move )
 		{
-		return (move != null && 
-				move.iSqFrom == iSqFrom && 
-				move.iSqTo == iSqTo && 
+		return (move != null &&
+				move.iSqFrom == iSqFrom &&
+				move.iSqTo == iSqTo &&
 				move.iType == iType);
 		}
 
