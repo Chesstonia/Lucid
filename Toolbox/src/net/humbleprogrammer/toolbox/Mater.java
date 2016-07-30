@@ -53,7 +53,7 @@ public class Mater extends ToolboxApp
 	//	-----------------------------------------------------------------------
 
 	private static final boolean EXACT_ONLY      = false;
-	private static final int     MATE_IN_X       = 3;
+	private static final int     MATE_IN_X       = 4;
 	private static final long    REPORT_INTERVAL = 60L * 1000;    // 60 seconds
 	private static final int     STOP_AFTER      = 0;
 
@@ -112,7 +112,7 @@ public class Mater extends ToolboxApp
 		{
 		try
 			{
-			new Mater( strArgs ).run( );
+			new Mater( strArgs ).run();
 			}
 		catch (Exception ex)
 			{
@@ -124,7 +124,7 @@ public class Mater extends ToolboxApp
 	//	IMPLEMENTATION
 	//	-----------------------------------------------------------------------
 
-	private void run( )
+	private void run()
 		{
 		try
 			{
@@ -204,8 +204,8 @@ public class Mater extends ToolboxApp
 	private class MaterListener extends PgnValidator
 		{
 		private final boolean _bExactDepth;
-		private final int  _iMaxMoves;
-		private       long _deadline;
+		private final int     _iMaxMoves;
+		private       long    _deadline;
 
 		MaterListener( int iMaxMoves, boolean bExactDepth )
 			{

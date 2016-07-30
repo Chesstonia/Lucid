@@ -225,8 +225,11 @@ public class MoveList implements Iterable<Move>
 		//	-----------------------------------------------------------------
 		MoveList moves = new MoveList( bd );
 
-		return moves.generateFirst();
+		moves.generate();
+
+		return (moves.size() > 0);
 		}
+
 	/**
 	 * Tests the move list to see if it is empty, i.e., has no moves.
 	 *
@@ -280,6 +283,7 @@ public class MoveList implements Iterable<Move>
 
 		return this;
 		}
+
 	//  -----------------------------------------------------------------------
 	//	PUBLIC GETTERS & SETTERS
 	//	-----------------------------------------------------------------------
@@ -545,86 +549,6 @@ public class MoveList implements Iterable<Move>
 				if (Move.unpackToSq( _moves[ index ] ) != iSqTo && --_iCount > index)
 					_moves[ index-- ] = _moves[ _iCount ];
 			}
-		}
-	/**
-	 * This is identical to the {@link #generate} method, but stops as soon as at least one
-	 * move is found.
-	 */
-	private boolean generateFirst()
-		{
-		if (_bbFromSq == 0 && _bbToSq == 0) return false;
-		//	-----------------------------------------------------------------
-		long bbPawns;
-		long bbPieces = _bbFromSq;
-
-		_bAllMoves = false;
-		//
-		//	Generate pawn captures/moves.
-		//
-		if (_player == WHITE)
-			{
-			bbPawns = bbPieces & _map[ MAP_W_PAWN ];
-			generatePawnMovesWhite( bbPawns );
-			}
-		else
-			{
-			bbPawns = bbPieces & _map[ MAP_B_PAWN ];
-			generatePawnMovesBlack( bbPawns );
-			}
-		//
-		//	Generate e.p. captures.  These ignore the "From" and "To"
-		//	restrictions because of the edge case where the capture
-		//	removes a pawn checking the King.
-		//
-		if (_bbEP != 0L)
-			addMovesFrom( _bbEP, _board.getEnPassantSquare(), Move.Type.EN_PASSANT );
-
-		if (_iCount > 0) return true;
-		//
-		//	Generate remaining moves.
-		//
-		for ( long bb = bbPieces & ~bbPawns; bb != 0L; bb &= (bb - 1L) )
-			{
-			int iSq = BitUtil.first( bb );
-
-			switch (_board.get( iSq ))
-				{
-				case MAP_W_KNIGHT:
-				case MAP_B_KNIGHT:
-					addMovesTo( iSq, Bitboards.knight[ iSq ] );
-					break;
-
-				case MAP_W_BISHOP:
-				case MAP_B_BISHOP:
-					addMovesTo( iSq, Bitboards.getDiagonalMovesFrom( iSq, _bbAll ) );
-					break;
-
-				case MAP_W_ROOK:
-				case MAP_B_ROOK:
-					addMovesTo( iSq, Bitboards.getLateralMovesFrom( iSq, _bbAll ) );
-					break;
-
-				case MAP_W_QUEEN:
-				case MAP_B_QUEEN:
-					addMovesTo( iSq, Bitboards.getQueenMovesFrom( iSq, _bbAll ) );
-					break;
-
-				case MAP_W_KING:
-					generateKingMovesWhite( iSq );
-					break;
-
-				case MAP_B_KING:
-					generateKingMovesBlack( iSq );
-					break;
-
-				default:
-					throw new RuntimeException( "Invalid piece type." );
-				}
-
-			if (_iCount > 0) return true;
-			}
-
-		return false;
 		}
 
 	/**

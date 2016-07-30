@@ -159,14 +159,29 @@ public class TestEvaluator extends TestBase
 	@Test
 	public void t_findMateIn_deep()
 		{
-		Board bd = BoardFactory.createFromFEN( "8/1k1K4/8/8/1pN5/1N6/8/8 w - -" );
-		List<PV> solutions = Evaluator.findMateIn( bd, 6 );
+		String[] strFEN =
+			{
+			// 1. Nd6 Kxc5 2. Nb5 Kc4 3. Bf5! Re3 4. Nd6+ Kc5 5. Ne4+ Kc4 6. Nxd2#
+			"8/p3B3/4PPBb/KNPP4/2k5/1p1R4/2np4/3br3 w - -",
+			// 1. Bxf5 Rb4 2. Rg5+ Kh6 3. Rg7 Rxf6 4. exf6 e4 5. Nf7+ Kh5 6. Rg5#
+			"1r3r2/3p4/2bNpB2/p3Pp1k/6R1/1p1B2P1/PP3P1P/6K1 w - -",
+			// 1. Nc5+ Ka7 2. Kc7 b3 3. Nd6 Ka8 4. Nb5 b2 5. Nd7 b1=Q 6. Nb6#
+			"8/1k1K4/8/8/1pN5/1N6/8/8 w - -"
+			};
 
-		assertNotNull( solutions );
-		assertTrue( solutions.size() > 0 );
+		for ( String str : strFEN )
+			{
+			Board bd = BoardFactory.createFromFEN( str );
+			assertNotNull( bd );
 
-		for ( PV pv : solutions )
-			assertEquals( 11, pv.size() );
+			List<PV> solutions = Evaluator.findMateIn( bd, 6 );
+
+			assertNotNull( solutions );
+			assertTrue( solutions.size() > 0 );
+
+			for ( PV pv : solutions )
+				assertEquals( 11, pv.size() );
+			}
 		}
 
 	@AfterClass

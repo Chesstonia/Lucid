@@ -259,8 +259,6 @@ public class Evaluator
 
 		/** Maximum search depth, in plies. */
 		private int  _iMaxDepth;
-		/** Number of nodes tested. */
-		private long _lNodes;
 		/** Pre-allocated array of lines. */
 		private PV[] _pv;
 
@@ -283,7 +281,6 @@ public class Evaluator
 			final Stopwatch swatch = Stopwatch.startNew();
 
 			_iMaxDepth = maxDepth;
-			_lNodes = 0L;
 			_pv = new PV[ _iMaxDepth ];
 
 			for ( int idx = 0; idx < _pv.length; ++idx )
@@ -319,7 +316,6 @@ public class Evaluator
 				}
 
 			swatch.stop();
-			s_nodes += _lNodes;
 			s_elapsedMSecs += swatch.getElapsedMillisecs();
 
 			return solutions;
@@ -348,24 +344,25 @@ public class Evaluator
 			final int iDeeper = iDepth + 1;
 			final int scoreMate = MAX_SCORE - iDepth;
 
-			_lNodes++;
+			s_nodes++;
 			_pv[ iDepth ].clear();
 			//
 			//	If this is a leaf node, the only thing we care about is whether or not the
 			//	player has been mated.
 			//
+			MoveList moves = MoveList.generate( bd );
+
+			if (moves.isEmpty())
+				return Arbiter.isInCheck( bd ) ? -scoreMate : 0;
+
 			if (iDeeper >= _iMaxDepth)
-				{
-				return Arbiter.isMated( bd )
-					   ? -scoreMate
-					   : Evaluator.getMaterialScore( bd );
-				}
+				return (moves.isEmpty() && Arbiter.isInCheck( bd )) ? -scoreMate : 0;
 			//
 			//	Now try the moves.
 			//
-			MoveList moves = MoveList.generate( bd );
+			moves.sort( this );
 
-			for ( Move move : moves.sort( this ) )
+			for ( Move move : moves )
 				{
 				if (move.getPromotionPiece() == BISHOP || move.getPromotionPiece() == ROOK)
 					continue; // ignore underpromotions for mate-in-x problems
@@ -381,9 +378,7 @@ public class Evaluator
 					}
 				}
 
-			return moves.isEmpty()
-				? (Arbiter.isInCheck( bd ) ? -scoreMate : 0)
-				: iAlpha;
+			return iAlpha;
 			}
 
 		@Override
@@ -392,29 +387,38 @@ public class Evaluator
 			assert bd != null;
 			assert bd.isLegalMove( move );
 			//	-----------------------------------------------------
-			final Board bdAfter = new Board( bd, move );
+			final int CHECK_BONUS = MAX_SCORE >> 2;
 
-			int score = Arbiter.isInCheck( bdAfter )
-						? (MAX_SCORE >> 2) // BIG bonus for checking moves.
-						: 0;
+			final int piece = Piece.getType( bd.sq[ move.iSqFrom ] );
+			final int iSqKing = bd.getKingSquare( bd.getMovingPlayer() ^ 1 );
+
+			int score = 0;
+
+			if (piece == KNIGHT && BitUtil.isSet( Bitboards.knight[ iSqKing ], move.iSqTo ))
+				score += CHECK_BONUS;
+			else
+				{
+				long bbAll = bd.map[ MAP_W_ALL ] | bd.map[ MAP_B_ALL ];
+				long bbMask = Square.getMask( move.iSqFrom ) | Square.getMask( move.iSqTo );
+				long bbSees = Bitboards.getDiagonalMovesFrom( iSqKing, bbAll ) |
+							  Bitboards.getLateralMovesFrom( iSqKing, bbAll );
+
+				if ((bbSees & bbMask) != 0 && Arbiter.isInCheck( new Board( bd, move ) ))
+					score += CHECK_BONUS; // BIG bonus for checking moves.
+				}
 			//
-			//	Bonus for capturing stuff, because that means fewer defenders.
+			//	Bonus for capturing stuff, because that means fewer defenders.  This won't work
+			//	for e.p. captures, but they're rare enough to not matter a lot.
 			//
-			int victim = Piece.getType( bd.sq[ move.iSqTo ] );
+			int victim = bd.sq[ move.iSqTo ];
 
 			if (victim != EMPTY)
-				score += getPieceValue( victim );
+				score += getPieceValue( Piece.getType( victim ) );
 			//
 			//	Bonus for promoting a pawn, because we can always use bigger pieces...
 			//
 			if (move.isPromotion())
 				score += getPieceValue( move.getPromotionPiece() ) - getPieceValue( PAWN );
-
-			//	Penalize distance from opponent's King (-8 pts for every square away)
-			int player = bd.getMovingPlayer();
-			int opposingKingSq = bd.getKingSquare( player ^ 1 );
-
-			score -= (Square.distance( move.iSqTo, opposingKingSq ) - 1) << 3;
 
 			return clampScore( score );
 			}

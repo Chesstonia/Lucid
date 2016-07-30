@@ -33,57 +33,72 @@
 package net.humbleprogrammer.humble;
 
 public class BitUtil
-    {
+	{
 
-    //  -----------------------------------------------------------------------
-    //	CONSTANTS
-    //	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	CONSTANTS
+	//	-----------------------------------------------------------------------
 
-    /** 64-bit integer with all bits set to one. */
-    public static final long ALL_ONES = ~0L;
+	/** 64-bit integer with all bits set to one. */
+	public static final long ALL_ONES = ~0L;
 
-    //  -----------------------------------------------------------------------
-    //	PUBLIC METHODS
-    //	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	PUBLIC METHODS
+	//	-----------------------------------------------------------------------
 
-    /**
-     * Returns a count of 1s in a bitboard.
-     *
-     * @param bb
-     *     Bitboard to test.
-     *
-     * @return Number of set bits.
-     */
-    public static int count( long bb )
-        { return (bb != 0) ? Long.bitCount( bb ) : 0; }
+	/**
+	 * Returns a count of 1s in a bitboard.
+	 *
+	 * @param bb
+	 * 	Bitboard to test.
+	 *
+	 * @return Number of set bits.
+	 */
+	public static int count( long bb )
+		{ return (bb != 0) ? Long.bitCount( bb ) : 0; }
 
 
-    /**
-     * First the first (least) one bit in a bitboard.
-     *
-     * @param bb
-     *     Bitboard to test.
-     *
-     * @return Zero-based offset of first bit, or -1 if no bits are set.
-     */
-    public static int first( long bb )
-        { return (bb != 0L) ? Long.numberOfTrailingZeros( bb ) : -1; }
+	/**
+	 * First the first (least) one bit in a bitboard.
+	 *
+	 * @param bb
+	 * 	Bitboard to test.
+	 *
+	 * @return Zero-based offset of first bit, or -1 if no bits are set.
+	 */
+	public static int first( long bb )
+		{ return (bb != 0L) ? Long.numberOfTrailingZeros( bb ) : -1; }
 
-    /**
-     * Tests a bitboard to determine if more than one bit is set.
-     *
-     * @param bb
-     *     Bitboard to test.
-     */
-    public static boolean multiple( long bb )
-        { return (bb != 0L && (bb & (bb - 1)) != 0L); }
+	/**
+	 * Tests a specific bit for non-zero.
+	 *
+	 * @param bb
+	 * 	Bitboard to test.
+	 * @param bit
+	 * 	Zero-based index of bit to test.
+	 *
+	 * @return .T. if bit is 1, or .F. if zero.
+	 */
+	public static boolean isSet( long bb, int bit )
+		{
+		return ((bb & (1L << bit)) != 0);
+		}
 
-    /**
-     * Tests a bitboard to determine if one (and only one) bit is set.
-     *
-     * @param bb
-     *     Bitboard to test.
-     */
-    public static boolean singleton( long bb )
-        { return (bb != 0L && (bb & (bb - 1)) == 0L); }
-    }   /* end of class BitUtil */
+	/**
+	 * Tests a bitboard to determine if more than one bit is set.
+	 *
+	 * @param bb
+	 * 	Bitboard to test.
+	 */
+	public static boolean multiple( long bb )
+		{ return (bb != 0L && (bb & (bb - 1)) != 0L); }
+
+	/**
+	 * Tests a bitboard to determine if one (and only one) bit is set.
+	 *
+	 * @param bb
+	 * 	Bitboard to test.
+	 */
+	public static boolean singleton( long bb )
+		{ return (bb != 0L && (bb & (bb - 1)) == 0L); }
+	}   /* end of class BitUtil */

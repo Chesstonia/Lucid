@@ -36,29 +36,23 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
-import net.humbleprogrammer.humble.*;
-import net.humbleprogrammer.maxx.*;
-import net.humbleprogrammer.maxx.factories.BoardFactory;
-import net.humbleprogrammer.maxx.factories.MoveFactory;
+import net.humbleprogrammer.humble.Stopwatch;
+import net.humbleprogrammer.humble.TimeUtil;
 import net.humbleprogrammer.maxx.interfaces.IPgnListener;
 import net.humbleprogrammer.maxx.pgn.*;
 
-public class Checker extends ToolboxApp
+public class Cleaner extends ToolboxApp
 	{
-	//  -----------------------------------------------------------------------
-	//	CONSTANTS
-	//	-----------------------------------------------------------------------
-	private static final int STOP_AFTER = 25;
 
 	//  -----------------------------------------------------------------------
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
 	/** Array of PGN files. */
-	private final List<Path> _listPGN;
+	private final List<Path>	_listPGN;
 
 	/** Number of errors found so far. */
-	private int _iFound;
+	private int					_iErrorsFound;
 
 	//  -----------------------------------------------------------------------
 	//	CTOR
@@ -68,21 +62,19 @@ public class Checker extends ToolboxApp
 	 * Default CTOR.
 	 *
 	 * @param strArgs
-	 * 	Command-line arguments.
+	 *            Command-line arguments.
 	 */
-	private Checker( String[] strArgs )
+	private Cleaner(String[] strArgs)
 		{
 		assert strArgs != null;
 		//	-----------------------------------------------------------------
-		String strPath = (strArgs.length > 0) ? strArgs[ 0 ] : "P:\\Chess\\PGN\\TWIC";
+		String strPath = (strArgs.length > 0) ? strArgs[0] : "P:\\Chess\\PGN\\TWIC";
 
-		_listPGN = getPGN( strPath );
+		_listPGN = getPGN(strPath);
 
-		printLine( "Found %,d *.pgn %s",
-				   _listPGN.size(),
-				   StrUtil.pluralize( _listPGN.size(), "file", null ) );
+		printLine("Found %,d *.pgn %s", _listPGN.size(), ((_listPGN.size() == 1) ? "file" : "files"));
 
-		if (_listPGN.isEmpty()) throw new RuntimeException( "No *.pgn files found." );
+		if (_listPGN.isEmpty()) throw new RuntimeException("No *.pgn files found.");
 		}
 
 	//  -----------------------------------------------------------------------
@@ -93,40 +85,30 @@ public class Checker extends ToolboxApp
 	 * Entry point for the application.
 	 *
 	 * @param strArgs
-	 * 	Command-line parameters.
+	 *            Command-line parameters.
 	 */
 	public static void main( String[] strArgs )
 		{
 		try
 			{
-			new Checker( strArgs ).run( STOP_AFTER );
+			new Cleaner(strArgs).run(50);
 			}
-		catch (Exception ex)
+		catch ( Exception ex )
 			{
-			s_log.warn( "Caught fatal exception.", ex );
+			s_log.warn("Caught fatal exception.", ex);
 			}
 		}
 
 	//  -----------------------------------------------------------------------
 	//	IMPLEMENTATION
 	//	-----------------------------------------------------------------------
-	private int _iLongest = 0;
 
-	private void display( Board bd, List<Move> moves )
+	private void displayError( String strPGN, String strError, int iGame )
 		{
-		if (bd == null || moves.size() <= _iLongest) return;
-		//	-----------------------------------------------------------------
-		_iFound++;
-		_iLongest = moves.size();
-
-		print( BoardFactory.exportEPD( bd ) );
-		print( "; bm" );
-		for ( Move move : moves )
-			print( ' ' + MoveFactory.toSAN( bd, move, true ) );
-
-		printLine( "" );
-
-		moves.clear();
+		printLine("Game #%,d:", (iGame + 1));
+		printLine(strPGN);
+		printLine(strError);
+		printLine("");
 		}
 
 	private void run( int iMaxCount )
@@ -135,82 +117,47 @@ public class Checker extends ToolboxApp
 		//	-----------------------------------------------------------------
 		try
 			{
-			IPgnListener listener = new CheckerListener();
+			int iNetGames = 0;
+			IPgnListener listener = new PgnValidator();
+			Stopwatch swatch = Stopwatch.startNew();
 
 			for ( Path path : _listPGN )
 				{
-				String strPGN;
-
-				try (PgnReader pgn = new PgnReader( new FileReader( path.toFile() ) ))
+				try (PgnReader pgn = new PgnReader(new FileReader(path.toFile())))
 					{
-					printLine( "# " + path.toString() );
+					int iGames;
+					String strPGN;
 
-					for ( int iGames = 0; (strPGN = pgn.readGame()) != null; ++iGames )
-						if (PgnParser.parse( listener, strPGN ))
+					printLine(path.toString());
+
+					for ( iGames = 0; (strPGN = pgn.readGame()) != null; ++iGames )
+						if (!PgnParser.parse(listener, strPGN))
 							{
-							if (iMaxCount > 0 && ++_iFound >= iMaxCount)
+							displayError(strPGN, PgnParser.getLastError(), iGames);
+
+							if (iMaxCount > 0 && ++_iErrorsFound >= iMaxCount)
 								{
-								printLine( "Stopped after %,d %s.",
-										   _iFound,
-										   StrUtil.pluralize( _iFound, "position", null ) );
+								printLine("Stopped after %,d errors.", _iErrorsFound);
 								return;
 								}
 							}
-						else
-							{
-							printLine( "Game #%,d:", (iGames + 1) );
-							printLine( strPGN );
-							printLine( PgnParser.getLastError() );
-							printLine( "" );
-							}
 
+					iNetGames += iGames;
 					}
 				}
+
+			swatch.stop();
+
+			long lMillisecs = Math.max(1L, swatch.getElapsedMillisecs());
+			String strFiles = String.format("%,d %s", _listPGN.size(), ((_listPGN.size() == 1) ? "file" : "files"));
+			String strGames = String.format("%,d %s", iNetGames, ((iNetGames == 1) ? "game" : "games"));
+
+			print("Validated %s containing %s in %s ", strFiles, strGames, TimeUtil.formatMillisecs(lMillisecs, false));
+			printLine("(%,d gps)", ((iNetGames * 1000L) / lMillisecs));
 			}
-		catch (IOException ex)
+		catch ( IOException ex )
 			{
-			s_log.error( ex.getMessage() );
+			s_log.error(ex.getMessage());
 			}
 		}
-
-	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: CheckerListener
-	//	-----------------------------------------------------------------------
-
-	private class CheckerListener extends PgnValidator
-		{
-		/**
-		 * A move has been parsed.
-		 *
-		 * @param strSAN
-		 * 	Move string.
-		 * @param strSuffix
-		 * 	Optional suffix string.
-		 *
-		 * @return .T. if parsing is to continue; .F. to abort parsing.
-		 */
-		@Override
-		public boolean onMove( final String strSAN, final String strSuffix )
-			{
-			if (!super.onMove( strSAN, strSuffix )) return false;
-			//	-------------------------------------------------------------
-			final Board bd = new Board( _pv.getCurrentPosition() );
-			final List<Move> checks = new ArrayList<>();
-			final MoveList moves = MoveList.generate( bd );
-
-			for ( Move mv : moves )
-				{
-				Board bdNew = new Board( bd );
-
-				bdNew.makeMove( mv );
-				if (Arbiter.isInCheck( bdNew ))
-					checks.add( mv );
-				}
-
-			if (!checks.isEmpty())
-				display( bd, checks );
-
-			return true;
-			}
-		}
-	} /* end of class Checker */
+	} /* end of class Cleaner */
