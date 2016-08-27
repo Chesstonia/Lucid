@@ -71,18 +71,17 @@ public class Evaluator
 		{
 		DBC.requireNotNull( bd, "Board" );
 		//	-----------------------------------------------------------------
-		//	@formatter:off
-		int iScore = ((BitUtil.count( bd.map[ MAP_W_PAWN ] ) * s_pieceValue[ PAWN ]) +
-					  (BitUtil.count( bd.map[ MAP_W_KNIGHT ] ) * s_pieceValue[ KNIGHT ]) +
-					  (BitUtil.count( bd.map[ MAP_W_BISHOP ] ) * s_pieceValue[ BISHOP ]) +
-					  (BitUtil.count( bd.map[ MAP_W_ROOK ] ) * s_pieceValue[ ROOK ]) +
-					  (BitUtil.count( bd.map[ MAP_W_QUEEN ] ) * s_pieceValue[ QUEEN ])) -
-					 ((BitUtil.count( bd.map[ MAP_B_PAWN ] ) * s_pieceValue[ PAWN ]) +
-					  (BitUtil.count( bd.map[ MAP_B_KNIGHT ] ) * s_pieceValue[ KNIGHT ]) +
-					  (BitUtil.count( bd.map[ MAP_B_BISHOP ] ) * s_pieceValue[ BISHOP ]) +
-					  (BitUtil.count( bd.map[ MAP_B_ROOK ] ) * s_pieceValue[ ROOK ]) +
-					  (BitUtil.count( bd.map[ MAP_B_QUEEN ] ) * s_pieceValue[ QUEEN ]));
-		//	@formatter:on
+		int iPawns = BitUtil.count( bd.map[ MAP_W_PAWN ] ) - BitUtil.count( bd.map[ MAP_B_PAWN ] );
+		int iKnights = BitUtil.count( bd.map[ MAP_W_KNIGHT ] ) - BitUtil.count( bd.map[ MAP_B_KNIGHT ] );
+		int iBishops = BitUtil.count( bd.map[ MAP_W_BISHOP ] ) - BitUtil.count( bd.map[ MAP_B_BISHOP ] );
+		int iRooks = BitUtil.count( bd.map[ MAP_W_ROOK ] ) - BitUtil.count( bd.map[ MAP_B_ROOK ] );
+		int iQueens = BitUtil.count( bd.map[ MAP_W_QUEEN ] ) - BitUtil.count( bd.map[ MAP_B_QUEEN ] );
+
+		int iScore = (iPawns * s_pieceValue[ PAWN ]) +
+					 (iKnights * s_pieceValue[ KNIGHT ]) +
+					 (iBishops * s_pieceValue[ BISHOP ]) +
+					 (iRooks * s_pieceValue[ ROOK ]) +
+					 (iQueens * s_pieceValue[ QUEEN ]);
 
 		return (bd.getMovingPlayer() == WHITE) ? iScore : -iScore;
 		}
@@ -288,9 +287,7 @@ public class Evaluator
 			//
 			//	Try all the top-level (root) moves.
 			//
-			MoveList moves = MoveList.generate( bd );
-
-			moves.sort( this );
+			MoveList moves = MoveList.generate( bd ).sort( this );
 
 			for ( Move move : moves )
 				{
@@ -346,39 +343,54 @@ public class Evaluator
 
 			s_nodes++;
 			_pv[ iDepth ].clear();
+
+			if (iAlpha < -scoreMate) iAlpha = -scoreMate;
+			if (iBeta > scoreMate) iBeta = scoreMate;
+			if (iAlpha >= iBeta) return iBeta;
 			//
 			//	If this is a leaf node, the only thing we care about is whether or not the
 			//	player has been mated.
 			//
-			MoveList moves = MoveList.generate( bd );
-
-			if (moves.isEmpty())
-				return Arbiter.isInCheck( bd ) ? -scoreMate : 0;
-
 			if (iDeeper >= _iMaxDepth)
-				return (moves.isEmpty() && Arbiter.isInCheck( bd )) ? -scoreMate : 0;
+				return Arbiter.isMated( bd ) ? -scoreMate : 0;
 			//
 			//	Now try the moves.
 			//
-			moves.sort( this );
+			boolean bMadeMove = false;
+			int iScore;
+			MoveList moves = MoveList.generate( bd ).sort( this );
 
 			for ( Move move : moves )
 				{
 				if (move.getPromotionPiece() == BISHOP || move.getPromotionPiece() == ROOK)
 					continue; // ignore underpromotions for mate-in-x problems
 
-				int iScore = -search( new Board( bd, move ), iDeeper, -iBeta, -iAlpha );
+				if (bMadeMove)
+					{
+					Board bdNew = new Board( bd, move );
+
+					iScore = -search( bdNew, iDeeper, -(iAlpha + 1), -iAlpha );
+					if (iScore > iAlpha && iScore < iBeta)
+						iScore = -search( bdNew, iDeeper, -iBeta, -iAlpha );
+					}
+				else
+					{
+					bMadeMove = true;
+					iScore = -search( new Board( bd, move ), iDeeper, -iBeta, -iAlpha );
+					}
 
 				if (iScore > iAlpha)
 					{
-					if (iScore >= iBeta) return iBeta;
-
+					if (iScore >= iBeta)
+						return iScore;
 					iAlpha = iScore;
 					_pv[ iDepth ].build( move, _pv[ iDeeper ] );
 					}
 				}
 
-			return iAlpha;
+			return bMadeMove
+				   ? iAlpha
+				   : (Arbiter.isInCheck( bd ) ? -scoreMate : 0);
 			}
 
 		@Override
@@ -387,7 +399,7 @@ public class Evaluator
 			assert bd != null;
 			assert bd.isLegalMove( move );
 			//	-----------------------------------------------------
-			final int CHECK_BONUS = MAX_SCORE >> 2;
+			final int CHECK_BONUS = (MAX_SCORE - MAX_MATE_DEPTH) >> 2;
 
 			final int piece = Piece.getType( bd.sq[ move.iSqFrom ] );
 			final int iSqKing = bd.getKingSquare( bd.getMovingPlayer() ^ 1 );

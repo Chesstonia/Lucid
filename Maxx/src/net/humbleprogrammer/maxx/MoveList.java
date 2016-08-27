@@ -91,7 +91,7 @@ public class MoveList implements Iterable<Move>
 	/** Bitboard of potential "To" squares. */
 	private long    _bbToSq;
 	/** Bitboard of all pieces that are NOT pinned. */
-	private long    _bbUnpinned;
+	private long    _bbPinned;
 
 	//  -----------------------------------------------------------------------
 	//	CTOR
@@ -251,6 +251,7 @@ public class MoveList implements Iterable<Move>
 	public MoveList sort( IMoveScorer scorer )
 		{
 		DBC.requireNotNull( scorer, "Move Scorer" );
+
 		if (_iCount <= 1) return this;
 		//	-----------------------------------------------------------------
 		int index = 0;
@@ -348,7 +349,7 @@ public class MoveList implements Iterable<Move>
 		long bbSqFrom = 1L << iSqFrom;
 
 		if (iMoveType == Move.Type.EN_PASSANT ||
-			(_bbUnpinned & bbSqFrom) == 0L)
+			(_bbPinned & bbSqFrom) != 0L)
 			{
 			long bbSqBoth = bbSqFrom | (1L << iSqTo);
 			//
@@ -708,6 +709,7 @@ public class MoveList implements Iterable<Move>
 		{
 		_bbFromSq = _bbPlayer;
 		_bbToSq = ~_bbPlayer;
+		_bbPinned = 0;
 		//
 		//	See if there are any e.p. captures possible.
 		//
@@ -726,16 +728,13 @@ public class MoveList implements Iterable<Move>
 
 		if (_bbCheckers == 0L)
 			{
-			_bbUnpinned = _bbPlayer;
 			//
 			//  Find pinned pieces.  This is done by finding all of the opposing pieces that
 			//  could attack the King if the moving player's pieces were removed.
 			//
-			long bbDiagonal =
-				_map[ MAP_W_QUEEN + _opponent ] | _map[ MAP_W_BISHOP + _opponent ];
+			long bbDiagonal = _map[ MAP_W_QUEEN + _opponent ] | _map[ MAP_W_BISHOP + _opponent ];
 			long bbLateral = _map[ MAP_W_QUEEN + _opponent ] | _map[ MAP_W_ROOK + _opponent ];
-			long bbPinners = Bitboards.getDiagonalAttackers( _iSqKing, bbDiagonal, _bbOpponent )
-							 |
+			long bbPinners = Bitboards.getDiagonalAttackers( _iSqKing, bbDiagonal, _bbOpponent ) |
 							 Bitboards.getLateralAttackers( _iSqKing, bbLateral, _bbOpponent );
 
 			for ( long bb = bbPinners & ~Bitboards.king[ _iSqKing ]; bb != 0L; bb &= (bb - 1) )
@@ -746,10 +745,10 @@ public class MoveList implements Iterable<Move>
 				//	Pinned pieces may still be able to move (except for Knights) but need to
 				//	test for check when they do so.
 				//
-				long bbBetween =
-					_bbPlayer & Bitboards.getSquaresBetween( _iSqKing, BitUtil.first( bb ) );
+				long bbBetween = _bbPlayer & Bitboards.getSquaresBetween( _iSqKing, BitUtil.first( bb ) );
 
-				if (BitUtil.singleton( bbBetween )) _bbUnpinned ^= bbBetween;
+				if (BitUtil.singleton( bbBetween ))
+					_bbPinned |= bbBetween;
 				}
 			}
 		//
@@ -775,6 +774,8 @@ public class MoveList implements Iterable<Move>
 					_bbEP | _bbKing | Bitboards.getAttackedBy( _map, iSqChecker, _player );
 				_bbToSq &= _bbCheckers | Bitboards.king[ _iSqKing ] | Square.getMask( iSqEP );
 				}
+
+			_bbPinned = _bbPlayer;	// treat all pieces as if they're pinned
 			}
 		//
 		//  The King is being threatened by more than one attacker (double check).  The only
@@ -784,6 +785,7 @@ public class MoveList implements Iterable<Move>
 			{
 			_bbFromSq &= _bbKing;
 			_bbToSq &= Bitboards.king[ _iSqKing ];
+			_bbPinned = _bbPlayer;	// treat all pieces as if they're pinned
 			}
 		}
 
