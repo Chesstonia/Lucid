@@ -71,11 +71,16 @@ public class Evaluator
 		{
 		DBC.requireNotNull( bd, "Board" );
 		//	-----------------------------------------------------------------
-		int iPawns = BitUtil.count( bd.map[ MAP_W_PAWN ] ) - BitUtil.count( bd.map[ MAP_B_PAWN ] );
-		int iKnights = BitUtil.count( bd.map[ MAP_W_KNIGHT ] ) - BitUtil.count( bd.map[ MAP_B_KNIGHT ] );
-		int iBishops = BitUtil.count( bd.map[ MAP_W_BISHOP ] ) - BitUtil.count( bd.map[ MAP_B_BISHOP ] );
-		int iRooks = BitUtil.count( bd.map[ MAP_W_ROOK ] ) - BitUtil.count( bd.map[ MAP_B_ROOK ] );
-		int iQueens = BitUtil.count( bd.map[ MAP_W_QUEEN ] ) - BitUtil.count( bd.map[ MAP_B_QUEEN ] );
+		int iPawns =
+			BitUtil.count( bd.map[ MAP_W_PAWN ] ) - BitUtil.count( bd.map[ MAP_B_PAWN ] );
+		int iKnights =
+			BitUtil.count( bd.map[ MAP_W_KNIGHT ] ) - BitUtil.count( bd.map[ MAP_B_KNIGHT ] );
+		int iBishops =
+			BitUtil.count( bd.map[ MAP_W_BISHOP ] ) - BitUtil.count( bd.map[ MAP_B_BISHOP ] );
+		int iRooks =
+			BitUtil.count( bd.map[ MAP_W_ROOK ] ) - BitUtil.count( bd.map[ MAP_B_ROOK ] );
+		int iQueens =
+			BitUtil.count( bd.map[ MAP_W_QUEEN ] ) - BitUtil.count( bd.map[ MAP_B_QUEEN ] );
 
 		int iScore = (iPawns * s_pieceValue[ PAWN ]) +
 					 (iKnights * s_pieceValue[ KNIGHT ]) +
@@ -171,11 +176,15 @@ public class Evaluator
 		{
 		if (bd == null || !Square.isValid( iSqTarget )) return false;
 		//	-----------------------------------------------------------------
-		MoveList moves = MoveList.generateCaptures( bd, iSqTarget );
+		MoveList moves = MoveList.generateMovesTo( bd, iSqTarget );
 
 		for ( Move mv : moves )
-			if (MoveList.generateCaptures( new Board( bd, mv ), iSqTarget ).isEmpty())
+			{
+			Board bdNew = new Board( bd ).makeMove( mv );
+
+			if (MoveList.generateMovesTo( bdNew, iSqTarget ).isEmpty())
 				return true;
+			}
 
 		return false;
 		}
@@ -291,7 +300,8 @@ public class Evaluator
 
 			for ( Move move : moves )
 				{
-				int iScore = -search( new Board( bd, move ), 0, MIN_SCORE, MAX_SCORE );
+				Board bdNew = new Board( bd ).makeMove( move );
+				int iScore = -search( bdNew, 0, MIN_SCORE, MAX_SCORE );
 
 				if (iScore > (MAX_SCORE - MAX_MATE_DEPTH))
 					{
@@ -365,10 +375,10 @@ public class Evaluator
 				if (move.getPromotionPiece() == BISHOP || move.getPromotionPiece() == ROOK)
 					continue; // ignore underpromotions for mate-in-x problems
 
+				Board bdNew = new Board( bd ).makeMove( move );
+
 				if (bMadeMove)
 					{
-					Board bdNew = new Board( bd, move );
-
 					iScore = -search( bdNew, iDeeper, -(iAlpha + 1), -iAlpha );
 					if (iScore > iAlpha && iScore < iBeta)
 						iScore = -search( bdNew, iDeeper, -iBeta, -iAlpha );
@@ -376,7 +386,7 @@ public class Evaluator
 				else
 					{
 					bMadeMove = true;
-					iScore = -search( new Board( bd, move ), iDeeper, -iBeta, -iAlpha );
+					iScore = -search( bdNew, iDeeper, -iBeta, -iAlpha );
 					}
 
 				if (iScore > iAlpha)
@@ -412,11 +422,13 @@ public class Evaluator
 				{
 				long bbAll = bd.map[ MAP_W_ALL ] | bd.map[ MAP_B_ALL ];
 				long bbMask = Square.getMask( move.iSqFrom ) | Square.getMask( move.iSqTo );
-				long bbSees = Bitboards.getDiagonalMovesFrom( iSqKing, bbAll ) |
-							  Bitboards.getLateralMovesFrom( iSqKing, bbAll );
+				long bbSees = Bitboards.getQueenMovesFrom( iSqKing, bbAll );
 
-				if ((bbSees & bbMask) != 0 && Arbiter.isInCheck( new Board( bd, move ) ))
+				if ((bbSees & bbMask) != 0 &&
+					Arbiter.isInCheck( new Board( bd ).makeMove( move ) ))
+					{
 					score += CHECK_BONUS; // BIG bonus for checking moves.
+					}
 				}
 			//
 			//	Bonus for capturing stuff, because that means fewer defenders.  This won't work

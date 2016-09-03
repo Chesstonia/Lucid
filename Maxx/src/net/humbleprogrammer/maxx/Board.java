@@ -149,15 +149,17 @@ public class Board
 	 *
 	 * @param src
 	 * 	Board to copy from.
-	 * @param move
-	 * 	Move to apply.
+	 * @param packed
+	 * 	Packed move to apply.
 	 */
-	Board( Board src, Move move )
+	Board( Board src, int packed )
 		{
 		assert src != null;
 		//	-----------------------------------------------------------------
 		copyFrom( src );
-		makeMove( move );
+		applyMove( Move.unpackFromSq( packed ),
+				   Move.unpackToSq( packed ),
+				   Move.unpackType( packed ) );
 		}
 
 	//  -----------------------------------------------------------------------
@@ -238,83 +240,15 @@ public class Board
 	 *
 	 * @param move
 	 * 	Move to make.
+	 *
+	 * @return this
 	 */
-	public void makeMove( Move move )
+	public Board makeMove( Move move )
 		{
 		if (!isLegalMove( move )) throw new IllegalMoveException( this, move );
 		//	-----------------------------------------------------------------
-		int iSqFrom = move.iSqFrom;
-		int iSqTo = move.iSqTo;
-
-		if (sq[ iSqTo ] != EMPTY)
-			{
-			_iHalfMoves = 0;
-			removePiece( iSqTo );
-			}
-		else if (Piece.getType( sq[ iSqFrom ] ) == PAWN)
-			_iHalfMoves = 0;
-		else
-			_iHalfMoves++;
-
-		_iSqEP = INVALID;
-
-		switch (move.iType)
-			{
-			case Move.Type.NORMAL:
-				movePiece( iSqFrom, iSqTo );
-				break;
-
-			case Move.Type.PAWN_PUSH:
-				movePiece( iSqFrom, iSqTo );
-				_iSqEP = (iSqFrom + iSqTo) >>> 1;
-				break;
-
-			case Move.Type.CASTLING:
-				movePiece( iSqFrom, iSqTo );
-				if (iSqTo > iSqFrom)    // .T. if O-O; .F. if O-O-O
-					movePiece( iSqTo + 1, iSqTo - 1 );
-				else
-					movePiece( iSqTo - 2, iSqTo + 1 );
-				break;
-
-			case Move.Type.EN_PASSANT:
-				movePiece( iSqFrom, iSqTo );
-				removePiece( (iSqFrom & 0x38) | (iSqTo & 0x07) );
-				break;
-
-			case Move.Type.PROMOTION:
-				removePiece( iSqFrom );
-				placePiece( iSqTo, Piece.W_QUEEN + _player );
-				break;
-
-			case Move.Type.PROMOTE_ROOK:
-				removePiece( iSqFrom );
-				placePiece( iSqTo, Piece.W_ROOK + _player );
-				break;
-
-			case Move.Type.PROMOTE_BISHOP:
-				removePiece( iSqFrom );
-				placePiece( iSqTo, Piece.W_BISHOP + _player );
-				break;
-
-			case Move.Type.PROMOTE_KNIGHT:
-				removePiece( iSqFrom );
-				placePiece( iSqTo, Piece.W_KNIGHT + _player );
-				break;
-
-			default:
-				throw new RuntimeException( "Unrecognized move type." );
-			}
-		//
-		//  Update the castling flags, move number, and flip the player.
-		//
-		if (_castling != CastlingFlags.NONE)
-			_castling &= s_castling[ iSqFrom ] & s_castling[ iSqTo ];
-
-		if ((_player ^= 1) == WHITE)
-			_iFullMoves++;
-
-		_hashExtra = ZobristHash.getExtraHash( _castling, _iSqEP, _player );
+		applyMove( move.iSqFrom, move.iSqTo, move.iType );
+		return this;
 		}
 
 	//  -----------------------------------------------------------------------
@@ -596,6 +530,89 @@ public class Board
 	//  -----------------------------------------------------------------------
 	//	METHODS
 	//	-----------------------------------------------------------------------
+
+	/**
+	 * Makes a move on the board.
+	 *
+	 * @param iSqFrom
+	 * 	From square, in 8x8 format.
+	 * @param iSqTo
+	 * 	To square, in 8x8 format.
+	 * @param iType
+	 * 	Move.Type.*
+	 */
+	private void applyMove( int iSqFrom, int iSqTo, int iType )
+		{
+		if (sq[ iSqTo ] != EMPTY)
+			{
+			_iHalfMoves = 0;
+			removePiece( iSqTo );
+			}
+		else if (Piece.getType( sq[ iSqFrom ] ) == PAWN)
+			_iHalfMoves = 0;
+		else
+			_iHalfMoves++;
+
+		_iSqEP = INVALID;
+
+		switch (iType)
+			{
+			case Move.Type.NORMAL:
+				movePiece( iSqFrom, iSqTo );
+				break;
+
+			case Move.Type.PAWN_PUSH:
+				movePiece( iSqFrom, iSqTo );
+				_iSqEP = (iSqFrom + iSqTo) >>> 1;
+				break;
+
+			case Move.Type.CASTLING:
+				movePiece( iSqFrom, iSqTo );
+				if (iSqTo > iSqFrom)    // .T. if O-O; .F. if O-O-O
+					movePiece( iSqTo + 1, iSqTo - 1 );
+				else
+					movePiece( iSqTo - 2, iSqTo + 1 );
+				break;
+
+			case Move.Type.EN_PASSANT:
+				movePiece( iSqFrom, iSqTo );
+				removePiece( (iSqFrom & 0x38) | (iSqTo & 0x07) );
+				break;
+
+			case Move.Type.PROMOTION:
+				removePiece( iSqFrom );
+				placePiece( iSqTo, Piece.W_QUEEN + _player );
+				break;
+
+			case Move.Type.PROMOTE_ROOK:
+				removePiece( iSqFrom );
+				placePiece( iSqTo, Piece.W_ROOK + _player );
+				break;
+
+			case Move.Type.PROMOTE_BISHOP:
+				removePiece( iSqFrom );
+				placePiece( iSqTo, Piece.W_BISHOP + _player );
+				break;
+
+			case Move.Type.PROMOTE_KNIGHT:
+				removePiece( iSqFrom );
+				placePiece( iSqTo, Piece.W_KNIGHT + _player );
+				break;
+
+			default:
+				throw new RuntimeException( "Unrecognized move type." );
+			}
+		//
+		//  Update the castling flags, move number, and flip the player.
+		//
+		if (_castling != CastlingFlags.NONE)
+			_castling &= s_castling[ iSqFrom ] & s_castling[ iSqTo ];
+
+		if ((_player ^= 1) == WHITE)
+			_iFullMoves++;
+
+		_hashExtra = ZobristHash.getExtraHash( _castling, _iSqEP, _player );
+		}
 
 	/**
 	 * Copies another board to this one.
