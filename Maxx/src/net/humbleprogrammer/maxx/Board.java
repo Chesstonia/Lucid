@@ -149,6 +149,23 @@ public class Board
 	 *
 	 * @param src
 	 * 	Board to copy from.
+	 * @param move
+	 * 	Move to apply.
+	 */
+	Board( Board src, Move move )
+		{
+		assert src != null;
+		assert move != null;
+		//	-----------------------------------------------------------------
+		copyFrom( src );
+		makeMove( move );
+		}
+
+	/**
+	 * Alternate CTOR for the {@link Board} class.
+	 *
+	 * @param src
+	 * 	Board to copy from.
 	 * @param packed
 	 * 	Packed move to apply.
 	 */

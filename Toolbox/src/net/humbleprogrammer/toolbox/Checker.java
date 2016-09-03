@@ -196,7 +196,7 @@ public class Checker extends ToolboxApp
 			//	-------------------------------------------------------------
 			final Board bd = new Board( _pv.getCurrentPosition() );
 			final List<Move> checks = new ArrayList<>();
-			final MoveList moves = MoveList.generate( bd );
+			final MoveList moves = new MoveList( bd );
 
 			for ( Move mv : moves )
 				{

@@ -176,13 +176,13 @@ public class Evaluator
 		{
 		if (bd == null || !Square.isValid( iSqTarget )) return false;
 		//	-----------------------------------------------------------------
-		MoveList moves = MoveList.generateMovesTo( bd, iSqTarget );
+		MoveList moves = new MoveList( bd, iSqTarget );
 
 		for ( Move mv : moves )
 			{
-			Board bdNew = new Board( bd ).makeMove( mv );
+			Board bdNew = new Board( bd, mv );
 
-			if (MoveList.generateMovesTo( bdNew, iSqTarget ).isEmpty())
+			if (new MoveList( bdNew, iSqTarget ).isEmpty())
 				return true;
 			}
 
@@ -296,11 +296,11 @@ public class Evaluator
 			//
 			//	Try all the top-level (root) moves.
 			//
-			MoveList moves = MoveList.generate( bd ).sort( this );
+			MoveList moves = new MoveList( bd ).sort( this );
 
 			for ( Move move : moves )
 				{
-				Board bdNew = new Board( bd ).makeMove( move );
+				Board bdNew = new Board( bd, move );
 				int iScore = -search( bdNew, 0, MIN_SCORE, MAX_SCORE );
 
 				if (iScore > (MAX_SCORE - MAX_MATE_DEPTH))
@@ -353,29 +353,29 @@ public class Evaluator
 
 			s_nodes++;
 			_pv[ iDepth ].clear();
-
-			if (iAlpha < -scoreMate) iAlpha = -scoreMate;
-			if (iBeta > scoreMate) iBeta = scoreMate;
-			if (iAlpha >= iBeta) return iBeta;
 			//
 			//	If this is a leaf node, the only thing we care about is whether or not the
 			//	player has been mated.
 			//
 			if (iDeeper >= _iMaxDepth)
 				return Arbiter.isMated( bd ) ? -scoreMate : 0;
+
+			if (iAlpha < -scoreMate) iAlpha = -scoreMate;
+			if (iBeta > scoreMate) iBeta = scoreMate;
+			if (iAlpha >= iBeta) return iBeta;
 			//
 			//	Now try the moves.
 			//
 			boolean bMadeMove = false;
-			int iScore;
-			MoveList moves = MoveList.generate( bd ).sort( this );
+			MoveList moves = new MoveList( bd ).sort( this );
 
 			for ( Move move : moves )
 				{
 				if (move.getPromotionPiece() == BISHOP || move.getPromotionPiece() == ROOK)
 					continue; // ignore underpromotions for mate-in-x problems
 
-				Board bdNew = new Board( bd ).makeMove( move );
+				int iScore;
+				Board bdNew = new Board( bd, move );
 
 				if (bMadeMove)
 					{
@@ -404,20 +404,28 @@ public class Evaluator
 			}
 
 		@Override
-		public int scoreMove( final Board bd, final Move move )
+		public int scoreMove( final Board bd, Move move )
 			{
 			assert bd != null;
 			assert bd.isLegalMove( move );
 			//	-----------------------------------------------------
 			final int CHECK_BONUS = (MAX_SCORE - MAX_MATE_DEPTH) >> 2;
 
-			final int piece = Piece.getType( bd.sq[ move.iSqFrom ] );
-			final int iSqKing = bd.getKingSquare( bd.getMovingPlayer() ^ 1 );
-
 			int score = 0;
+			//
+			//	Making a move to see if it checks the opponent's King is expensive, so
+			//	spend a few clock cycles to see if there's any chance.  Knights are easy,
+			//	so they get a special check.  For everything else, check to see if the
+			//	opponent's King can "see" either the "From" square or the "To" square. If
+			//	not, there's no chance of the move resulting in check.
+			//
+			int iSqKing = bd.getKingSquare( bd.getMovingPlayer() ^ 1 );
 
-			if (piece == KNIGHT && BitUtil.isSet( Bitboards.knight[ iSqKing ], move.iSqTo ))
+			if (Piece.getType( bd.sq[ move.iSqFrom ] ) == KNIGHT &&
+				BitUtil.isSet( Bitboards.knight[ iSqKing ], move.iSqTo ))
+				{
 				score += CHECK_BONUS;
+				}
 			else
 				{
 				long bbAll = bd.map[ MAP_W_ALL ] | bd.map[ MAP_B_ALL ];
@@ -425,7 +433,7 @@ public class Evaluator
 				long bbSees = Bitboards.getQueenMovesFrom( iSqKing, bbAll );
 
 				if ((bbSees & bbMask) != 0 &&
-					Arbiter.isInCheck( new Board( bd ).makeMove( move ) ))
+					Arbiter.isInCheck( new Board( bd, move ) ))
 					{
 					score += CHECK_BONUS; // BIG bonus for checking moves.
 					}

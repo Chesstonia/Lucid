@@ -41,20 +41,6 @@ public class Arbiter
 	{
 
 	//  -----------------------------------------------------------------------
-	//	CTOR
-	//	-----------------------------------------------------------------------
-
-	/**
-	 * Default CTOR.
-	 */
-	private Arbiter()
-		{
-		/*
-		 * EMPTY CTOR
-		 */
-		}
-
-	//  -----------------------------------------------------------------------
 	//	PUBLIC METHODS
 	//	-----------------------------------------------------------------------
 
@@ -145,7 +131,7 @@ public class Arbiter
 		{
 		if (bd == null) return false;
 		//	-----------------------------------------------------------------
-		return (isInCheck(bd) && !MoveList.hasLegalMove( bd ));
+		return (isInCheck(bd) && !MoveGenerator.hasLegalMove( bd ));
 		}
 
 	/**
@@ -160,7 +146,7 @@ public class Arbiter
 		{
 		if (bd == null) return false;
 		//	-----------------------------------------------------------------
-		return !(isInCheck(bd) || MoveList.hasLegalMove( bd ));
+		return !(isInCheck(bd) || MoveGenerator.hasLegalMove( bd ));
 		}
 
 	} /* end of class Arbiter */

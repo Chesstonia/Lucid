@@ -34,93 +34,95 @@ package net.humbleprogrammer.maxx;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
+@SuppressWarnings( "WeakerAccess" )
 public class Piece
-    {
-    //  -----------------------------------------------------------------------
-    //	PUBLIC DECLARATIONS
-    //	-----------------------------------------------------------------------
-    /** index = 2 */
-    public static final int W_PAWN   = MAP_W_PAWN;
-    /** index = 3 */
-    public static final int B_PAWN   = MAP_B_PAWN;
-    /** index = 4 */
-    public static final int W_KNIGHT = MAP_W_KNIGHT;
-    /** index = 5 */
-    public static final int B_KNIGHT = MAP_B_KNIGHT;
-    /** index = 6 */
-    public static final int W_BISHOP = MAP_W_BISHOP;
-    /** index = 7 */
-    public static final int B_BISHOP = MAP_B_BISHOP;
-    /** index = 8 */
-    public static final int W_ROOK   = MAP_W_ROOK;
-    /** index = 9 */
-    public static final int B_ROOK   = MAP_B_ROOK;
-    /** index = 10 */
-    public static final int W_QUEEN  = MAP_W_QUEEN;
-    /** index = 11 */
-    public static final int B_QUEEN  = MAP_B_QUEEN;
-    /** index = 12 */
-    public static final int W_KING   = MAP_W_KING;
-    /** index = 13 */
-    public static final int B_KING   = MAP_B_KING;
-    
-    /** Lowest piece index */
-    public static final int FIRST = W_PAWN;
-    /** Highest piece index */
-    public static final int LAST = B_KING;
+	{
+	//  -----------------------------------------------------------------------
+	//	PUBLIC DECLARATIONS
+	//	-----------------------------------------------------------------------
+	/** index = 2 */
+	public static final int W_PAWN   = MAP_W_PAWN;
+	/** index = 3 */
+	public static final int B_PAWN   = MAP_B_PAWN;
+	/** index = 4 */
+	public static final int W_KNIGHT = MAP_W_KNIGHT;
+	/** index = 5 */
+	public static final int B_KNIGHT = MAP_B_KNIGHT;
+	/** index = 6 */
+	public static final int W_BISHOP = MAP_W_BISHOP;
+	/** index = 7 */
+	public static final int B_BISHOP = MAP_B_BISHOP;
+	/** index = 8 */
+	public static final int W_ROOK   = MAP_W_ROOK;
+	/** index = 9 */
+	public static final int B_ROOK   = MAP_B_ROOK;
+	/** index = 10 */
+	public static final int W_QUEEN  = MAP_W_QUEEN;
+	/** index = 11 */
+	public static final int B_QUEEN  = MAP_B_QUEEN;
+	/** index = 12 */
+	public static final int W_KING   = MAP_W_KING;
+	/** index = 13 */
+	public static final int B_KING   = MAP_B_KING;
 
-    //  -----------------------------------------------------------------------
-    //	PUBLIC METHODS
-    //	-----------------------------------------------------------------------
+	/** Lowest piece index */
+	public static final int FIRST = W_PAWN;
+	/** Highest piece index */
+	public static final int LAST  = B_KING;
 
-    /**
-     * Returns a piece of the given type and color.
-     *
-     * @param pc
-     *     Piece color [BLACK|WHITE]
-     * @param pt
-     *     Piece type [PAWN..KING]
-     *
-     * @return Piece.*, or EMPTY if either type or color are invalid.
-     */
-    static int create( int pc, int pt )
-        {
-        return (pt >= PAWN && pt <= KING && (pc == WHITE || pc == BLACK))
-               ? ((pt << 1) + pc)
-               : EMPTY;
-        }
+	//  -----------------------------------------------------------------------
+	//	PUBLIC METHODS
+	//	-----------------------------------------------------------------------
 
-    /**
-     * Extracts the piece color from a Piece.* constant.
-     *
-     * @param piece
-     *     Piece.* constant.
-     *
-     * @return [WHITE|BLACK] if piece is valid; EMPTY otherwise.
-     */
-    public static int getColor( int piece )
-        { return isValid( piece ) ? (piece & 1) : INVALID; }
+	/**
+	 * Returns a piece of the given type and color.
+	 *
+	 * @param pc
+	 * 	Piece color [BLACK|WHITE]
+	 * @param pt
+	 * 	Piece type [PAWN..KING]
+	 *
+	 * @return Piece.*, or EMPTY if either type or color are invalid.
+	 */
+	@SuppressWarnings( "unused" )
+	static int create( int pc, int pt )
+		{
+		return (pt >= PAWN && pt <= KING && (pc == WHITE || pc == BLACK))
+			   ? ((pt << 1) + pc)
+			   : EMPTY;
+		}
 
-    /**
-     * Extracts the piece color from a Piece.* constant.
-     *
-     * @param piece
-     *     Piece.* constant.
-     *
-     * @return Piece type (PAWN, KNIGHT, BISHOP, etc.)  if piece is valid; EMPTY otherwise.
-     */
-    public static int getType( int piece )
-        { return isValid( piece ) ? (piece >> 1) : INVALID; }
+	/**
+	 * Extracts the piece color from a Piece.* constant.
+	 *
+	 * @param piece
+	 * 	Piece.* constant.
+	 *
+	 * @return [WHITE|BLACK] if piece is valid; INVALID otherwise.
+	 */
+	public static int getColor( int piece )
+		{ return isValid( piece ) ? (piece & 1) : INVALID; }
 
-    /**
-     * Tests a piece value for validity.
-     *
-     * @param piece
-     *     Piece.* constant.
-     *
-     * @return .T. if valid; .F. otherwise.
-     */
-    public static boolean isValid( int piece )
-        { return (piece >= W_PAWN && piece <= B_KING); }
+	/**
+	 * Extracts the piece color from a Piece.* constant.
+	 *
+	 * @param piece
+	 * 	Piece.* constant.
+	 *
+	 * @return Piece type (PAWN, KNIGHT, BISHOP, etc.)  if piece is valid; EMPTY otherwise.
+	 */
+	public static int getType( int piece )
+		{ return isValid( piece ) ? (piece >> 1) : INVALID; }
 
-    }   /* end of enum Piece */
+	/**
+	 * Tests a piece value for validity.
+	 *
+	 * @param piece
+	 * 	Piece.* constant.
+	 *
+	 * @return .T. if valid; .F. otherwise.
+	 */
+	public static boolean isValid( int piece )
+		{ return (piece >= W_PAWN && piece <= B_KING); }
+
+	}   /* end of enum Piece */
