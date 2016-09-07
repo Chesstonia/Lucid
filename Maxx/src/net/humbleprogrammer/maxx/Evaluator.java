@@ -50,6 +50,9 @@ public class Evaluator
 	//	STATIC DECLARATIONS
 	//	-----------------------------------------------------------------------
 
+	/** Bonus for moves in mate search that check the opposing King. */
+	private static final int CHECK_BONUS = (MAX_SCORE - MAX_MATE_DEPTH) >> 2;
+
 	/** Piece Value Table */
 	private static final   int[]  s_pieceValue = { 0, 100, 325, 325, 500, 900, 0 };
 	/** Logger */
@@ -400,7 +403,7 @@ public class Evaluator
 
 			return bMadeMove
 				   ? iAlpha
-				   : (Arbiter.isInCheck( bd ) ? -scoreMate : 0);
+				   : (bd.isInCheck() ? -scoreMate : 0);
 			}
 
 		@Override
@@ -409,33 +412,46 @@ public class Evaluator
 			assert bd != null;
 			assert bd.isLegalMove( move );
 			//	-----------------------------------------------------
-			final int CHECK_BONUS = (MAX_SCORE - MAX_MATE_DEPTH) >> 2;
-
 			int score = 0;
+			int player = bd.getMovingPlayer();
+			int iSqKing = bd.getKingSquare( player ^ 1 );
 			//
 			//	Making a move to see if it checks the opponent's King is expensive, so
-			//	spend a few clock cycles to see if there's any chance.  Knights are easy,
-			//	so they get a special check.  For everything else, check to see if the
-			//	opponent's King can "see" either the "From" square or the "To" square. If
-			//	not, there's no chance of the move resulting in check.
+			//	spend a few clock cycles to see if there's any chance.  Knights and pawns
+			//	get unique tests; everything else checks to see if the opponent's King
+			//	can "see" either the "From" square or the "To" square. If not, there's no
+			//	chance of the move resulting in check.
 			//
-			int iSqKing = bd.getKingSquare( bd.getMovingPlayer() ^ 1 );
+			int piece = Piece.getType( bd.sq[ move.iSqFrom ] );
 
-			if (Piece.getType( bd.sq[ move.iSqFrom ] ) == KNIGHT &&
-				BitUtil.isSet( Bitboards.knight[ iSqKing ], move.iSqTo ))
+			if (piece == PAWN)
 				{
-				score += CHECK_BONUS;
+				long bbAttacksFrom = (player == WHITE)
+								   ? Bitboards.pawnDownwards[ iSqKing ]
+								   : Bitboards.pawnUpwards[ iSqKing ];
+
+				if (BitUtil.isSet( bbAttacksFrom, move.iSqTo ))
+					score += CHECK_BONUS;
+
+				//	Bonus for promoting a pawn, because we can always use bigger pieces...
+				if (move.isPromotion())
+					score += getPieceValue( move.getPromotionPiece() ) - s_pieceValue[ PAWN ];
 				}
-			else
+			else if (piece == KNIGHT)
+				{
+				if (BitUtil.isSet( Bitboards.knight[ iSqKing ], move.iSqTo ))
+					score += CHECK_BONUS;
+				}
+			else if (piece != KING)
 				{
 				long bbAll = bd.map[ MAP_W_ALL ] | bd.map[ MAP_B_ALL ];
 				long bbMask = Square.getMask( move.iSqFrom ) | Square.getMask( move.iSqTo );
-				long bbSees = Bitboards.getQueenMovesFrom( iSqKing, bbAll );
+				long bbKingSees = Bitboards.getQueenMovesFrom( iSqKing, bbAll );
 
-				if ((bbSees & bbMask) != 0 &&
-					Arbiter.isInCheck( new Board( bd, move ) ))
+				if ((bbKingSees & bbMask) != 0 &&
+					new Board( bd, move ).isInCheck())
 					{
-					score += CHECK_BONUS; // BIG bonus for checking moves.
+					score += CHECK_BONUS; // BIG bonus for checking moves
 					}
 				}
 			//
@@ -446,11 +462,6 @@ public class Evaluator
 
 			if (victim != EMPTY)
 				score += getPieceValue( Piece.getType( victim ) );
-			//
-			//	Bonus for promoting a pawn, because we can always use bigger pieces...
-			//
-			if (move.isPromotion())
-				score += getPieceValue( move.getPromotionPiece() ) - getPieceValue( PAWN );
 
 			return clampScore( score );
 			}

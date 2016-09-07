@@ -476,28 +476,6 @@ public class Bitboards
 		}
 
 	/**
-	 * Determines if a square is attacked by a given player.
-	 *
-	 * @param map
-	 * 	Array of piece bitboards.
-	 * @param iSq
-	 * 	Square index, in 8x8 format.
-	 * @param player
-	 * 	Attacking player color [WHITE|BLACK].
-	 *
-	 * @return <c>true</c> if attacked; <c>false</c> otherwise.
-	 */
-	static boolean isAttackedBy( long[] map, int iSq, int player )
-		{
-		assert map != null;
-		if ((iSq & ~0x3F) != 0 || (all[ iSq ] & map[ player ]) == 0L) return false;
-		//	-----------------------------------------------------------------
-		return (player == WHITE)
-			   ? isAttackedByWhite( map, iSq )
-			   : isAttackedByBlack( map, iSq );
-		}
-
-	/**
 	 * Determines if a square is attacked by the Black player.
 	 *
 	 * @param map

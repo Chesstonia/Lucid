@@ -74,51 +74,18 @@ public class MoveList extends MoveGenerator implements Iterable<Move>
 		{
 		super( bd );
 		//	-----------------------------------------------------------------
-		_bbToSq &= Square.getMask( iSqTo );
 		_hashZobrist = bd.getZobristHash();
 
-		generateAll();
-		//
-		//  Take out all moves that don't reach the "To" square.  Do this by copying the last
-		//  move on top of the "bad" move.  The current index is decremented so that the next
-		//  iteration of the loop will test the copied move, which is now in the same element.
-		//
-		for ( int index = 0; index < _iCount; ++index )
-			if (Move.unpackToSq( _moves[ index ] ) != iSqTo && --_iCount > index)
-				_moves[ index-- ] = _moves[ _iCount ];
+		generateSome( ~0L, Square.getMask( iSqTo ));
 		}
 
 	public MoveList( Board bd, long bbFromMask, long bbToMask )
 		{
 		super( bd );
 		//	-----------------------------------------------------------------
-		_bbFromSq &= bbFromMask;
-		_bbToSq &= bbToMask;
 		_hashZobrist = bd.getZobristHash();
 
-		generateAll();
-		//
-		//  Take out all moves that don't reach the "To" square.
-		//
-		for ( int index = 0; index < _iCount; ++index )
-			{
-			int packed = _moves[ index ];
-			int iSqFrom = Move.unpackFromSq( packed );
-			int iSqTo = Move.unpackToSq( packed );
-
-			if ((bbFromMask & (1L << iSqFrom)) == 0 || (bbToMask & (1L << iSqTo)) == 0)
-				{
-				//
-				//	Remove the unwanted move by copying the last move on top
-				//	of the "bad" move.  The current index is decremented so
-				//	that the next iteration of the loop will test the copied
-				//	move, which is now in the same element.
-				//
-				if (--_iCount > index)
-					_moves[ index-- ] = _moves[ _iCount ];
-				}
-
-			}
+		generateSome( bbFromMask, bbToMask);
 		}
 
 	//  -----------------------------------------------------------------------

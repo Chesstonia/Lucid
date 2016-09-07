@@ -203,7 +203,7 @@ public class Checker extends ToolboxApp
 				Board bdNew = new Board( bd );
 
 				bdNew.makeMove( mv );
-				if (Arbiter.isInCheck( bdNew ))
+				if (bdNew.isInCheck())
 					checks.add( mv );
 				}
 

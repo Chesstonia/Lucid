@@ -52,11 +52,7 @@ class MoveGenerator
 	//	-----------------------------------------------------------------------
 
 	/** Number of moves in {@link #_moves}. */
-	int  _iCount;
-	/** Bitboard of potential "From" squares. */
-	long _bbFromSq;
-	/** Bitboard of potential "To" squares. */
-	long _bbToSq;
+	int _iCount;
 	/** Current position. */
 	final Board _board;
 	/** Array of packed moves. */
@@ -83,6 +79,10 @@ class MoveGenerator
 	private long _bbEP;
 	/** Bitboard of all pieces that are NOT pinned. */
 	private long _bbPinned;
+	/** Bitboard of potential "From" squares. */
+	private long _bbSqFrom;
+	/** Bitboard of potential "To" squares. */
+	private long _bbSqTo;
 
 	//  -----------------------------------------------------------------------
 	//	CTOR
@@ -95,7 +95,7 @@ class MoveGenerator
 	 * 	Board to generate moves for.
 	 *
 	 * @throws java.lang.IllegalArgumentException
-	 * 	if board is <code>null</code>.
+	 * 	if board is null.
 	 */
 	MoveGenerator( Board bd )
 		{
@@ -112,8 +112,6 @@ class MoveGenerator
 		_bbAll = _bbPlayer | _bbOpponent;
 
 		_iSqKing = BitUtil.first( _map[ MAP_W_KING + _player ] );
-
-		initBitboards();
 		}
 
 	//  -----------------------------------------------------------------------
@@ -125,7 +123,61 @@ class MoveGenerator
 	 */
 	void generateAll()
 		{
+		initBitboards();
 		generate( MAX_MOVE_COUNT );
+		}
+
+	/**
+	 * Generates the fewest legal moves.
+	 *
+	 * @return .T. if at least one move available; .F. otherwise.
+	 */
+	@SuppressWarnings( "WeakerAccess" )
+	boolean generateFirst()
+		{
+		initBitboards();
+		generate( 1 );
+
+		return (_iCount > 0);
+		}
+
+	/**
+	 * Generates a subset of legal moves.
+	 *
+	 * @param bbFromMask
+	 * 	Bitboard of desired "From" squares.
+	 * @param bbToMask
+	 * 	Bitboard of desired "To" squares.
+	 */
+	void generateSome( long bbFromMask, long bbToMask )
+		{
+		initBitboards();
+
+		_bbSqFrom &= bbFromMask;
+		_bbSqTo &= bbToMask;
+
+		generate( MAX_MOVE_COUNT );
+		//
+		//  Remove all moves that don't reach the "From" or "To" squares.  This may be
+		//	computationally-intensive, but is usally applied to short move lists.
+		//
+		for ( int index = 0; index < _iCount; ++index )
+			{
+			int packed = _moves[ index ];
+
+			if (BitUtil.isSet( bbFromMask, Move.unpackFromSq( packed ) ) &&
+				BitUtil.isSet( bbToMask, Move.unpackToSq( packed ) ))
+				{
+				continue;
+				}
+			//
+			//	Remove the unwanted move by copying the last move on top of the "bad" move.
+			//	The current index is decremented so that the next iteration of the loop will
+			//	test the copied move, which is now in the same element.
+			//
+			if (--_iCount > index)
+				_moves[ index-- ] = _moves[ _iCount ];
+			}
 		}
 
 	/**
@@ -138,13 +190,8 @@ class MoveGenerator
 	 */
 	static boolean hasLegalMove( Board bd )
 		{
-		if (bd == null) return false;
-		//	-----------------------------------------------------------------
-		MoveGenerator generator = new MoveGenerator( bd );
-
-		generator.generate( 1 );
-
-		return (generator._iCount > 0);
+		return (bd != null &&
+				new MoveGenerator( bd ).generateFirst());
 		}
 
 	//  -----------------------------------------------------------------------
@@ -226,7 +273,7 @@ class MoveGenerator
 	 */
 	private void addMovesFrom( long bbFrom, int iSqTo, int iType )
 		{
-		for ( long bb = bbFrom & _bbFromSq; bb != 0L; bb &= (bb - 1) )
+		for ( long bb = bbFrom & _bbSqFrom; bb != 0L; bb &= (bb - 1) )
 			addMoveIfLegal( BitUtil.first( bb ), iSqTo, iType );
 		}
 
@@ -240,7 +287,7 @@ class MoveGenerator
 	 */
 	private void addMovesTo( int iSqFrom, long bbTo )
 		{
-		for ( long bb = bbTo & _bbToSq; bb != 0L; bb &= (bb - 1) )
+		for ( long bb = bbTo & _bbSqTo; bb != 0L; bb &= (bb - 1) )
 			addMoveIfLegal( iSqFrom, BitUtil.first( bb ), Move.Type.NORMAL );
 		}
 
@@ -254,7 +301,7 @@ class MoveGenerator
 	 */
 	private void addPawnMoves( int iDelta, long bbTo, int iType )
 		{
-		if ((bbTo &= _bbToSq) == 0) return;
+		if ((bbTo &= _bbSqTo) == 0) return;
 		//	-----------------------------------------------------------------
 
 		//	Promotion moves/captures
@@ -289,7 +336,7 @@ class MoveGenerator
 	 */
 	private void generate( int iMaxMoves )
 		{
-		if (_bbFromSq == 0L || _bbToSq == 0L) return;
+		if (_bbSqFrom == 0L || _bbSqTo == 0L) return;
 		//	-----------------------------------------------------------------
 		long bbPawns;
 		//
@@ -297,12 +344,12 @@ class MoveGenerator
 		//
 		if (_player == WHITE)
 			{
-			bbPawns = _bbFromSq & _map[ MAP_W_PAWN ];
+			bbPawns = _bbSqFrom & _map[ MAP_W_PAWN ];
 			generatePawnMovesWhite( bbPawns );
 			}
 		else
 			{
-			bbPawns = _bbFromSq & _map[ MAP_B_PAWN ];
+			bbPawns = _bbSqFrom & _map[ MAP_B_PAWN ];
 			generatePawnMovesBlack( bbPawns );
 			}
 
@@ -310,7 +357,7 @@ class MoveGenerator
 		//
 		//	Generate remaining moves.
 		//
-		for ( long bb = _bbFromSq & ~bbPawns; bb != 0L; bb &= (bb - 1L) )
+		for ( long bb = _bbSqFrom & ~bbPawns; bb != 0L; bb &= (bb - 1L) )
 			{
 			int iSq = BitUtil.first( bb );
 
@@ -367,9 +414,9 @@ class MoveGenerator
 	private void generateKingMovesBlack( int iSq )
 		{
 		assert Square.isValid( iSq );
-		assert Piece.getType( _board.get( iSq ) ) == KING;
+		assert _board.sq[ iSq ] == MAP_B_KING;
 		//	-----------------------------------------------------------------
-		long bbKingMoves = _bbToSq & Bitboards.king[ iSq ];
+		long bbKingMoves = _bbSqTo & Bitboards.king[ iSq ];
 
 		if (bbKingMoves != 0L)
 			{
@@ -420,9 +467,9 @@ class MoveGenerator
 	private void generateKingMovesWhite( int iSq )
 		{
 		assert Square.isValid( iSq );
-		assert Piece.getType( _board.get( iSq ) ) == KING;
+		assert _board.sq[ iSq ] == MAP_W_KING;
 		//	-----------------------------------------------------------------
-		long bbKingMoves = _bbToSq & Bitboards.king[ iSq ];
+		long bbKingMoves = _bbSqTo & Bitboards.king[ iSq ];
 
 		if (bbKingMoves != 0L)
 			{
@@ -475,9 +522,6 @@ class MoveGenerator
 		{
 		if (bbPawns == 0) return;
 		//	-----------------------------------------------------------------
-		long bbEmpty = ~_bbAll;
-		long bbUnblocked = (bbPawns >>> 8) & bbEmpty;
-
 		//	Captures to the SW.
 		addPawnMoves( 7,
 					  (((bbPawns & 0x7F7F7F7F7F7F7F7FL) >>> 7) & _bbOpponent),
@@ -488,13 +532,19 @@ class MoveGenerator
 					  (((bbPawns & 0xFEFEFEFEFEFEFEFEL) >>> 9) & _bbOpponent),
 					  Move.Type.NORMAL );
 
-		//	Normal moves.
-		addPawnMoves( 8, bbUnblocked, Move.Type.NORMAL );
+		//	Normal moves
+		long bbEmpty = ~_bbAll;
+		long bbUnblocked = (bbPawns >>> 8) & bbEmpty;
 
-		//	Pawn Advances (double moves)
-		bbUnblocked = ((bbUnblocked & Bitboards.rankMask[ 5 ]) >>> 8) & bbEmpty;
-		addPawnMoves( 16, bbUnblocked, Move.Type.PAWN_PUSH );
+		if (bbUnblocked != 0L)
+			{
+			addPawnMoves( 8, bbUnblocked, Move.Type.NORMAL );
+			//	Pawn Advances (double moves)
+			if ((bbUnblocked = ((bbUnblocked & Bitboards.rankMask[ 5 ]) >>> 8) & bbEmpty) != 0L)
+				addPawnMoves( 16, bbUnblocked, Move.Type.PAWN_PUSH );
+			}
 		}
+
 
 	/**
 	 * Generate all moves for a set of White pawns.
@@ -506,9 +556,6 @@ class MoveGenerator
 		{
 		if (bbPawns == 0) return;
 		//	-----------------------------------------------------------------
-		long bbEmpty = ~_bbAll;
-		long bbUnblocked = (bbPawns << 8) & bbEmpty;
-
 		//	Captures to the NW.
 		addPawnMoves( -9,
 					  (((bbPawns & 0x7F7F7F7F7F7F7F7FL) << 9) & _bbOpponent),
@@ -520,11 +567,16 @@ class MoveGenerator
 					  Move.Type.NORMAL );
 
 		//	Normal moves.
-		addPawnMoves( -8, bbUnblocked, Move.Type.NORMAL );
+		long bbEmpty = ~_bbAll;
+		long bbUnblocked = (bbPawns << 8) & bbEmpty;
 
-		//	Pawn Advances (double moves)
-		bbUnblocked = ((bbUnblocked & Bitboards.rankMask[ 2 ]) << 8) & bbEmpty;
-		addPawnMoves( -16, bbUnblocked, Move.Type.PAWN_PUSH );
+		if (bbUnblocked != 0L)
+			{
+			addPawnMoves( -8, bbUnblocked, Move.Type.NORMAL );
+			//	Pawn Advances (double moves)
+			if ((bbUnblocked = ((bbUnblocked & Bitboards.rankMask[ 2 ]) << 8) & bbEmpty) != 0L)
+				addPawnMoves( -16, bbUnblocked, Move.Type.PAWN_PUSH );
+			}
 		}
 
 	/**
@@ -532,9 +584,13 @@ class MoveGenerator
 	 */
 	private void initBitboards()
 		{
-		_bbFromSq = _bbPlayer;
-		_bbToSq = ~_bbPlayer;
-		_bbPinned = 0;
+		if (!Square.isValid( _iSqKing )) return;
+		//	-----------------------------------------------------------------
+		_iCount = 0;
+		_bbEP = _bbCheckers = _bbPinned = 0L;
+
+		_bbSqFrom = _bbPlayer;
+		_bbSqTo = ~_bbPlayer;
 		//
 		//	See if there are any e.p. captures possible.
 		//
@@ -542,11 +598,10 @@ class MoveGenerator
 
 		if (Square.isValid( iSqEP ))
 			{
-			_bbEP = (_player == WHITE) ? (Bitboards.pawnDownwards[ iSqEP ] & _map[ MAP_W_PAWN ])
-									   : (Bitboards.pawnUpwards[ iSqEP ] & _map[ MAP_B_PAWN ]);
+			_bbEP = (_player == WHITE)
+					? (Bitboards.pawnDownwards[ iSqEP ] & _map[ MAP_W_PAWN ])
+					: (Bitboards.pawnUpwards[ iSqEP ] & _map[ MAP_B_PAWN ]);
 			}
-
-		if (!Square.isValid( _iSqKing )) return;
 		//
 		//  Find out if the moving player is in check, because that affects the possible "From"
 		//	and "To" squares.  If the player is NOT in check, build a bitboard of pinned pieces.
@@ -570,10 +625,10 @@ class MoveGenerator
 			for ( long bb = bbPinners & ~Bitboards.king[ _iSqKing ]; bb != 0L; bb &= (bb - 1) )
 				{
 				//
-				//  Now see if there is one (and only one) moving piece that lies on the path
-				//	between a threatening piece (the "pinner") and the King, then it is pinned.
-				//	Pinned pieces may still be able to move (except for Knights) but need to
-				//	test for check when they do so.
+				//  If there is one (and only one) moving piece that lies on the path between a
+				//	threatening piece (the "pinner") and the King, then it is pinned. Pinned
+				//	pieces may still be able to move (except for Knights) but need to test for
+				//	check when they do so.
 				//
 				long bbBetween = _bbPlayer &
 								 Bitboards.getSquaresBetween( _iSqKing, BitUtil.first( bb ) );
@@ -598,13 +653,13 @@ class MoveGenerator
 			//	plus any of the moving player's pieces that can capture the checking piece.
 			//
 			if (bbXRays != 0L)
-				_bbToSq &= (_bbCheckers | bbXRays | Bitboards.king[ _iSqKing ]);
+				_bbSqTo &= (_bbCheckers | bbXRays | Bitboards.king[ _iSqKing ]);
 			else
 				{
-				_bbFromSq &= _bbEP |
-							 (1L << _iSqKing) |
+				_bbSqFrom &= _bbEP |
+							 Square.getMask( _iSqKing ) |
 							 Bitboards.getAttackedBy( _map, iSqChecker, _player );
-				_bbToSq &= _bbCheckers |
+				_bbSqTo &= _bbCheckers |
 						   Bitboards.king[ _iSqKing ] |
 						   Square.getMask( iSqEP );
 				}
@@ -615,9 +670,9 @@ class MoveGenerator
 		//
 		else
 			{
-			_bbFromSq &= (1L << _iSqKing);
-			_bbToSq &= Bitboards.king[ _iSqKing ];
+			_bbSqFrom &= Square.getMask( _iSqKing );
+			_bbSqTo &= Bitboards.king[ _iSqKing ];
 			}
 		}
 
-	} /* end of class MoveList */
+	} /* end of class MoveGenerator */

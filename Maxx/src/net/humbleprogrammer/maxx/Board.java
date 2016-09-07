@@ -544,6 +544,19 @@ public class Board
 		return (_hashExtra ^ _hashPawns ^ _hashPieces);
 		}
 
+
+	/**
+	 * Determines if the moving player is currently in check.
+	 *
+	 * @return .T. if moving player in check; .F. otherwise.
+	 */
+	public boolean isInCheck()
+		{
+		return (_player == WHITE)
+			   ? Bitboards.isAttackedByBlack( map, BitUtil.first( map[ MAP_W_KING ] ) )
+			   : Bitboards.isAttackedByWhite( map, BitUtil.first( map[ MAP_B_KING ] ) );
+		}
+
 	//  -----------------------------------------------------------------------
 	//	METHODS
 	//	-----------------------------------------------------------------------

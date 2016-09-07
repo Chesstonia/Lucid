@@ -198,7 +198,8 @@ public class MoveFactory
 
 			if (Arbiter.isMated( bdTest ))
 				sb.append( '#' );
-			else if (Arbiter.isInCheck( bdTest )) sb.append( '+' );
+			else if (bdTest.isInCheck())
+				sb.append( '+' );
 			}
 
 		return sb.toString();

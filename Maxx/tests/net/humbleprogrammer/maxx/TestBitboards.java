@@ -118,7 +118,7 @@ public class TestBitboards extends TestBase
         }
 
     @Test
-    public void t_isAttackedBy_black()
+    public void t_isAttackedByBlack()
         {
         Board bd = BoardFactory.createFromFEN( FEN_TEST );
 
@@ -128,12 +128,12 @@ public class TestBitboards extends TestBase
             {
             assertEquals( "Black attacking " + Square.toString( iSq ),
                           ((s_bbAttacks[ iSq ] & s_bbPieces[ BLACK ]) != 0L),
-                          Bitboards.isAttackedBy( bd.map, iSq, BLACK ) );
+                          Bitboards.isAttackedByBlack( bd.map, iSq ) );
             }
         }
 
     @Test
-    public void t_isAttackedBy_white()
+    public void t_isAttackedByWhite()
         {
         Board bd = BoardFactory.createFromFEN( FEN_TEST );
 
@@ -143,7 +143,7 @@ public class TestBitboards extends TestBase
             {
             assertEquals( "White attacking " + Square.toString( iSq ),
                           ((s_bbAttacks[ iSq ] & s_bbPieces[ WHITE ]) != 0L),
-                          Bitboards.isAttackedBy( bd.map, iSq, WHITE ) );
+                          Bitboards.isAttackedByWhite( bd.map, iSq ) );
             }
         }
 
