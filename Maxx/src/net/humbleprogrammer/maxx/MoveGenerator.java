@@ -66,6 +66,8 @@ class MoveGenerator
 	private final int  _iSqKing;
 	/** Bitboard of all pieces. */
 	private final long _bbAll;
+	/** Bitboard of pieces threatening the moving player's King. */
+	private final long _bbCheckers;
 	/** Bitboard of opposing pieces. */
 	private final long _bbOpponent;
 	/** Bitboard of moving pieces. */
@@ -73,8 +75,6 @@ class MoveGenerator
 	/** Saved copy of the board maps. */
 	private final long[] _map = new long[ MAP_LENGTH ];
 
-	/** Bitboard of pieces threatening the moving player's King. */
-	private long _bbCheckers;
 	/** Bitboard of pawns that can capture via e.p. */
 	private long _bbEP;
 	/** Bitboard of all pieces that are NOT pinned. */
@@ -110,8 +110,12 @@ class MoveGenerator
 		_bbOpponent = _map[ _opponent ];
 		_bbPlayer = _map[ _player ];
 		_bbAll = _bbPlayer | _bbOpponent;
-
+		//
+		//  Find out if the moving player is in check.
+		//
 		_iSqKing = BitUtil.first( _map[ MAP_W_KING + _player ] );
+
+		_bbCheckers = Bitboards.getAttackedBy( _map, _iSqKing, _opponent );
 		}
 
 	//  -----------------------------------------------------------------------
@@ -587,12 +591,14 @@ class MoveGenerator
 		if (!Square.isValid( _iSqKing )) return;
 		//	-----------------------------------------------------------------
 		_iCount = 0;
-		_bbEP = _bbCheckers = _bbPinned = 0L;
+		_bbEP = _bbPinned = 0L;
 
 		_bbSqFrom = _bbPlayer;
 		_bbSqTo = ~_bbPlayer;
 		//
-		//	See if there are any e.p. captures possible.
+		//	See if there are any e.p. captures possible. This is used as
+		//	possible evasion moves if the King is in check to handle the edge
+		//	case where the only legal move is an e.p. capture.
 		//
 		int iSqEP = _board.getEnPassantSquare();
 
@@ -603,11 +609,9 @@ class MoveGenerator
 					: (Bitboards.pawnUpwards[ iSqEP ] & _map[ MAP_B_PAWN ]);
 			}
 		//
-		//  Find out if the moving player is in check, because that affects the possible "From"
-		//	and "To" squares.  If the player is NOT in check, build a bitboard of pinned pieces.
+		//  If the moving player is in check, that affects possible "From" and "To" squares.
+		//	If the player is NOT in check, build a bitboard of pinned pieces.
 		//
-		_bbCheckers = Bitboards.getAttackedBy( _map, _iSqKing, _opponent );
-
 		if (_bbCheckers == 0L)
 			{
 			//

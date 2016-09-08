@@ -32,6 +32,7 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
+@SuppressWarnings( "WeakerAccess" )
 public final class Constants
     {
 
