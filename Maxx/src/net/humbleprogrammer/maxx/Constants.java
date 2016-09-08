@@ -44,7 +44,7 @@ public final class Constants
     //
     //	Piece/Player colors
     //
-    /** The light side...we have cookies. */
+    /** The light side...we have chocolate-chip cookies. */
     public static final int WHITE   = 0;
     /** The dark side...no cookies for you! */
     public static final int BLACK   = 1;
