@@ -74,7 +74,9 @@ public class Checker extends ToolboxApp
 		{
 		assert strArgs != null;
 		//	-----------------------------------------------------------------
-		String strPath = (strArgs.length > 0) ? strArgs[ 0 ] : "P:\\Chess\\PGN\\TWIC";
+		String strPath = (strArgs.length > 0)
+						 ? strArgs[ 0 ]
+						 : "P:\\Chess\\PGN\\Assorted"; // "P:\\Chess\\PGN\\TWIC";
 
 		_listPGN = getPGN( strPath );
 
@@ -110,24 +112,6 @@ public class Checker extends ToolboxApp
 	//  -----------------------------------------------------------------------
 	//	IMPLEMENTATION
 	//	-----------------------------------------------------------------------
-	private int _iLongest = 0;
-
-	private void display( Board bd, List<Move> moves )
-		{
-		if (bd == null || moves.size() <= _iLongest) return;
-		//	-----------------------------------------------------------------
-		_iFound++;
-		_iLongest = moves.size();
-
-		print( BoardFactory.exportEPD( bd ) );
-		print( "; bm" );
-		for ( Move move : moves )
-			print( ' ' + MoveFactory.toSAN( bd, move, true ) );
-
-		printLine( "" );
-
-		moves.clear();
-		}
 
 	private void run( int iMaxCount )
 		{
@@ -135,7 +119,7 @@ public class Checker extends ToolboxApp
 		//	-----------------------------------------------------------------
 		try
 			{
-			IPgnListener listener = new CheckerListener();
+			IPgnListener listener = new TestListener();
 
 			for ( Path path : _listPGN )
 				{
@@ -148,7 +132,7 @@ public class Checker extends ToolboxApp
 					for ( int iGames = 0; (strPGN = pgn.readGame()) != null; ++iGames )
 						if (PgnParser.parse( listener, strPGN ))
 							{
-							if (iMaxCount > 0 && ++_iFound >= iMaxCount)
+							if (iMaxCount > 0 && _iFound >= iMaxCount)
 								{
 								printLine( "Stopped after %,d %s.",
 										   _iFound,
@@ -174,11 +158,40 @@ public class Checker extends ToolboxApp
 		}
 
 	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: CheckerListener
+	//	NESTED CLASS: CheckFinderListener
 	//	-----------------------------------------------------------------------
 
-	private class CheckerListener extends PgnValidator
+	@SuppressWarnings( "unused" )
+	private class CheckFinderListener extends PgnValidator
 		{
+		/** Longest sequence of moves found so far. */
+		private int _iLongest = 0;
+
+		/**
+		 * Display all the moves for a given position.
+		 *
+		 * @param bd
+		 * 	Position.
+		 * @param moves
+		 * 	List of moves.
+		 */
+		private void display( Board bd, List<Move> moves )
+			{
+			if (bd == null || moves.size() <= _iLongest) return;
+			//	-----------------------------------------------------------------
+			_iFound++;
+			_iLongest = moves.size();
+
+			print( BoardFactory.exportEPD( bd ) );
+			print( "; bm" );
+			for ( Move move : moves )
+				print( ' ' + MoveFactory.toSAN( bd, move, true ) );
+
+			printLine( "" );
+
+			moves.clear();
+			}
+
 		/**
 		 * A move has been parsed.
 		 *
@@ -194,23 +207,76 @@ public class Checker extends ToolboxApp
 			{
 			if (!super.onMove( strSAN, strSuffix )) return false;
 			//	-------------------------------------------------------------
-			final Board bd = new Board( _pv.getCurrentPosition() );
-			final List<Move> checks = new ArrayList<>();
-			final MoveList moves = new MoveList( bd );
-
-			for ( Move mv : moves )
+			if (_pv != null)
 				{
-				Board bdNew = new Board( bd );
+				final Board bd = new Board( _pv.getCurrentPosition() );
+				final List<Move> checks = new ArrayList<>();
+				final MoveList moves = new MoveList( bd );
 
-				bdNew.makeMove( mv );
-				if (bdNew.isInCheck())
-					checks.add( mv );
+				for ( Move mv : moves )
+					{
+					Board bdNew = new Board( bd );
+
+					bdNew.makeMove( mv );
+					if (bdNew.isInCheck())
+						checks.add( mv );
+					}
+
+				if (!checks.isEmpty())
+					display( bd, checks );
 				}
-
-			if (!checks.isEmpty())
-				display( bd, checks );
 
 			return true;
 			}
 		}
+
+	//  -----------------------------------------------------------------------
+	//	NESTED CLASS: TestListener
+	//	-----------------------------------------------------------------------
+
+	@SuppressWarnings( "unused" )
+	private class TestListener extends PgnValidator
+		{
+		private int _iLongest = 64;
+
+
+		/**
+		 * Display all the moves for a given position.
+		 */
+		private void display( Board bd )
+			{
+			printLine( "%s; %,d",
+					   BoardFactory.exportEPD( bd ),
+					   _iLongest );
+			}
+
+		/**
+		 * A move has been parsed.
+		 *
+		 * @param strSAN
+		 * 	Move string.
+		 * @param strSuffix
+		 * 	Optional suffix string.
+		 *
+		 * @return .T. if parsing is to continue; .F. to abort parsing.
+		 */
+		@Override
+		public boolean onMove( final String strSAN, final String strSuffix )
+			{
+			if (!super.onMove( strSAN, strSuffix )) return false;
+			//	-------------------------------------------------------------
+			if (_pv != null)
+				{
+				final MoveList moves = new MoveList( _pv.getCurrentPosition() );
+
+				if (moves.size() > _iLongest)
+					{
+					_iLongest = moves.size();
+					display( _pv.getCurrentPosition() );
+					}
+				}
+			return true;
+			}
+		}
+
 	} /* end of class Checker */

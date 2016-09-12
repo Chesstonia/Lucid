@@ -82,9 +82,7 @@ public class App implements Runnable
 		{
 		assert strArgs != null;
 		assert s_self == null;
-		/*
-		**  CODE
-        */
+		//	-----------------------------------------------------------------
 		s_self = this;
 
 		_workspace = new Workspace();

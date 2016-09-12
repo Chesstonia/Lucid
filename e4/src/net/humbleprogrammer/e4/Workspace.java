@@ -108,9 +108,7 @@ public class Workspace
 	public void run()
 		{
 		s_log.debug( "cmdQuickGameWhite" );
-		/*
-		**	CODE
-		*/
+		//	-----------------------------------------------------------------
 		startNewGame();
 		//
 		//	Set the board so that white is at the bottom.
@@ -134,9 +132,7 @@ public class Workspace
 	public void run()
 		{
 		s_log.debug( "cmdQuickGameBlack" );
-		/*
-		**	CODE
-		*/
+		//	-----------------------------------------------------------------
 		startNewGame();
 		//
 		//	Set the board so that black is at the bottom.
@@ -160,9 +156,7 @@ public class Workspace
 	public void run()
 		{
 		s_log.debug( "cmdQuickGameRandom" );
-		/*
-		**	CODE
-		*/
+		//	-----------------------------------------------------------------
 		Random rnd = new Random();
 		int pc = rnd.nextBoolean() ? WHITE : BLACK;
 		//
@@ -193,9 +187,7 @@ public class Workspace
 	public void run()
 		{
 		s_log.debug( "cmdRequestMove" );
-		/*
-		**	CODE
-		*/
+		//	-----------------------------------------------------------------
 		if (_playerMoving instanceof IBoardController)
 			{
 			App.getFrame()

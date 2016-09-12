@@ -345,7 +345,13 @@ public class MoveFactory
 				iPieceMoving = PAWN;
 			else if (iState == STATE_RANK && iFileFrom < 0)
 				iFileFrom = iFileTo;
-			else if (iState != STATE_FILE) return INVALID;
+			else if (iState == STATE_SUFFIX && iFileFrom < 0 && iRankFrom < 0)
+				{
+				iFileFrom = iFileTo;
+				iRankFrom = iRankTo;
+				}
+			else if  (iState != STATE_FILE)
+				return INVALID;
 
 			iFileTo = iFile;
 			return STATE_RANK;

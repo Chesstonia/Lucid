@@ -43,20 +43,20 @@ import static net.humbleprogrammer.maxx.Constants.*;
 @SuppressWarnings( "unused" )
 public class Variation extends PV
 	{
-	private static final long	serialVersionUID	= 20161628L;
+	private static final long serialVersionUID = 20161628L;
 	//  -----------------------------------------------------------------------
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
 	/** Current position. */
-	private final Board			_board				= BoardFactory.createInitial();
+	private final Board _board = BoardFactory.createInitial();
 
 	/** First ply of the variation. */
-	private int					_iFirstPly;
+	private int    _iFirstPly;
 	/** Starting position, or null for initial setup. */
-	private Board				_bdStart;
+	private Board  _bdStart;
 	/** Result, or <code>null</code> if not set. */
-	private Result				_result;
+	private Result _result;
 
 	//  -----------------------------------------------------------------------
 	//	PUBLIC METHODS
@@ -66,14 +66,15 @@ public class Variation extends PV
 	 * Appends a move to the variation.
 	 *
 	 * @param move
-	 *            Move to append.
+	 * 	Move to append.
+	 *
 	 * @return <code>.T.</code> if added; <code>.F.</code> otherwise.
 	 */
 	public boolean appendMove( final Move move )
 		{
-		if (_board.isLegalMove(move) && add(move))
+		if (_board.isLegalMove( move ) && add( move ))
 			{
-			_board.makeMove(move);
+			_board.makeMove( move );
 			return true;
 			}
 
@@ -84,9 +85,10 @@ public class Variation extends PV
 	 * Creates a variation from a PV.
 	 *
 	 * @param bd
-	 *            Starting position.
+	 * 	Starting position.
 	 * @param pv
-	 *            Sequence of moves.
+	 * 	Sequence of moves.
+	 *
 	 * @return Variation if position and moves are legal; null otherwise.
 	 */
 	public static Variation fromPV( Board bd, PV pv )
@@ -95,10 +97,10 @@ public class Variation extends PV
 		//	-----------------------------------------------------------------
 		Variation line = new Variation();
 
-		line.setStartingPosition(bd);
+		line.setStartingPosition( bd );
 
 		for ( Move move : pv )
-			if (!line.appendMove(move)) return null;
+			if (!line.appendMove( move )) return null;
 
 		return line;
 		}
@@ -107,9 +109,9 @@ public class Variation extends PV
 	 * Gets the position <i>BEFORE</i> the player's move at a given move number.
 	 *
 	 * @param iDelta
-	 *            Distance to seek: positive from start, negative from end
-	 * @return Board position, or <code>null</code> if move number or player are
-	 *         invalid.
+	 * 	Distance to seek: positive from start, negative from end
+	 *
+	 * @return Board position, or <code>null</code> if move number or player are invalid.
 	 */
 	public Board seekPosition( int iDelta )
 		{
@@ -119,10 +121,11 @@ public class Variation extends PV
 		//
 		//	Make each move
 		//
-		Board bd = (_bdStart != null) ? BoardFactory.createCopy(_bdStart) : BoardFactory.createInitial();
+		Board bd = (_bdStart != null) ? BoardFactory.createCopy( _bdStart )
+									  : BoardFactory.createInitial();
 
 		for ( int idx = 0; idx < iDelta; ++idx )
-			bd.makeMove(get(idx));
+			bd.makeMove( get( idx ) );
 
 		return bd;
 		}
@@ -142,30 +145,42 @@ public class Variation extends PV
 		}
 
 	/**
+	 * Gets the last move in the variation.
+	 *
+	 * @return Move or null if empty.
+	 */
+	public Move getLastMove()
+		{
+		int idx = size() - 1;
+
+		return (idx >= 0) ? get( idx ) : null;
+		}
+
+	/**
 	 * Gets the position <i>BEFORE</i> the player's move at a given move number.
 	 *
 	 * @param iMoveNum
-	 *            Move number (starts at 1)
+	 * 	Move number (starts at 1)
 	 * @param player
-	 *            Moving player [WHITE|BLACK]
-	 * @return Board position, or <code>null</code> if move number or player are
-	 *         invalid.
+	 * 	Moving player [WHITE|BLACK]
+	 *
+	 * @return Board position, or <code>null</code> if move number or player are invalid.
 	 */
 	public Board getPosition( int iMoveNum, int player )
 		{
-		Board bd = (_bdStart != null) ? BoardFactory.createCopy(_bdStart) : BoardFactory.createInitial();
+		Board bd = getStartingPosition();
 
 		if (bd.getMoveNumber() == iMoveNum && bd.getMovingPlayer() == player) return bd;
 		//
 		//	See if the move is in the move list.
 		//
-		int iPly = Board.computePly(iMoveNum, player) - _iFirstPly;
+		int iPly = Board.computePly( iMoveNum, player ) - _iFirstPly;
 
 		if (iPly >= 0 && iPly < size())
 			{
 			for ( Move mv : this )
 				{
-				bd.makeMove(mv);
+				bd.makeMove( mv );
 				if (bd.getMoveNumber() == iMoveNum && bd.getMovingPlayer() == player) return bd;
 				}
 			}
@@ -187,11 +202,23 @@ public class Variation extends PV
 	 * Sets the result.
 	 *
 	 * @param result
-	 *            Desired result.
+	 * 	Desired result.
 	 */
 	public void setResult( Result result )
 		{
 		_result = result;
+		}
+
+	/**
+	 * Gets the current position.
+	 *
+	 * @return Board.
+	 */
+	public Board getStartingPosition()
+		{
+		return (_bdStart != null)
+			   ? BoardFactory.createCopy( _bdStart )
+			   : BoardFactory.createInitial();
 		}
 
 	/**
@@ -200,18 +227,18 @@ public class Variation extends PV
 	 * doesn't start at the initial position.
 	 *
 	 * @param bd
-	 *            Starting position.
-	 * @return <code>.T.</code> if position is legal; <code>.F.</code>
-	 *         otherwise.
+	 * 	Starting position.
+	 *
+	 * @return <code>.T.</code> if position is legal; <code>.F.</code> otherwise.
 	 */
 	public boolean setStartingPosition( final Board bd )
 		{
 		if (bd == null) return false;
 		//	-----------------------------------------------------------------
-		_iFirstPly = Board.computePly(bd.getMoveNumber(), bd.getMovingPlayer());
+		_iFirstPly = Board.computePly( bd.getMoveNumber(), bd.getMovingPlayer() );
 
-		_board.copyFrom(bd);
-		_bdStart = (bd.getZobristHash() != HASH_INITIAL) ? new Board(bd) : null;
+		_board.copyFrom( bd );
+		_bdStart = (bd.getZobristHash() != HASH_INITIAL) ? new Board( bd ) : null;
 
 		clear();
 
@@ -224,13 +251,13 @@ public class Variation extends PV
 	 * doesn't start at the initial position.
 	 *
 	 * @param strFEN
-	 *            Starting position expressed as a FEN string.
-	 * @return <code>.T.</code> if position is legal; <code>.F.</code>
-	 *         otherwise.
+	 * 	Starting position expressed as a FEN string.
+	 *
+	 * @return <code>.T.</code> if position is legal; <code>.F.</code> otherwise.
 	 */
 	public boolean setStartingPosition( final String strFEN )
 		{
-		return setStartingPosition(BoardFactory.createFromFEN(strFEN));
+		return setStartingPosition( BoardFactory.createFromFEN( strFEN ) );
 		}
 
 	} /* end of class Variation */

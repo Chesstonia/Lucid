@@ -75,8 +75,6 @@ class MoveGenerator
 	/** Saved copy of the board maps. */
 	private final long[] _map = new long[ MAP_LENGTH ];
 
-	/** Bitboard of pawns that can capture via e.p. */
-	private long _bbEP;
 	/** Bitboard of all pieces that are NOT pinned. */
 	private long _bbPinned;
 	/** Bitboard of potential "From" squares. */
@@ -340,12 +338,15 @@ class MoveGenerator
 	 */
 	private void generate( int iMaxMoves )
 		{
-		if (_bbSqFrom == 0L || _bbSqTo == 0L) return;
-		//	-----------------------------------------------------------------
-		long bbPawns;
+		_iCount = 0;
+
+		if (_bbSqFrom == 0L || _bbSqTo == 0L)
+			return;
 		//
 		//	Generate pawn captures/moves.
 		//
+		long bbPawns;
+
 		if (_player == WHITE)
 			{
 			bbPawns = _bbSqFrom & _map[ MAP_W_PAWN ];
@@ -399,14 +400,9 @@ class MoveGenerator
 					throw new RuntimeException( "Invalid piece type." );
 				}
 
-			if (_iCount >= iMaxMoves) return;
+			if (_iCount >= iMaxMoves)
+				break;
 			}
-		//
-		//	Generate e.p. captures.  These ignore the "From" and "To" restrictions because
-		//	of the edge case where the capture removes a pawn checking the King.
-		//
-		if (_bbEP != 0L)
-			addMovesFrom( _bbEP, _board.getEnPassantSquare(), Move.Type.EN_PASSANT );
 		}
 
 	/**
@@ -536,6 +532,16 @@ class MoveGenerator
 					  (((bbPawns & 0xFEFEFEFEFEFEFEFEL) >>> 9) & _bbOpponent),
 					  Move.Type.NORMAL );
 
+		//	En passant captures
+		int iSqEP = _board.getEnPassantSquare();
+
+		if (Square.isValid( iSqEP ))
+			{
+			addMovesFrom( (bbPawns & Bitboards.pawnUpwards[ iSqEP ]),
+						  iSqEP,
+						  Move.Type.EN_PASSANT );
+			}
+
 		//	Normal moves
 		long bbEmpty = ~_bbAll;
 		long bbUnblocked = (bbPawns >>> 8) & bbEmpty;
@@ -544,11 +550,11 @@ class MoveGenerator
 			{
 			addPawnMoves( 8, bbUnblocked, Move.Type.NORMAL );
 			//	Pawn Advances (double moves)
-			if ((bbUnblocked = ((bbUnblocked & Bitboards.rankMask[ 5 ]) >>> 8) & bbEmpty) != 0L)
-				addPawnMoves( 16, bbUnblocked, Move.Type.PAWN_PUSH );
+			addPawnMoves( 16,
+						  (((bbUnblocked & Bitboards.rankMask[ 5 ]) >>> 8) & bbEmpty),
+						  Move.Type.PAWN_PUSH );
 			}
 		}
-
 
 	/**
 	 * Generate all moves for a set of White pawns.
@@ -570,6 +576,16 @@ class MoveGenerator
 					  (((bbPawns & 0xFEFEFEFEFEFEFEFEL) << 7) & _bbOpponent),
 					  Move.Type.NORMAL );
 
+		//	En passant captures
+		int iSqEP = _board.getEnPassantSquare();
+
+		if (Square.isValid( iSqEP ))
+			{
+			addMovesFrom( (bbPawns & Bitboards.pawnDownwards[ iSqEP ]),
+						  iSqEP,
+						  Move.Type.EN_PASSANT );
+			}
+
 		//	Normal moves.
 		long bbEmpty = ~_bbAll;
 		long bbUnblocked = (bbPawns << 8) & bbEmpty;
@@ -578,8 +594,9 @@ class MoveGenerator
 			{
 			addPawnMoves( -8, bbUnblocked, Move.Type.NORMAL );
 			//	Pawn Advances (double moves)
-			if ((bbUnblocked = ((bbUnblocked & Bitboards.rankMask[ 2 ]) << 8) & bbEmpty) != 0L)
-				addPawnMoves( -16, bbUnblocked, Move.Type.PAWN_PUSH );
+			addPawnMoves( -16,
+						  (((bbUnblocked & Bitboards.rankMask[ 2 ]) << 8) & bbEmpty),
+						  Move.Type.PAWN_PUSH );
 			}
 		}
 
@@ -590,38 +607,22 @@ class MoveGenerator
 		{
 		if (!Square.isValid( _iSqKing )) return;
 		//	-----------------------------------------------------------------
-		_iCount = 0;
-		_bbEP = _bbPinned = 0L;
-
+		_bbPinned = 0L;
 		_bbSqFrom = _bbPlayer;
 		_bbSqTo = ~_bbPlayer;
-		//
-		//	See if there are any e.p. captures possible. This is used as
-		//	possible evasion moves if the King is in check to handle the edge
-		//	case where the only legal move is an e.p. capture.
-		//
-		int iSqEP = _board.getEnPassantSquare();
-
-		if (Square.isValid( iSqEP ))
-			{
-			_bbEP = (_player == WHITE)
-					? (Bitboards.pawnDownwards[ iSqEP ] & _map[ MAP_W_PAWN ])
-					: (Bitboards.pawnUpwards[ iSqEP ] & _map[ MAP_B_PAWN ]);
-			}
 		//
 		//  If the moving player is in check, that affects possible "From" and "To" squares.
 		//	If the player is NOT in check, build a bitboard of pinned pieces.
 		//
 		if (_bbCheckers == 0L)
 			{
+			final long bbQueen = _map[ MAP_W_QUEEN + _opponent ];
+			final long bbBishops = _map[ MAP_W_BISHOP + _opponent ];
+			final long bbRooks = _map[ MAP_W_ROOK + _opponent ];
 			//
 			//  Find pinned pieces.  This is done by finding all of the opposing pieces that
 			//  could attack the King if the moving player's pieces were removed.
 			//
-			long bbQueen = _map[ MAP_W_QUEEN + _opponent ];
-			long bbBishops = _map[ MAP_W_BISHOP + _opponent ];
-			long bbRooks = _map[ MAP_W_ROOK + _opponent ];
-
 			long bbPinners =
 				Bitboards.getDiagonalAttackers( _iSqKing, (bbQueen | bbBishops), _bbOpponent ) |
 				Bitboards.getLateralAttackers( _iSqKing, (bbQueen | bbRooks), _bbOpponent );
@@ -660,12 +661,26 @@ class MoveGenerator
 				_bbSqTo &= (_bbCheckers | bbXRays | Bitboards.king[ _iSqKing ]);
 			else
 				{
-				_bbSqFrom &= _bbEP |
-							 Square.getMask( _iSqKing ) |
-							 Bitboards.getAttackedBy( _map, iSqChecker, _player );
+				long bbFrom = (1L << _iSqKing) |
+							  Bitboards.getAttackedBy( _map, iSqChecker, _player );
+				//
+				//	See if there are any e.p. captures possible. This is used as
+				//	possible evasion moves if the King is in check to handle the edge
+				//	case where the only legal move is an e.p. capture.
+				//
+				int iSqEP = _board.getEnPassantSquare();
+
+				if (Square.isValid( iSqEP ))
+					{
+					bbFrom |= (_player == WHITE)
+							  ? (Bitboards.pawnDownwards[ iSqEP ] & _map[ MAP_W_PAWN ])
+							  : (Bitboards.pawnUpwards[ iSqEP ] & _map[ MAP_B_PAWN ]);
+					}
+
+				_bbSqFrom &= bbFrom;
 				_bbSqTo &= _bbCheckers |
-						   Bitboards.king[ _iSqKing ] |
-						   Square.getMask( iSqEP );
+						   Square.getMask( iSqEP ) |
+						   Bitboards.king[ _iSqKing ];
 				}
 			}
 		//
@@ -674,7 +689,7 @@ class MoveGenerator
 		//
 		else
 			{
-			_bbSqFrom &= Square.getMask( _iSqKing );
+			_bbSqFrom &= (1L << _iSqKing);
 			_bbSqTo &= Bitboards.king[ _iSqKing ];
 			}
 		}

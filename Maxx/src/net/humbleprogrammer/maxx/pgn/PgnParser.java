@@ -33,17 +33,16 @@
 package net.humbleprogrammer.maxx.pgn;
 
 import net.humbleprogrammer.humble.*;
-import net.humbleprogrammer.maxx.Parser;
-import net.humbleprogrammer.maxx.Result;
+import net.humbleprogrammer.maxx.*;
 import net.humbleprogrammer.maxx.interfaces.IPgnListener;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 
 import java.text.ParseException;
 import java.util.*;
 import java.util.regex.Pattern;
 
+@SuppressWarnings( { "PointlessBitwiseExpression", "WeakerAccess" } )
 public class PgnParser extends Parser
 	{
 
@@ -52,76 +51,77 @@ public class PgnParser extends Parser
 	//	-----------------------------------------------------------------------
 
 	/** PGN Tag name of starting position. */
-	public static final String			TAG_FEN					= "FEN";
+	public static final String TAG_FEN = "FEN";
 
 	/** Dash, hyphen, minus sign, etc. */
-	private static final char			SYM_DASH				= '-';
+	private static final char SYM_DASH    = '-';
 	/** Period, full stop, dot, whatever. */
-	private static final char			SYM_DOT					= '.';
+	private static final char SYM_DOT     = '.';
 	/** Numeric Annotation Glyph (NAG) */
-	private static final char			SYM_NAG					= '$';
+	private static final char SYM_NAG     = '$';
 	/** Marks an escaped line, but only in column 1. */
-	private static final char			SYM_PERCENT				= '%';
+	private static final char SYM_PERCENT = '%';
 	/** Marks a text literal. */
-	private static final char			SYM_QUOTE				= '"';
+	private static final char SYM_QUOTE   = '"';
 	/** Marks an escaped character in a text literal. */
-	private static final char			SYM_SLASH				= '\\';
+	private static final char SYM_SLASH   = '\\';
 	/** Indeterminate result. */
-	private static final char			SYM_STAR				= '*';
+	private static final char SYM_STAR    = '*';
 
 	/** Marks the start of an in-line comment. */
-	private static final int			COMMENT_BEGIN			= '{';
+	private static final int COMMENT_BEGIN   = '{';
 	/** Marks the end of an in-line comment. */
-	private static final int			COMMENT_END				= '}';
+	private static final int COMMENT_END     = '}';
 	/** Marks the start of a tag name/value pair. */
-	private static final int			TAG_BEGIN				= '[';
+	private static final int TAG_BEGIN       = '[';
 	/** Marks the end of a tag name/value pair. */
-	private static final int			TAG_END					= ']';
+	private static final int TAG_END         = ']';
 	/** Marks the start of a variation. */
-	private static final int			VARIATION_BEGIN			= '(';
+	private static final int VARIATION_BEGIN = '(';
 	/** Marks the end of a variation. */
-	private static final int			VARIATION_END			= ')';
+	private static final int VARIATION_END   = ')';
 
 	/** Characters allowed in a move suffix. */
-	private static final String			STR_MOVE_SUFFIX			= "!?+#";
+	private static final String STR_MOVE_SUFFIX = "!?+#";
 	/** Regex to validate tag names. */
-	private static final String			STR_TAG_NAME			= "^[A-Z]\\w{0,254}$";
+	private static final String STR_TAG_NAME    = "^[A-Z]\\w{0,254}$";
 
 	/** Result 0-1 */
-	private static final String			STR_RESULT_BLACK_WIN	= Result.toString(Result.WON_BY_BLACK);
+	private static final String STR_RESULT_BLACK_WIN = Result.toString( Result.WON_BY_BLACK );
 	/** Result 1-0 */
-	private static final String			STR_RESULT_WHITE_WIN	= Result.toString(Result.WON_BY_WHITE);
+	private static final String STR_RESULT_WHITE_WIN = Result.toString( Result.WON_BY_WHITE );
 	/** Result 1/2-1/2 */
-	private static final String			STR_RESULT_DRAW			= Result.toString(Result.DRAW);
+	private static final String STR_RESULT_DRAW      = Result.toString( Result.DRAW );
 	//  -----------------------------------------------------------------------
 	//	STATIC DECLARATIONS
 	//	-----------------------------------------------------------------------
 
 	/** The mandatory "Seven Tag Roster". */
-	private static final List<String>	s_listTags				= Arrays.asList("Event", "Site", "Date", "Round",
-			"White", "Black", "Result");
+	private static final List<String> s_listTags =
+		Arrays.asList( "Event", "Site", "Date", "Round",
+					   "White", "Black", "Result" );
 
 	/** Logger */
-	private static final Logger			s_log					= LoggerFactory.getLogger(PgnParser.class);
+	private static final Logger s_log = LoggerFactory.getLogger( PgnParser.class );
 	//  -----------------------------------------------------------------------
 	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
 	/** Receives notification of tokens. */
-	private final IPgnListener			_listener;
+	private final IPgnListener _listener;
 	/** Used for building tokens. */
-	private final StringBuilder			_sb						= new StringBuilder();
+	private final StringBuilder _sb = new StringBuilder();
 	/** Used for parsing the input string. */
-	private final StrLexer				_lexer;
+	private final StrLexer _lexer;
 
 	/** Numer of moves seen since the last move number. */
-	private int							_iMovesSeen;
+	private int _iMovesSeen;
 	/** Valid token types for the next token. */
-	private int							_iValidTokens			= TT_TAG_PAIR;
+	private int _iValidTokens = TT_TAG_PAIR;
 	/** Variation flags. */
-	private int							_iVariations			= TT_VARIATION_BEGIN;
+	private int _iVariations  = TT_VARIATION_BEGIN;
 	/** Variation nesting level, or zero for the main line. */
-	private int							_iVariationDepth;
+	private int _iVariationDepth;
 
 	//  -----------------------------------------------------------------------
 	//	CTOR
@@ -131,19 +131,19 @@ public class PgnParser extends Parser
 	 * CTOR
 	 *
 	 * @param listener
-	 *            Listener that will receive notifications.
+	 * 	Listener that will receive notifications.
 	 * @param strPGN
-	 *            Strng to parse.
+	 * 	Strng to parse.
 	 */
-	private PgnParser(IPgnListener listener, final String strPGN)
+	private PgnParser( IPgnListener listener, final String strPGN )
 		{
 		assert listener != null;
 		assert strPGN != null;
 		//  -----------------------------------------------------------------
-		_lexer = new StrLexer(strPGN);
+		_lexer = new StrLexer( strPGN );
 		_listener = listener;
 		}
-	
+
 	//  -----------------------------------------------------------------------
 	//	PUBLIC METHODS
 	//	-----------------------------------------------------------------------
@@ -152,31 +152,34 @@ public class PgnParser extends Parser
 	 * Validates a PGN string.
 	 *
 	 * @param strPGN
-	 *            String to validate.
+	 * 	String to validate.
+	 *
 	 * @return .T. if valid PGN; .F. otherwise.
 	 */
 	public static boolean isValid( final String strPGN )
 		{
-		return parse(new PgnValidator(), strPGN);
+		return parse( new PgnValidator(), strPGN );
 		}
 
 	/**
 	 * Tests a tag name for validity.
 	 *
 	 * @param strName
-	 *            Name to test.
+	 * 	Name to test.
+	 *
 	 * @return <code>.T.</code> if valid; <code>.F.</code> otherwise.
 	 */
 	public static boolean isValidTagName( String strName )
 		{
-		return (strName != null && Pattern.matches(STR_TAG_NAME, strName));
+		return (strName != null && Pattern.matches( STR_TAG_NAME, strName ));
 		}
 
 	/**
 	 * Tests a tag value for validity.
 	 *
 	 * @param strValue
-	 *            Value to test.
+	 * 	Value to test.
+	 *
 	 * @return <code>.T.</code> if valid; <code>.F.</code> otherwise.
 	 */
 	public static boolean isValidTagValue( String strValue )
@@ -188,17 +191,18 @@ public class PgnParser extends Parser
 	 * Parses a PGN string.
 	 *
 	 * @param listener
-	 *            Listener to receive PGN tokens.
+	 * 	Listener to receive PGN tokens.
 	 * @param strPGN
-	 *            String to parse.
+	 * 	String to parse.
+	 *
 	 * @return .T. if parsed successfully; .F. on error.
 	 */
 	public static boolean parse( IPgnListener listener, String strPGN )
 		{
-		DBC.requireNotNull(listener, "PGN Listener");
-		if (StrUtil.isBlank(strPGN)) return false;
+		DBC.requireNotNull( listener, "PGN Listener" );
+		if (StrUtil.isBlank( strPGN )) return false;
 		//  -----------------------------------------------------------------
-		PgnParser parser = new PgnParser(listener, strPGN);
+		PgnParser parser = new PgnParser( listener, strPGN );
 
 		try
 			{
@@ -210,12 +214,12 @@ public class PgnParser extends Parser
 
 			listener.onGameOver();
 			}
-		catch ( ParseException ex )
+		catch (ParseException ex)
 			{
 			s_strError = ex.getMessage();
 
-			s_log.debug(parser.getCurrentLine());
-			s_log.warn("Parsing failed: {}", s_strError);
+			s_log.debug( parser.getCurrentLine() );
+			s_log.warn( "Parsing failed: {}", s_strError );
 			return false;
 			}
 
@@ -228,6 +232,7 @@ public class PgnParser extends Parser
 
 	public static String getLastError()
 		{ return s_strError; }
+
 	/**
 	 * Gets the mandatory tags.
 	 *
@@ -235,7 +240,7 @@ public class PgnParser extends Parser
 	 */
 	public static List<String> getMandatoryTags()
 		{
-		return Collections.unmodifiableList(s_listTags);
+		return Collections.unmodifiableList( s_listTags );
 		}
 
 	//  -----------------------------------------------------------------------
@@ -249,15 +254,16 @@ public class PgnParser extends Parser
 	 */
 	private String getCurrentLine()
 		{
-		return _lexer.extractLine(_lexer.getOffset());
+		return _lexer.extractLine( _lexer.getOffset() );
 		}
 
 	/**
 	 * Reads and parses the next token.
 	 *
 	 * @return .T. if token found; .F. at end of input.
+	 *
 	 * @throws ParseException
-	 *             if parsing encounters a syntax error.
+	 * 	if parsing encounters a syntax error.
 	 */
 	private boolean nextToken() throws ParseException
 		{
@@ -265,19 +271,19 @@ public class PgnParser extends Parser
 		//	-------------------------------------------------------------
 		int ch;
 
-		_sb.setLength(0);
+		_sb.setLength( 0 );
 
 		if ((ch = _lexer.readNextChar()) == 0) return false;
 
 		// Moves all start with a letter.
-		if (Character.isLetter(ch))
+		if (Character.isLetter( ch ))
 			{
 			parseMove();
 			return true;
 			}
 
 		// Digits are either a move number, or a result.
-		if (Character.isDigit(ch))
+		if (Character.isDigit( ch ))
 			{
 			if (ch <= '1' && parseResult()) return (_iVariationDepth > 0);
 
@@ -286,7 +292,7 @@ public class PgnParser extends Parser
 			}
 
 		//  Handle everything else
-		switch ( ch )
+		switch (ch)
 			{
 			case COMMENT_BEGIN:
 				parseComment();
@@ -307,7 +313,7 @@ public class PgnParser extends Parser
 			case SYM_PERCENT:
 				if (_lexer.getColumn() == 1)
 					{
-					_sb.append(_lexer.readLine());
+					_sb.append( _lexer.readLine() );
 					return true;
 					}
 				break;
@@ -331,8 +337,9 @@ public class PgnParser extends Parser
 		//
 		//  If we get this far, then we didn't recognize the character.
 		//
-		String strWhat = String.format("Unexpected character '%c' in column %,d", (char) ch, _lexer.getColumn());
-		throw new ParseException(strWhat, _lexer.getOffset());
+		String strWhat = String.format( "Unexpected character '%c' in column %,d", (char) ch,
+										_lexer.getColumn() );
+		throw new ParseException( strWhat, _lexer.getOffset() );
 		}
 
 	/**
@@ -340,24 +347,24 @@ public class PgnParser extends Parser
 	 */
 	private void parseAnnotation() throws ParseException
 		{
-		assert _lexer.peek(0) == SYM_NAG;
+		assert _lexer.peek( 0 ) == SYM_NAG;
 
 		if ((_iValidTokens & TT_ANNOTATION) == 0)
-			throw new ParseException("Unexpected annotation.", _lexer.getOffset());
+			throw new ParseException( "Unexpected annotation.", _lexer.getOffset() );
 		//	-------------------------------------------------------------
-		int ch = _lexer.peek(0);
+		int ch = _lexer.peek( 0 );
 
 		do
 			{
-			_sb.appendCodePoint(ch);
+			_sb.appendCodePoint( ch );
 			}
-		while ( (ch = _lexer.readChar()) != 0 && Character.isDigit(ch) );
+		while ( (ch = _lexer.readChar()) != 0 && Character.isDigit( ch ) );
 
-		if (!(ch == 0 || Character.isWhitespace(ch))) _lexer.undoRead();
+		if (!(ch == 0 || Character.isWhitespace( ch ))) _lexer.undoRead();
 		//
 		//  Pass the NAG to the listener
 		//
-		_listener.onAnnotation(_sb.toString());
+		_listener.onAnnotation( _sb.toString() );
 		}
 
 	/**
@@ -365,29 +372,29 @@ public class PgnParser extends Parser
 	 */
 	private void parseComment() throws ParseException
 		{
-		assert _lexer.peek(0) == COMMENT_BEGIN;
+		assert _lexer.peek( 0 ) == COMMENT_BEGIN;
 
-		if ((_iValidTokens & TT_COMMENT) == 0) 
-			throw new ParseException("Unexpected comment.", _lexer.getOffset());
+		if ((_iValidTokens & TT_COMMENT) == 0)
+			throw new ParseException( "Unexpected comment.", _lexer.getOffset() );
 		//	-------------------------------------------------------------
 		boolean bNeedSpace = false;
 		int ch;
 
 		while ( (ch = _lexer.readChar()) != 0 && ch != COMMENT_END )
-			if (Character.isWhitespace(ch))
+			if (Character.isWhitespace( ch ))
 				bNeedSpace = (_sb.length() > 0);
 			else if (bNeedSpace)
 				{
 				bNeedSpace = false;
-				_sb.append(' ');
-				_sb.appendCodePoint(ch);
+				_sb.append( ' ' );
+				_sb.appendCodePoint( ch );
 				}
 			else
-				_sb.appendCodePoint(ch);
+				_sb.appendCodePoint( ch );
 		//
 		//  Pass the comment to the listener.
 		//
-		_listener.onComment(_sb.toString());
+		_listener.onComment( _sb.toString() );
 
 		_iValidTokens = _iVariations | TT_COMMENT | TT_MOVE | TT_MOVE_NUMBER | TT_RESULT;
 		}
@@ -397,37 +404,38 @@ public class PgnParser extends Parser
 	 */
 	private void parseMove() throws ParseException
 		{
-		assert Character.isLetter(_lexer.peek(0));
+		assert Character.isLetter( _lexer.peek( 0 ) );
 		//	-------------------------------------------------------------
 		final int iMoveCol = _lexer.getColumn();
 
 		int ch;
 		String strSuffix;
 
-		for ( ch = _lexer.peek(0); STR_MOVE.indexOf(ch) >= 0; ch = _lexer.readChar() )
-			_sb.appendCodePoint(ch);
+		for ( ch = _lexer.peek( 0 ); STR_MOVE.indexOf( ch ) >= 0; ch = _lexer.readChar() )
+			_sb.appendCodePoint( ch );
 		//
 		//  Build the move suffix, if any. These are typically ver short (2-3 characters
 		//  at most) so any performance hit from string concantenation is acceptable.
 		//
-		for ( strSuffix = ""; STR_MOVE_SUFFIX.indexOf(ch) >= 0; ch = _lexer.readChar() )
+		for ( strSuffix = ""; STR_MOVE_SUFFIX.indexOf( ch ) >= 0; ch = _lexer.readChar() )
 			strSuffix += (char) ch;
 
-		if (!(ch == 0 || Character.isWhitespace(ch))) _lexer.undoRead();
+		if (!(ch == 0 || Character.isWhitespace( ch ))) _lexer.undoRead();
 		//
 		//  Pass the move to the listener.
 		//
-		if ((_iValidTokens & TT_MOVE) != 0 && _listener.onMove(_sb.toString(), strSuffix))
+		if ((_iValidTokens & TT_MOVE) != 0 && _listener.onMove( _sb.toString(), strSuffix ))
 			{
 			_iMovesSeen++;
 			_iValidTokens = _iVariations | TT_ANNOTATION | TT_COMMENT | TT_RESULT
-					| ((_iMovesSeen == 1) ? TT_MOVE : TT_MOVE_NUMBER);
+							| ((_iMovesSeen == 1) ? TT_MOVE : TT_MOVE_NUMBER);
 			}
 		else
 			{
-			String strWhat = String.format("Invalid move '%s' in column %,d.", _sb.toString(), iMoveCol);
+			String strWhat =
+				String.format( "Invalid move '%s' in column %,d.", _sb.toString(), iMoveCol );
 
-			throw new ParseException(strWhat, _lexer.getOffset());
+			throw new ParseException( strWhat, _lexer.getOffset() );
 			}
 		}
 
@@ -437,17 +445,17 @@ public class PgnParser extends Parser
 	 */
 	private void parseMoveNumber() throws ParseException
 		{
-		assert Character.isDigit(_lexer.peek(0));
+		assert Character.isDigit( _lexer.peek( 0 ) );
 
 		if ((_iValidTokens & TT_MOVE_NUMBER) == 0)
-			throw new ParseException("Unexpected move number.", _lexer.getOffset());
+			throw new ParseException( "Unexpected move number.", _lexer.getOffset() );
 		//	-------------------------------------------------------------
 		int ch;
 		int iValue = 0;
 
-		for ( ch = _lexer.peek(0); Character.isDigit(ch); ch = _lexer.readChar() )
+		for ( ch = _lexer.peek( 0 ); Character.isDigit( ch ); ch = _lexer.readChar() )
 			{
-			_sb.appendCodePoint(ch);
+			_sb.appendCodePoint( ch );
 			iValue = (iValue * 10) + (ch - '0');
 			}
 
@@ -456,24 +464,25 @@ public class PgnParser extends Parser
 			int iDots;
 
 			for ( iDots = 0; iDots < 3; ++iDots )
-				if (_lexer.peek(iDots) != SYM_DOT) break;
+				if (_lexer.peek( iDots ) != SYM_DOT) break;
 
 			if (iDots == 2) _lexer.undoRead();
 			}
-		else if (!(ch == 0 || Character.isWhitespace(ch))) _lexer.undoRead();
+		else if (!(ch == 0 || Character.isWhitespace( ch ))) _lexer.undoRead();
 		//
 		//  Pass the move number to the listener
 		//
-		if (iValue > 0 && _listener.onMoveNumber(iValue))
+		if (iValue > 0 && _listener.onMoveNumber( iValue ))
 			{
 			_iMovesSeen = 0;
 			_iValidTokens = TT_MOVE | TT_MOVE_PLACEHOLDER;
 			}
 		else
 			{
-			String strWhat = String.format("Invalid move number '%s' in column %,d.", _sb.toString(),
-					(_lexer.getColumn() - _sb.length()));
-			throw new ParseException(strWhat, _lexer.getOffset());
+			String strWhat =
+				String.format( "Invalid move number '%s' in column %,d.", _sb.toString(),
+							   (_lexer.getColumn() - _sb.length()) );
+			throw new ParseException( strWhat, _lexer.getOffset() );
 			}
 		}
 
@@ -482,12 +491,13 @@ public class PgnParser extends Parser
 	 */
 	private void parseMovePlaceholder() throws ParseException
 		{
-		assert _lexer.peek(0) == SYM_DOT;
+		assert _lexer.peek( 0 ) == SYM_DOT;
 		//	-------------------------------------------------------------
 		if (_lexer.readChar() != SYM_DOT)
 			{
-			String strWhat = String.format("Unexpected '.' in column %,d.", _lexer.getColumn());
-			throw new ParseException(strWhat, _lexer.getOffset());
+			String strWhat =
+				String.format( "Unexpected '.' in column %,d.", _lexer.getColumn() );
+			throw new ParseException( strWhat, _lexer.getOffset() );
 			}
 		//
 		//  Inform the listener.
@@ -498,7 +508,7 @@ public class PgnParser extends Parser
 			_iValidTokens = TT_MOVE;
 			}
 		else
-			throw new ParseException("Unexpected move placeholder.", _lexer.getOffset());
+			throw new ParseException( "Unexpected move placeholder.", _lexer.getOffset() );
 		}
 
 	/**
@@ -506,12 +516,13 @@ public class PgnParser extends Parser
 	 */
 	private void parseNullMove() throws ParseException
 		{
-		assert _lexer.peek(0) == SYM_DASH;
+		assert _lexer.peek( 0 ) == SYM_DASH;
 		//	-------------------------------------------------------------
 		if (_lexer.readChar() != SYM_DASH)
 			{
-			String strWhat = String.format("Unexpected '-' in column %,d.", _lexer.getColumn());
-			throw new ParseException(strWhat, _lexer.getOffset());
+			String strWhat =
+				String.format( "Unexpected '-' in column %,d.", _lexer.getColumn() );
+			throw new ParseException( strWhat, _lexer.getOffset() );
 			}
 		//
 		//  Inform the listener.
@@ -520,10 +531,10 @@ public class PgnParser extends Parser
 			{
 			_iMovesSeen++;
 			_iValidTokens = _iVariations | TT_ANNOTATION | TT_COMMENT | TT_RESULT
-					| ((_iMovesSeen == 1) ? TT_MOVE : TT_MOVE_NUMBER);
+							| ((_iMovesSeen == 1) ? TT_MOVE : TT_MOVE_NUMBER);
 			}
 		else
-			throw new ParseException("Unexpected null move.", _lexer.getOffset());
+			throw new ParseException( "Unexpected null move.", _lexer.getOffset() );
 		}
 
 	/**
@@ -531,31 +542,31 @@ public class PgnParser extends Parser
 	 */
 	private boolean parseResult() throws ParseException
 		{
-		final int ch = _lexer.peek(0);
-		final int cNext = _lexer.peek(+1);
+		final int ch = _lexer.peek( 0 );
+		final int cNext = _lexer.peek( +1 );
 		Result result = null;
 
 		if (ch == SYM_STAR)
 			result = Result.INDETERMINATE;
 		else if (cNext == '-')
 			{
-			if (_lexer.readString(STR_RESULT_BLACK_WIN))
+			if (_lexer.readString( STR_RESULT_BLACK_WIN ))
 				result = Result.WON_BY_BLACK;
-			else if (_lexer.readString(STR_RESULT_WHITE_WIN)) result = Result.WON_BY_WHITE;
+			else if (_lexer.readString( STR_RESULT_WHITE_WIN )) result = Result.WON_BY_WHITE;
 			}
 		else if (cNext == '/')
 			{
-			if (_lexer.readString(STR_RESULT_DRAW)) result = Result.DRAW;
+			if (_lexer.readString( STR_RESULT_DRAW )) result = Result.DRAW;
 			}
 
 		if (result == null) return false;
 
-		if ((_iValidTokens & TT_RESULT) != 0 && _listener.onResult(result))
+		if ((_iValidTokens & TT_RESULT) != 0 && _listener.onResult( result ))
 			{
 			_iValidTokens = (_iVariationDepth > 0) ? TT_VARIATION_END : 0;
 			}
 		else
-			throw new ParseException("Unexpected result.", _lexer.getOffset());
+			throw new ParseException( "Unexpected result.", _lexer.getOffset() );
 
 		return true;
 		}
@@ -565,14 +576,15 @@ public class PgnParser extends Parser
 	 */
 	private void parseTag() throws ParseException
 		{
-		assert _lexer.peek(0) == TAG_BEGIN;
+		assert _lexer.peek( 0 ) == TAG_BEGIN;
 		//	-------------------------------------------------------------
-		if ((_iValidTokens & TT_TAG_PAIR) != 0 && _listener.onTag(parseTagName(), parseTagValue()))
+		if ((_iValidTokens & TT_TAG_PAIR) != 0 &&
+			_listener.onTag( parseTagName(), parseTagValue() ))
 			{
 			_iValidTokens = TT_COMMENT | TT_TAG_PAIR | TT_MOVE_NUMBER | TT_RESULT;
 			}
 		else
-			throw new ParseException("Invalid tag marker.", _lexer.getOffset());
+			throw new ParseException( "Invalid tag marker.", _lexer.getOffset() );
 		}
 
 	/**
@@ -583,8 +595,8 @@ public class PgnParser extends Parser
 	private String parseTagName() throws ParseException
 		{
 		for ( int ch = _lexer.readNextChar(); ch != 0; ch = _lexer.readChar() )
-			if (Character.isLetterOrDigit(ch) || ch == '_')
-				_sb.appendCodePoint(ch);
+			if (Character.isLetterOrDigit( ch ) || ch == '_')
+				_sb.appendCodePoint( ch );
 			else
 				break;
 		//
@@ -592,10 +604,10 @@ public class PgnParser extends Parser
 		//
 		final String strName = _sb.toString();
 
-		if (isValidTagName(strName)) return strName;
+		if (isValidTagName( strName )) return strName;
 
-		String strWhat = String.format("Invalid tag name '%s'.", _sb.toString());
-		throw new ParseException(strWhat, _lexer.getOffset() - strName.length());
+		String strWhat = String.format( "Invalid tag name '%s'.", _sb.toString() );
+		throw new ParseException( strWhat, _lexer.getOffset() - strName.length() );
 		}
 
 	/**
@@ -606,12 +618,12 @@ public class PgnParser extends Parser
 	private String parseTagValue() throws ParseException
 		{
 		if (_lexer.readNextChar() != SYM_QUOTE)
-			throw new ParseException("Tag values must be in quotes.", _lexer.getOffset());
+			throw new ParseException( "Tag values must be in quotes.", _lexer.getOffset() );
 		//	-------------------------------------------------------------
 		boolean bEscaped = false;
 		int ch;
 
-		_sb.setLength(0);
+		_sb.setLength( 0 );
 
 		while ( (ch = _lexer.readChar()) != 0 )
 			{
@@ -619,32 +631,37 @@ public class PgnParser extends Parser
 				{
 				bEscaped = false;
 				if (ch == SYM_QUOTE || ch == SYM_SLASH)
-					_sb.appendCodePoint(ch);
+					_sb.appendCodePoint( ch );
 				else
 					{
-					String strWhat = String.format("Invalid escape character '%c'.", (char) ch);
-					throw new ParseException(strWhat, _lexer.getOffset());
+					_sb.append( SYM_SLASH );
+					_sb.appendCodePoint( ch );
 					}
 				}
 			else if (ch == SYM_SLASH)
 				bEscaped = true;
-			else if (!(ch == SYM_QUOTE || Character.getType(ch) == Character.CONTROL))
-				_sb.appendCodePoint(ch);
+			else if (ch != SYM_QUOTE && Parser.STR_CRLF.indexOf( ch ) < 0)
+				{
+				_sb.appendCodePoint( ch );
+				}
 			else
 				break;
 			}
 
 		if (_lexer.readNextChar() != TAG_END)
-			throw new ParseException("Tag close marker ']' not found.", _lexer.getOffset());
+			throw new ParseException( "Tag close marker ']' not found.", _lexer.getOffset() );
 		//
 		//  Validate the value.
 		//
 		final String strValue = _sb.toString();
 
-		if (isValidTagValue(strValue)) return strValue;
+		if (!isValidTagValue( strValue ))
+			{
+			String strWhat = String.format( "Invalid tag value '%s'.", strValue );
+			throw new ParseException( strWhat, _lexer.getOffset() - strValue.length() );
+			}
 
-		String strWhat = String.format("Invalid tag value '%s'.", _sb.toString());
-		throw new ParseException(strWhat, _lexer.getOffset() - strValue.length());
+		return strValue;
 		}
 
 	/**
@@ -652,16 +669,16 @@ public class PgnParser extends Parser
 	 */
 	private void parseVariationBegin() throws ParseException
 		{
-		assert _lexer.peek(0) == VARIATION_BEGIN;
+		assert _lexer.peek( 0 ) == VARIATION_BEGIN;
 
 		if ((_iValidTokens & TT_VARIATION_BEGIN) == 0)
-			throw new ParseException("Unexpected '(' marker.", _lexer.getOffset());
+			throw new ParseException( "Unexpected '(' marker.", _lexer.getOffset() );
 		//	-------------------------------------------------------------
 		_listener.onVariationEnter();
 
 		_iVariationDepth++;
 		_iVariations = TT_VARIATION_BEGIN | TT_VARIATION_END;
-		_iValidTokens = TT_COMMENT | TT_MOVE_NUMBER;
+		_iValidTokens = _iVariations | TT_COMMENT | TT_MOVE_NUMBER;
 		}
 
 	/**
@@ -669,30 +686,31 @@ public class PgnParser extends Parser
 	 */
 	private void parseVariationEnd() throws ParseException
 		{
-		assert _lexer.peek(0) == VARIATION_END;
+		assert _lexer.peek( 0 ) == VARIATION_END;
 
 		if ((_iValidTokens & TT_VARIATION_END) == 0)
-			throw new ParseException("Unexpected ')' marker.", _lexer.getOffset());
+			throw new ParseException( "Unexpected ')' marker.", _lexer.getOffset() );
 		//	-------------------------------------------------------------
 		_listener.onVariationExit();
 
 		_iVariationDepth--;
-		_iVariations = (_iVariationDepth <= 0) ? TT_VARIATION_BEGIN : (TT_VARIATION_BEGIN | TT_VARIATION_END);
-		_iValidTokens = _iVariations | TT_COMMENT | TT_MOVE_NUMBER | TT_RESULT;
+		_iVariations = (_iVariationDepth <= 0) ? TT_VARIATION_BEGIN
+											   : (TT_VARIATION_BEGIN | TT_VARIATION_END);
+		_iValidTokens = _iVariations | TT_COMMENT | TT_MOVE_NUMBER | TT_MOVE | TT_RESULT;
 		}
 
 	//  -----------------------------------------------------------------------
 	//	TOKEN TYPE CONSTANTS (TT_*)
 	//	-----------------------------------------------------------------------
 
-	private static final int	TT_ANNOTATION		= 1 << 0;
-	private static final int	TT_COMMENT			= 1 << 1;
-	private static final int	TT_MOVE				= 1 << 2;
-	private static final int	TT_MOVE_NUMBER		= 1 << 3;
-	private static final int	TT_MOVE_PLACEHOLDER	= 1 << 4;
-	private static final int	TT_RESULT			= 1 << 5;
-	private static final int	TT_TAG_PAIR			= 1 << 6;
-	private static final int	TT_VARIATION_BEGIN	= 1 << 7;
-	private static final int	TT_VARIATION_END	= 1 << 8;
+	private static final int TT_ANNOTATION       = 1 << 0;
+	private static final int TT_COMMENT          = 1 << 1;
+	private static final int TT_MOVE             = 1 << 2;
+	private static final int TT_MOVE_NUMBER      = 1 << 3;
+	private static final int TT_MOVE_PLACEHOLDER = 1 << 4;
+	private static final int TT_RESULT           = 1 << 5;
+	private static final int TT_TAG_PAIR         = 1 << 6;
+	private static final int TT_VARIATION_BEGIN  = 1 << 7;
+	private static final int TT_VARIATION_END    = 1 << 8;
 
 	} /* end of class PgnParser() */

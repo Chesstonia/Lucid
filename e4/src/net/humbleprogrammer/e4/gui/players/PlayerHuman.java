@@ -132,7 +132,7 @@ public class PlayerHuman implements IBoardController, IPlayer
 
 		assert _presenter != null;
 		//	-----------------------------------------------------------------
-		_movesLegal = MoveList.generate( _board );
+		_movesLegal = new MoveList( _board );
 		}
 
 	}	/* end of class PlayerHuman */

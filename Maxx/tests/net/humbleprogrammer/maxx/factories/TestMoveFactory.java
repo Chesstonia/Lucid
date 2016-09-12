@@ -1,4 +1,4 @@
-/*****************************************************************************
+/* ****************************************************************************
  **
  ** @author Lee Neuse (coder@humbleprogrammer.net)
  ** @since 1.0
@@ -34,86 +34,96 @@ package net.humbleprogrammer.maxx.factories;
 
 import net.humbleprogrammer.TestBase;
 import net.humbleprogrammer.maxx.*;
-import net.humbleprogrammer.maxx.factories.BoardFactory;
-import net.humbleprogrammer.maxx.factories.MoveFactory;
+
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 public class TestMoveFactory extends TestBase
-    {
+	{
 
-    //  -----------------------------------------------------------------------
-    //	UNIT TESTS
-    //	-----------------------------------------------------------------------
+	//  -----------------------------------------------------------------------
+	//	UNIT TESTS
+	//	-----------------------------------------------------------------------
 
-    @Test
-    public void t_sample()
-        {
-        Board bd = BoardFactory.createInitial();
+	@Test
+	public void t_sample()
+		{
+		Board bd = BoardFactory.createInitial();
 
-        for ( String str : SAMPLE_MOVES )
-            {
-            Move move = MoveFactory.fromSAN( bd, str );
+		for ( String str : SAMPLE_MOVES )
+			{
+			Move move = MoveFactory.fromSAN( bd, str );
 
-            assertNotNull( str, move );
-            assertTrue( bd.isLegalMove( move ) );
+			assertNotNull( str, move );
+			assertTrue( bd.isLegalMove( move ) );
 
-            bd.makeMove( move );
-            }
-        }
+			bd.makeMove( move );
+			}
+		}
 
-    @Test
-    public void t_fromSAN_fail()
-        {
-        assertNull( MoveFactory.fromSAN( null, null ) );
-        }
+	@Test
+	public void t_fromSAN_fail()
+		{
+		assertNull( MoveFactory.fromSAN( null, null ) );
+		}
 
-    @Test
-    public void t_fromSAN_fail_blank()
-        {
-        Board bd = BoardFactory.createInitial();
+	@Test
+	public void t_fromSAN_extra_disambiguation()
+		{
+		Board bd = BoardFactory.createFromFEN( "8/3q4/4q3/7K/4q3/8/6k1/5q2 b - -" );
+		Move move = MoveFactory.fromSAN( bd, "Qe4f5+" );	// Q4f5+ is sufficient...
 
-        assertNull( MoveFactory.fromSAN( bd, null ) );
-        assertNull( MoveFactory.fromSAN( bd, "" ) );
-        assertNull( MoveFactory.fromSAN( bd, "   " ) );
-        assertNull( MoveFactory.fromSAN( bd, Parser.STR_CRLF ) );
-        }
+		assertNotNull( move );
+		assertEquals( Square.E4, move.iSqFrom );
+		assertEquals( Square.F5, move.iSqTo );
+		}
 
-    @Test
-    public void t_fromSAN_fail_invalidFile()
-        {
-        Board bd = BoardFactory.createInitial();
+	@Test
+	public void t_fromSAN_fail_blank()
+		{
+		Board bd = BoardFactory.createInitial();
 
-        assertNull( MoveFactory.fromSAN( bd, "x4" ) );
-        assertNull( MoveFactory.fromSAN( bd, "14" ) );
-        assertNull( MoveFactory.fromSAN( bd, "-4" ) );
-        assertNull( MoveFactory.fromSAN( bd, "E4" ) );
-        assertNull( MoveFactory.fromSAN( bd, "*4" ) );
-        }
+		assertNull( MoveFactory.fromSAN( bd, null ) );
+		assertNull( MoveFactory.fromSAN( bd, "" ) );
+		assertNull( MoveFactory.fromSAN( bd, "   " ) );
+		assertNull( MoveFactory.fromSAN( bd, Parser.STR_CRLF ) );
+		}
 
-    @Test
-    public void t_fromSAN_fail_invalidRank()
-        {
-        Board bd = BoardFactory.createInitial();
+	@Test
+	public void t_fromSAN_fail_invalidFile()
+		{
+		Board bd = BoardFactory.createInitial();
 
-        assertNull( MoveFactory.fromSAN( bd, "ex" ) );
-        assertNull( MoveFactory.fromSAN( bd, "e0" ) );
-        assertNull( MoveFactory.fromSAN( bd, "e9" ) );
-        assertNull( MoveFactory.fromSAN( bd, "e" ) );
-        assertNull( MoveFactory.fromSAN( bd, "e " ) );
-        assertNull( MoveFactory.fromSAN( bd, "e-" ) );
-        }
+		assertNull( MoveFactory.fromSAN( bd, "x4" ) );
+		assertNull( MoveFactory.fromSAN( bd, "14" ) );
+		assertNull( MoveFactory.fromSAN( bd, "-4" ) );
+		assertNull( MoveFactory.fromSAN( bd, "E4" ) );
+		assertNull( MoveFactory.fromSAN( bd, "*4" ) );
+		}
 
-    @Test
-    public void t_fromSAN_fail_invalidPiece()
-        {
-        Board bd = BoardFactory.createInitial();
+	@Test
+	public void t_fromSAN_fail_invalidRank()
+		{
+		Board bd = BoardFactory.createInitial();
 
-        assertNull( MoveFactory.fromSAN( bd, "Je4" ) );
-        assertNull( MoveFactory.fromSAN( bd, "1e4" ) );
-        assertNull( MoveFactory.fromSAN( bd, "-e4" ) );
-        assertNull( MoveFactory.fromSAN( bd, "pe4" ) );
-        assertNull( MoveFactory.fromSAN( bd, "Pe4" ) );
-        }
-    }   /* end of class TestMoveFactory */
+		assertNull( MoveFactory.fromSAN( bd, "ex" ) );
+		assertNull( MoveFactory.fromSAN( bd, "e0" ) );
+		assertNull( MoveFactory.fromSAN( bd, "e9" ) );
+		assertNull( MoveFactory.fromSAN( bd, "e" ) );
+		assertNull( MoveFactory.fromSAN( bd, "e " ) );
+		assertNull( MoveFactory.fromSAN( bd, "e-" ) );
+		}
+
+	@Test
+	public void t_fromSAN_fail_invalidPiece()
+		{
+		Board bd = BoardFactory.createInitial();
+
+		assertNull( MoveFactory.fromSAN( bd, "Je4" ) );
+		assertNull( MoveFactory.fromSAN( bd, "1e4" ) );
+		assertNull( MoveFactory.fromSAN( bd, "-e4" ) );
+		assertNull( MoveFactory.fromSAN( bd, "pe4" ) );
+		assertNull( MoveFactory.fromSAN( bd, "Pe4" ) );
+		}
+	}   /* end of class TestMoveFactory */
