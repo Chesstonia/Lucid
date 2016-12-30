@@ -338,7 +338,7 @@ class MoveGenerator
 	 */
 	private void generate( int iMaxMoves )
 		{
-		long bbPawns = _map[MAP_W_PAWN + _player];
+		long bbPawns = _map[ MAP_W_PAWN + _player ];
 
 		_iCount = 0;
 
@@ -540,9 +540,8 @@ class MoveGenerator
 			{
 			addPawnMoves( 8, bbUnblocked, Move.Type.NORMAL );
 			//	Pawn Advances (double moves)
-			addPawnMoves( 16,
-						  (((bbUnblocked & Bitboards.rankMask[ 5 ]) >>> 8) & bbEmpty),
-						  Move.Type.PAWN_PUSH );
+			if ((bbUnblocked &= Bitboards.rankMask[ 5 ]) != 0L)
+				addPawnMoves( 16, ((bbUnblocked >>> 8) & bbEmpty), Move.Type.PAWN_PUSH );
 			}
 		}
 
@@ -584,9 +583,8 @@ class MoveGenerator
 			{
 			addPawnMoves( -8, bbUnblocked, Move.Type.NORMAL );
 			//	Pawn Advances (double moves)
-			addPawnMoves( -16,
-						  (((bbUnblocked & Bitboards.rankMask[ 2 ]) << 8) & bbEmpty),
-						  Move.Type.PAWN_PUSH );
+			if ((bbUnblocked &= Bitboards.rankMask[ 2 ]) != 0L)
+				addPawnMoves( -16, ((bbUnblocked << 8) & bbEmpty), Move.Type.PAWN_PUSH );
 			}
 		}
 
@@ -679,7 +677,7 @@ class MoveGenerator
 		//
 		else
 			{
-			_bbSqFrom &= Square.getMask(_iSqKing );
+			_bbSqFrom &= Square.getMask( _iSqKing );
 			_bbSqTo &= Bitboards.king[ _iSqKing ];
 			}
 		}
