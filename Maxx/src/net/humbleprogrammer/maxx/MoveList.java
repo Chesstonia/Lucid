@@ -76,7 +76,7 @@ public class MoveList extends MoveGenerator implements Iterable<Move>
 		//	-----------------------------------------------------------------
 		_hashZobrist = bd.getZobristHash();
 
-		generateSome( ~0L, Square.getMask( iSqTo ));
+		generateSome( ~0L, Square.getMask( iSqTo ) );
 		}
 
 	public MoveList( Board bd, long bbFromMask, long bbToMask )
@@ -85,7 +85,7 @@ public class MoveList extends MoveGenerator implements Iterable<Move>
 		//	-----------------------------------------------------------------
 		_hashZobrist = bd.getZobristHash();
 
-		generateSome( bbFromMask, bbToMask);
+		generateSome( bbFromMask, bbToMask );
 		}
 
 	//  -----------------------------------------------------------------------
@@ -140,17 +140,14 @@ public class MoveList extends MoveGenerator implements Iterable<Move>
 	//	-----------------------------------------------------------------------
 
 	/**
-	 * Gets the move at a given index.
-	 *
-	 * @param index
-	 * 	Zero-based index of move.
+	 * Gets the first move in the list.
 	 *
 	 * @return Move if valid index; <c>null/c> otherwise.
 	 */
-	public Move getAt( int index )
+	public Move getFirst()
 		{
-		return (index >= 0 && index < _iCount)
-			   ? new Move( _moves[ index ], _hashZobrist )
+		return (_iCount > 0)
+			   ? new Move( _moves[ 0 ], _hashZobrist )
 			   : null;
 		}
 

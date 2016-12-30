@@ -374,7 +374,7 @@ public class Evaluator
 
 			for ( Move move : moves )
 				{
-				if (move.getPromotionPiece() == BISHOP || move.getPromotionPiece() == ROOK)
+				if (move.isPromotion() && (move.getPromotionPiece() == BISHOP || move.getPromotionPiece() == ROOK))
 					continue; // ignore underpromotions for mate-in-x problems
 
 				int iScore;
@@ -446,7 +446,7 @@ public class Evaluator
 				{
 				long bbAll = bd.map[ MAP_W_ALL ] | bd.map[ MAP_B_ALL ];
 				long bbMask = Square.getMask( move.iSqFrom ) | Square.getMask( move.iSqTo );
-				long bbKingSees = Bitboards.getQueenMovesFrom( iSqKing, bbAll );
+				long bbKingSees = Bitboards.getSlidingMovesFrom( iSqKing, bbAll );
 
 				if ((bbKingSees & bbMask) != 0 &&
 					new Board( bd, move ).isInCheck())

@@ -338,30 +338,10 @@ class MoveGenerator
 	 */
 	private void generate( int iMaxMoves )
 		{
+		long bbPawns = _map[MAP_W_PAWN + _player];
+
 		_iCount = 0;
 
-		if (_bbSqFrom == 0L || _bbSqTo == 0L)
-			return;
-		//
-		//	Generate pawn captures/moves.
-		//
-		long bbPawns;
-
-		if (_player == WHITE)
-			{
-			bbPawns = _bbSqFrom & _map[ MAP_W_PAWN ];
-			generatePawnMovesWhite( bbPawns );
-			}
-		else
-			{
-			bbPawns = _bbSqFrom & _map[ MAP_B_PAWN ];
-			generatePawnMovesBlack( bbPawns );
-			}
-
-		if (_iCount >= iMaxMoves) return;
-		//
-		//	Generate remaining moves.
-		//
 		for ( long bb = _bbSqFrom & ~bbPawns; bb != 0L; bb &= (bb - 1L) )
 			{
 			int iSq = BitUtil.first( bb );
@@ -385,7 +365,7 @@ class MoveGenerator
 
 				case MAP_W_QUEEN:
 				case MAP_B_QUEEN:
-					addMovesTo( iSq, Bitboards.getQueenMovesFrom( iSq, _bbAll ) );
+					addMovesTo( iSq, Bitboards.getSlidingMovesFrom( iSq, _bbAll ) );
 					break;
 
 				case MAP_W_KING:
@@ -401,7 +381,17 @@ class MoveGenerator
 				}
 
 			if (_iCount >= iMaxMoves)
-				break;
+				return;
+			}
+		//
+		//	Now move all the pawns at once.
+		//
+		if ((bbPawns &= _bbSqFrom) != 0L)
+			{
+			if (_player == WHITE)
+				generatePawnMovesWhite( bbPawns );
+			else
+				generatePawnMovesBlack( bbPawns );
 			}
 		}
 
@@ -689,7 +679,7 @@ class MoveGenerator
 		//
 		else
 			{
-			_bbSqFrom &= (1L << _iSqKing);
+			_bbSqFrom &= Square.getMask(_iSqKing );
 			_bbSqTo &= Bitboards.king[ _iSqKing ];
 			}
 		}

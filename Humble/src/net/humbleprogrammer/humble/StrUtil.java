@@ -48,9 +48,10 @@ public class StrUtil
 	 * Create a string that contains a repeated character
 	 *
 	 * @param ch
-	 *            Character to fill with.
+	 * 	Character to fill with.
 	 * @param iCount
-	 *            Count.
+	 * 	Count.
+	 *
 	 * @return String containing <c>iCount</c> characters.
 	 */
 	public static String create( char ch, int iCount )
@@ -59,20 +60,21 @@ public class StrUtil
 
 		assert iCount < (1024 * 1024); // 1MB sanity check
 		//	-----------------------------------------------------------------
-		char[] array = new char[iCount];
+		char[] array = new char[ iCount ];
 
-		Arrays.fill(array, ch);
+		Arrays.fill( array, ch );
 
-		return new String(array);
+		return new String( array );
 		}
 
 	/**
 	 * Searchs a string array for a given value.
 	 *
 	 * @param array
-	 *            Array to search
+	 * 	Array to search
 	 * @param strKey
-	 *            Desired value.
+	 * 	Desired value.
+	 *
 	 * @return <c>true</c> if found; <c>false</c> otherwise.
 	 */
 	public static boolean contains( final String[] array, final String strKey )
@@ -80,7 +82,7 @@ public class StrUtil
 		if (array == null || strKey == null) return false;
 		//	-----------------------------------------------------------------
 		for ( final String str : array )
-			if (strKey.equals(str)) return true;
+			if (strKey.equals( str )) return true;
 
 		return false;
 		}
@@ -89,9 +91,10 @@ public class StrUtil
 	 * Tests a string to see if it is blank, empty, or null.
 	 *
 	 * @param str
-	 *            String to test.
-	 * @return <c>true</c> if null, empty, or consists of only whitepace;
-	 *         <c>false</c> otherwise.
+	 * 	String to test.
+	 *
+	 * @return <c>true</c> if null, empty, or consists of only whitepace; <c>false</c>
+	 * otherwise.
 	 */
 	public static boolean isBlank( final String str )
 		{
@@ -99,11 +102,11 @@ public class StrUtil
 		//	-----------------------------------------------------------------
 		for ( int idx = 0; idx < str.length(); ++idx )
 			{
-			final int ch = str.codePointAt(idx);
+			final int ch = str.codePointAt( idx );
 
-			if (!Character.isWhitespace(ch)) return false;
+			if (!Character.isWhitespace( ch )) return false;
 
-			if (Character.isSupplementaryCodePoint(ch)) idx++;
+			if (Character.isSupplementaryCodePoint( ch )) idx++;
 			}
 
 		return true;
@@ -111,13 +114,14 @@ public class StrUtil
 
 	/**
 	 * Returns the singular or plural form of a string, based on the count.
-	 * 
+	 *
 	 * @param count
-	 *            Number of elements.
+	 * 	Number of elements.
 	 * @param singular
-	 *            Singular form.
+	 * 	Singular form.
 	 * @param plural
-	 *            Plural form, or null if plural is singular + 's'
+	 * 	Plural form, or null if plural is singular + 's'
+	 *
 	 * @return Correct form.
 	 */
 	public static String pluralize( int count, final String singular, final String plural )
@@ -125,6 +129,29 @@ public class StrUtil
 		if (count == 1) return singular;
 		//	-----------------------------------------------------------------
 		return (plural != null) ? plural : singular + 's';
+		}
+
+	/**
+	 * Returns the singular or plural form of a string, based on the count.
+	 *
+	 * @param str
+	 * 	String to strip.
+	 * @param cDelimiter
+	 * 	Delimiter to string.
+	 *
+	 * @return Stripped string.
+	 */
+	public static String stripDelimiters( String str, char cDelimiter )
+		{
+		if (str == null) return null;
+		//	-----------------------------------------------------------------
+		int iLast = str.length() - 1;
+
+		return (iLast <= 0 ||
+				str.charAt( 0 ) != cDelimiter ||
+				str.charAt( iLast ) != cDelimiter)
+			   ? str
+			   : str.substring( 1, iLast );
 		}
 
 	} /* end of class StrUtil */

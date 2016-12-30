@@ -349,8 +349,8 @@ public class Board
 
 			case QUEEN:
 				return map[ MAP_W_QUEEN + _player ] &
-					   Bitboards.getQueenMovesFrom( iSqTo,
-													(map[ MAP_W_ALL ] | map[ MAP_B_ALL ]) );
+					   Bitboards.getSlidingMovesFrom( iSqTo,
+													  (map[ MAP_W_ALL ] | map[ MAP_B_ALL ]) );
 
 			case KING:
 				//  Don't mask against Bitboards.king[] because that excludes castling moves.

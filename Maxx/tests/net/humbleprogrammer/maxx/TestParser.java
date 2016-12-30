@@ -54,6 +54,7 @@ public class TestParser extends TestBase
         assertEquals( "en-US", Parser.getLanguage() );
         }
 
+    @Test
     public void t_matchFEN()
         {
         final Collection<String> listFEN = getFEN();

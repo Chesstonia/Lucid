@@ -32,95 +32,96 @@
  ******************************************************************************/
 package net.humbleprogrammer.maxx;
 
-import net.humbleprogrammer.humble.*;
+import java.util.Arrays;
 
-import org.junit.*;
-
-import java.util.concurrent.TimeUnit;
+import net.humbleprogrammer.humble.DBC;
+import net.humbleprogrammer.maxx.factories.BoardFactory;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 import static org.junit.Assert.*;
 
-public class TestMoveGenerator extends net.humbleprogrammer.TestBase
+public class TestPosition
 	{
 
 	//  -----------------------------------------------------------------------
-	//	STATIC DECLARATIONS
+	//	DECLARATIONS
 	//	-----------------------------------------------------------------------
 
-	/** Total number of moves generated. */
-	private static long s_lNetMoves    = 0L;
-	/** Total number of nanoseconds spent generating moves. */
-	private static long s_lNetNanosecs = 0L;
+	private final Board  _board;
+	private final Board  _boardMirror;
+	private final long[] _lActual;
+	private final long[] _lExpected;
 
 	//  -----------------------------------------------------------------------
-	//	UNIT TESTS
+	//	CTOR
 	//	-----------------------------------------------------------------------
 
-	@Test
-	public void t_perft_black()
+	public TestPosition( String strFEN, long[] lExpected )
 		{
-		for ( TestPosition position : s_positions )
-			s_lNetNanosecs += test( position, s_iMaxDepth, BLACK );
-		}
+		DBC.require( BoardFactory.isValidFEN( strFEN ), "strFEN" );
+		DBC.requireNotNull( lExpected, "Expected" );
+		//	-----------------------------------------------------------------
+		Board bd = BoardFactory.createFromFEN( strFEN );
+		assertNotNull( bd );
 
-	@Test
-	public void t_perft_white()
-		{
-		for ( TestPosition position : s_positions )
-			s_lNetNanosecs += test( position, s_iMaxDepth, WHITE );
-		}
-
-	//  -----------------------------------------------------------------------
-	//	METHODS
-	//	-----------------------------------------------------------------------
-
-	@BeforeClass
-	public static void setup()
-		{
-		s_lNetMoves = s_lNetNanosecs = 0L;
-		}
-
-	@AfterClass
-	public static void teardown()
-		{
-		long lMillisecs;
-
-		if (s_lNetMoves > 0L &&
-			(lMillisecs = TimeUnit.NANOSECONDS.toMillis( s_lNetNanosecs )) > 0)
+		if (bd.getMovingPlayer() == WHITE)
 			{
-			s_log.info( String.format( "%s: MoveList generated %,d moves in %s (%,d mps)",
-									   DURATION.toString(),
-									   s_lNetMoves,
-									   TimeUtil.formatMillisecs( lMillisecs, true ),
-									   (s_lNetMoves * 1000) / lMillisecs ) );
+			_board = bd;
+			_boardMirror = BoardFactory.createMirror( bd );
 			}
+		else
+			{
+			_boardMirror = bd;
+			_board = BoardFactory.createMirror( bd );
+			}
+
+		_lExpected = lExpected;
+		_lActual = new long[ _lExpected.length ];
+		}
+
+	//  -----------------------------------------------------------------------
+	//	PUBLIC METHODS
+	//	-----------------------------------------------------------------------
+
+	public int test( int player, int iMaxDepth )
+		{
+		final int iDepth = Math.min( iMaxDepth, _lExpected.length - 1 );
+
+		Arrays.fill( _lActual, 0L );
+
+		if (iDepth > 0)
+			{
+			Board bd = (player == WHITE) ? _board : _boardMirror;
+
+			perft( bd, 0, iDepth );
+			}
+
+		return iDepth;
 		}
 
 	//  -----------------------------------------------------------------------
 	//	IMPLEMENTATION
 	//	-----------------------------------------------------------------------
 
-	private long test( TestPosition position, int iMaxDepth, int player )
+	long[] getActual( int iDepth ) { return Arrays.copyOfRange( _lActual, 0, iDepth + 1 ); }
+
+	long[] getExpected( int iDepth ) { return Arrays.copyOfRange( _lExpected, 0, iDepth + 1 ); }
+
+	String getFEN( int player )
 		{
-		assert position != null;
-		assert iMaxDepth >= 0;
-		assert player == WHITE || player == BLACK;
-		//	-------------------------------------------------------------
-		Stopwatch swatch = Stopwatch.startNew();
-
-		int iDepth = position.test( player, iMaxDepth );
-
-		swatch.stop();
-
-		//	Compare the actual results to the expected results.
-		assertArrayEquals( position.getFEN( player ),
-						   position.getExpected( iDepth ), position.getActual( iDepth ) );
-
-		//	Add add the actual move counts
-		for ( long count : position.getActual( iDepth ) )
-			s_lNetMoves += count;
-
-		return swatch.getElapsed();
+		return (player == WHITE) ? _board.toString() : _boardMirror.toString();
 		}
-	} /* end of unit test class TestMoveGenerator */
+
+	private void perft( final Board bd, int iDepth, int iMaxDepth )
+		{
+		MoveList moves = new MoveList( bd );
+
+		_lActual[ iDepth ] += moves.size();
+
+		if (++iDepth <= iMaxDepth)
+			{
+			for ( Move move : moves )
+				perft( new Board( bd, move ), iDepth, iMaxDepth );
+			}
+		}
+	}	/* end of class TestPosition */

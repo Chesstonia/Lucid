@@ -53,16 +53,12 @@ public class PgnParser extends Parser
 	/** PGN Tag name of starting position. */
 	public static final String TAG_FEN = "FEN";
 
-	/** Dash, hyphen, minus sign, etc. */
-	private static final char SYM_DASH    = '-';
 	/** Period, full stop, dot, whatever. */
 	private static final char SYM_DOT     = '.';
 	/** Numeric Annotation Glyph (NAG) */
 	private static final char SYM_NAG     = '$';
 	/** Marks an escaped line, but only in column 1. */
 	private static final char SYM_PERCENT = '%';
-	/** Marks a text literal. */
-	private static final char SYM_QUOTE   = '"';
 	/** Marks an escaped character in a text literal. */
 	private static final char SYM_SLASH   = '\\';
 	/** Indeterminate result. */

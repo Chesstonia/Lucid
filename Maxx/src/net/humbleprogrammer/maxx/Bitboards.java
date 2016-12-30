@@ -40,6 +40,7 @@ import static net.humbleprogrammer.maxx.Constants.*;
 /**
  * Magic Bitboards class.
  */
+@SuppressWarnings( "WeakerAccess" )
 public class Bitboards
 	{
 
@@ -266,17 +267,22 @@ public class Bitboards
 			//
 			for ( int iSqRHS = 0; iSqRHS < 64; ++iSqRHS )
 				{
-				long bbBetween = (~0L << iSq) ^ (~0L << iSqRHS);
-				long bbFile = (iSqRHS & 0x07) - (iSq & 0x07);
-				long bbLine = ((bbFile & 0x07) - 1) & 0x0001010101010100L;
-				long bbRank = ((iSqRHS | 0x07) - iSq) >>> 3;
+				if (iSqRHS < iSq)
+					between[iSq][iSqRHS] = between[iSqRHS][iSq];
+				else
+					{
+					long bbBetween = (~0L << iSq) ^ (~0L << iSqRHS);
+					long bbFile = (iSqRHS & 0x07) - (iSq & 0x07);
+					long bbLine = ((bbFile & 0x07) - 1) & 0x0001010101010100L;
+					long bbRank = ((iSqRHS | 0x07) - iSq) >>> 3;
 
-				bbLine += 2 * (((bbRank & 0x07) - 1) >> 58);
-				bbLine += (((bbRank - bbFile) & 0x0F) - 1) & 0x0040201008040200L;
-				bbLine += (((bbRank + bbFile) & 0x0F) - 1) & 0x0002040810204080L;
-				bbLine *= bbBetween & -bbBetween;
+					bbLine += 2 * (((bbRank & 0x07) - 1) >> 58);
+					bbLine += (((bbRank - bbFile) & 0x0F) - 1) & 0x0040201008040200L;
+					bbLine += (((bbRank + bbFile) & 0x0F) - 1) & 0x0002040810204080L;
+					bbLine *= bbBetween & -bbBetween;
 
-				between[ iSq ][ iSqRHS ] = bbLine & bbBetween;
+					between[ iSq ][ iSqRHS ] = bbLine & bbBetween;
+					}
 				}
 			}
 		}
@@ -444,7 +450,7 @@ public class Bitboards
 	 *
 	 * @return Bitboard of all squares that can reach the origin square.
 	 */
-	static long getQueenMovesFrom( int iSq, long bbAll )
+	static long getSlidingMovesFrom( int iSq, long bbAll )
 		{
 		if ((iSq & ~0x3F) != 0) return 0L;
 		//	-----------------------------------------------------------------

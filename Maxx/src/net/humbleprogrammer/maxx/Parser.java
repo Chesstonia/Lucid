@@ -39,6 +39,7 @@ import net.humbleprogrammer.humble.StrUtil;
 
 import static net.humbleprogrammer.maxx.Constants.*;
 
+@SuppressWarnings( "WeakerAccess" )
 public class Parser
 	{
 
@@ -46,7 +47,7 @@ public class Parser
 	//	CONSTANTS
 	//	-----------------------------------------------------------------------
 
-	/** CR/LF seqquence. */
+	/** CR/LF sequence. */
 	public static final String STR_CRLF = System.getProperty( "line.separator" );
 	/** Placeholder in EPD/FEN strings. */
 	public static final String STR_DASH = "-";
@@ -56,33 +57,27 @@ public class Parser
 	/** Castling King-side, AKA "castling short". */
 	public static final String STR_CASTLE_SHORT = "O-O";
 
+
+	/** Dash, hyphen, minus sign, etc. */
+	protected static final char SYM_DASH    = '-';
+	/** Marks a text literal. */
+	protected static final char SYM_SPACE   = ' ';
+	/** Marks a text literal. */
+	protected static final char SYM_QUOTE   = '"';
+
 	/** Characters allowed in a move. */
 	protected static final String STR_MOVE = "abcdefgh12345678BKNQRx:=O-";
 
-	/** Regular expresion for whitespace or end of string. */
-	private static final String RX_EOS = "(?:\\z|\\s+)";
-	/** Regular expresion for an EPD string. */
-	private static final String RX_EPD =
-		// group[1] -- position
-		"([BbKkNnQqRr1-8]{1,8}(?:/[BbKkNnPpQqRr1-8]{1,8}){6}/[BbKkNnQqRr1-8]{1,8})" +
-		// group[2] -- player
-		"\\s+(w|b)" +
-		// group[3] -- castling flags
-		"\\s+(-|[KkQq]{1,4})" +
-		// group[4] -- e.p. square
-		"\\s+(-|[a-h][36])";
-
-	/** FEN string pattern. */
-	private static final Pattern s_rxFEN = Pattern.compile
-		(
-			RX_EPD +
-			// group[5] -- half move clock
-			"\\s+(0|[1-9]\\d*)" +
-			// group[6] -- full move clock
-			"\\s+([1-9]\\d*)" +
-			// End of string or white space
-			RX_EOS
-		);
+	/** Regular expression for whitespace or end of string. */
+	protected static final String RX_EOS       = "(?:\\z|\\s+)";
+	/** Regular expression for castling flags. */
+	protected static final String RX_CASTLING  = "(-|[KkQq]{1,4})";
+	/** Regular expression for an e.p. square. */
+	protected static final String RX_EP_SQUARE = "(-|[a-h][36])";
+	/** Regular expression for player color. */
+	protected static final String RX_PLAYER    = "(w|b)";
+	/** Regular expression for a board position. */
+	protected static final String RX_POSITION  = "([BbKkNnQqRr1-8]{1,8}(?:/[BbKkNnPpQqRr1-8]{1,8}){6}/[BbKkNnQqRr1-8]{1,8})";
 
 	/** Piece glyphs */
 	private static final String PIECE_GLYPHS  = "PpNnBbRrQqKk";
@@ -95,6 +90,25 @@ public class Parser
 
 	/** Last error encountered. */
 	protected static String s_strError;
+
+	/** FEN string pattern. */
+	protected static final Pattern s_rxFEN = Pattern.compile
+		(
+			// group[1] -- position
+			RX_POSITION +
+			// group[2] -- player
+			"\\s+" + RX_PLAYER +
+			// group[3] -- castling flags
+			"\\s+" + RX_CASTLING +
+			// group[4] -- e.p. square
+			"\\s+" + RX_EP_SQUARE +
+			// group[5] -- half move clock
+			"\\s+(0|[1-9]\\d*)" +
+			// group[6] -- full move clock
+			"\\s+([1-9]\\d*)" +
+			// End of string or white space
+			RX_EOS
+		);
 
 	//  -----------------------------------------------------------------------
 	//	PUBLIC METHODS
@@ -110,11 +124,8 @@ public class Parser
 	 */
 	public static Matcher matchFEN( final String strFEN )
 		{
-		if (StrUtil.isBlank( strFEN ))
-			return null;
-		/*
-		**  CODE
-        */
+		if (StrUtil.isBlank( strFEN )) return null;
+		//	-----------------------------------------------------------------
 		Matcher match = s_rxFEN.matcher( strFEN );
 
 		return match.lookingAt() ? match : null;

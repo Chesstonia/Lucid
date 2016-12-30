@@ -34,6 +34,7 @@ package net.humbleprogrammer.maxx;
 
 import static net.humbleprogrammer.maxx.Constants.INVALID;
 
+@SuppressWarnings( { "PointlessBitwiseExpression", "unused", "WeakerAccess" } )
 public class Square
 	{
 	//  -----------------------------------------------------------------------
@@ -60,115 +61,102 @@ public class Square
 	//		+----+----+----+----+----+----+----+----+
 	//		   a    b    c    d    e    f    g    h
 
-	public static final int	A1				= 0;
-	public static final int	B1				= 1;
-	public static final int	C1				= 2;
-	public static final int	D1				= 3;
-	public static final int	E1				= 4;
-	public static final int	F1				= 5;
-	public static final int	G1				= 6;
-	public static final int	H1				= 7;
+	public static final int A1 = 0;
+	public static final int B1 = 1;
+	public static final int C1 = 2;
+	public static final int D1 = 3;
+	public static final int E1 = 4;
+	public static final int F1 = 5;
+	public static final int G1 = 6;
+	public static final int H1 = 7;
 
-	public static final int	A2				= 8;
-	public static final int	B2				= 9;
-	public static final int	C2				= 10;
-	public static final int	D2				= 11;
-	public static final int	E2				= 12;
-	public static final int	F2				= 13;
-	public static final int	G2				= 14;
-	public static final int	H2				= 15;
+	public static final int A2 = 8;
+	public static final int B2 = 9;
+	public static final int C2 = 10;
+	public static final int D2 = 11;
+	public static final int E2 = 12;
+	public static final int F2 = 13;
+	public static final int G2 = 14;
+	public static final int H2 = 15;
 
-	public static final int	A3				= 16;
-	public static final int	B3				= 17;
-	public static final int	C3				= 18;
-	public static final int	D3				= 19;
-	public static final int	E3				= 20;
-	public static final int	F3				= 21;
-	public static final int	G3				= 22;
-	public static final int	H3				= 23;
+	public static final int A3 = 16;
+	public static final int B3 = 17;
+	public static final int C3 = 18;
+	public static final int D3 = 19;
+	public static final int E3 = 20;
+	public static final int F3 = 21;
+	public static final int G3 = 22;
+	public static final int H3 = 23;
 
-	public static final int	A4				= 24;
-	public static final int	B4				= 25;
-	public static final int	C4				= 26;
-	public static final int	D4				= 27;
-	public static final int	E4				= 28;
-	public static final int	F4				= 29;
-	public static final int	G4				= 30;
-	public static final int	H4				= 31;
+	public static final int A4 = 24;
+	public static final int B4 = 25;
+	public static final int C4 = 26;
+	public static final int D4 = 27;
+	public static final int E4 = 28;
+	public static final int F4 = 29;
+	public static final int G4 = 30;
+	public static final int H4 = 31;
 
-	public static final int	A5				= 32;
-	public static final int	B5				= 33;
-	public static final int	C5				= 34;
-	public static final int	D5				= 35;
-	public static final int	E5				= 36;
-	public static final int	F5				= 37;
-	public static final int	G5				= 38;
-	public static final int	H5				= 39;
+	public static final int A5 = 32;
+	public static final int B5 = 33;
+	public static final int C5 = 34;
+	public static final int D5 = 35;
+	public static final int E5 = 36;
+	public static final int F5 = 37;
+	public static final int G5 = 38;
+	public static final int H5 = 39;
 
-	public static final int	A6				= 40;
-	public static final int	B6				= 41;
-	public static final int	C6				= 42;
-	public static final int	D6				= 43;
-	public static final int	E6				= 44;
-	public static final int	F6				= 45;
-	public static final int	G6				= 46;
-	public static final int	H6				= 47;
+	public static final int A6 = 40;
+	public static final int B6 = 41;
+	public static final int C6 = 42;
+	public static final int D6 = 43;
+	public static final int E6 = 44;
+	public static final int F6 = 45;
+	public static final int G6 = 46;
+	public static final int H6 = 47;
 
-	public static final int	A7				= 48;
-	public static final int	B7				= 49;
-	public static final int	C7				= 50;
-	public static final int	D7				= 51;
-	public static final int	E7				= 52;
-	public static final int	F7				= 53;
-	public static final int	G7				= 54;
-	public static final int	H7				= 55;
+	public static final int A7 = 48;
+	public static final int B7 = 49;
+	public static final int C7 = 50;
+	public static final int D7 = 51;
+	public static final int E7 = 52;
+	public static final int F7 = 53;
+	public static final int G7 = 54;
+	public static final int H7 = 55;
 
-	public static final int	A8				= 56;
-	public static final int	B8				= 57;
-	public static final int	C8				= 58;
-	public static final int	D8				= 59;
-	public static final int	E8				= 60;
-	public static final int	F8				= 61;
-	public static final int	G8				= 62;
-	public static final int	H8				= 63;
+	public static final int A8 = 56;
+	public static final int B8 = 57;
+	public static final int C8 = 58;
+	public static final int D8 = 59;
+	public static final int E8 = 60;
+	public static final int F8 = 61;
+	public static final int G8 = 62;
+	public static final int H8 = 63;
 
 	/** Pre-defined square masks, mostly used in castling logic. */
 
-	static final long		A1_MASK			= 1L << A1;
-	static final long		B1_MASK			= 1L << B1;
-	static final long		C1_MASK			= 1L << C1;
-	static final long		D1_MASK			= 1L << D1;
-	static final long		E1_MASK			= 1L << E1;
-	static final long		F1_MASK			= 1L << F1;
-	static final long		G1_MASK			= 1L << G1;
-	static final long		H1_MASK			= 1L << H1;
+	static final long A1_MASK = 1L << A1;
+	static final long B1_MASK = 1L << B1;
+	static final long C1_MASK = 1L << C1;
+	static final long D1_MASK = 1L << D1;
+	static final long E1_MASK = 1L << E1;
+	static final long F1_MASK = 1L << F1;
+	static final long G1_MASK = 1L << G1;
+	static final long H1_MASK = 1L << H1;
 
-	static final long		A8_MASK			= 1L << A8;
-	static final long		B8_MASK			= 1L << B8;
-	static final long		C8_MASK			= 1L << C8;
-	static final long		D8_MASK			= 1L << D8;
-	static final long		E8_MASK			= 1L << E8;
-	static final long		F8_MASK			= 1L << F8;
-	static final long		G8_MASK			= 1L << G8;
-	static final long		H8_MASK			= 1L << H8;
+	static final long A8_MASK = 1L << A8;
+	static final long B8_MASK = 1L << B8;
+	static final long C8_MASK = 1L << C8;
+	static final long D8_MASK = 1L << D8;
+	static final long E8_MASK = 1L << E8;
+	static final long F8_MASK = 1L << F8;
+	static final long G8_MASK = 1L << G8;
+	static final long H8_MASK = 1L << H8;
 
 	/** Bitboard where pawns are not allowed (first & last ranks). */
-	static final long		NO_PAWN_ZONE	= 0xFF000000000000FFL;
+	static final long NO_PAWN_ZONE = 0xFF000000000000FFL;
 	/** Bitboard where pawns are allowed (2nd - 7th ranks). */
-	static final long		PAWN_ZONE		= 0x00FFFFFFFFFFFF00L;
-
-	/** Square masks. */
-	static final long[]		mask			= new long[64];
-
-	//  -----------------------------------------------------------------------
-	//	CTOR
-	//	-----------------------------------------------------------------------
-
-	static
-		{
-		for ( int iSq = 0; iSq < 64; ++iSq )
-			mask[iSq] = (1L << iSq);
-		}
+	static final long PAWN_ZONE    = 0x00FFFFFFFFFFFF00L;
 
 	//  -----------------------------------------------------------------------
 	//	PUBLIC METHODS
@@ -176,36 +164,38 @@ public class Square
 
 	/**
 	 * Returns the distance from one square to another.
-	 * 
+	 *
 	 * @param iSqFrom
-	 *            "From" square, in 8x8 format.
+	 * 	"From" square, in 8x8 format.
 	 * @param iSqTo
-	 *            "To" square, in 8x8 format.
+	 * 	"To" square, in 8x8 format.
+	 *
 	 * @return Distance.
 	 */
 	public static int distance( int iSqFrom, int iSqTo )
 		{
 		if (iSqFrom == iSqTo || ((iSqFrom | iSqTo) & ~0x3F) != 0) return 0;
 		//	-----------------------------------------------------------------
-		int iFileDist = Math.abs(getFile(iSqFrom) - getFile(iSqTo));
-		int iRankDist = Math.abs(getRank(iSqFrom) - getRank(iSqTo));
+		int iFileDist = Math.abs( getFile( iSqFrom ) - getFile( iSqTo ) );
+		int iRankDist = Math.abs( getRank( iSqFrom ) - getRank( iSqTo ) );
 		//  Chebyshev distance
-		return Math.max(iFileDist, iRankDist);
+		return Math.max( iFileDist, iRankDist );
 		}
 
 	/**
 	 * Imports a square in algebraic format.
 	 *
 	 * @param strIn
-	 *            String to convert.
+	 * 	String to convert.
+	 *
 	 * @return Square index in 8x8 format, or <c>INVALID</c> if str isn't valid.
 	 */
 	public static int fromString( final String strIn )
 		{
 		if (strIn == null || strIn.length() < 2) return INVALID;
 		//  -----------------------------------------------------------------
-		int iFile = Character.toLowerCase(strIn.charAt(0)) - 'a';
-		int iRank = strIn.charAt(1) - '1';
+		int iFile = Character.toLowerCase( strIn.charAt( 0 ) ) - 'a';
+		int iRank = strIn.charAt( 1 ) - '1';
 
 		return (iRank << 3) + iFile;
 		}
@@ -214,26 +204,28 @@ public class Square
 	 * Imports a square in algebraic format.
 	 *
 	 * @param strIn
-	 *            String to convert.
+	 * 	String to convert.
 	 * @param iOffset
-	 *            Starting offset within the string.
+	 * 	Starting offset within the string.
+	 *
 	 * @return Square index in 8x8 format, or <c>INVALID</c> if str isn't valid.
 	 */
 	public static int fromString( final String strIn, int iOffset )
 		{
 		if (strIn == null || iOffset < 0 || (iOffset + 2) > strIn.length()) return INVALID;
 		//  -----------------------------------------------------------------
-		int iFile = Character.toLowerCase(strIn.charAt(iOffset)) - 'a';
-		int iRank = strIn.charAt(iOffset + 1) - '1';
+		int iFile = Character.toLowerCase( strIn.charAt( iOffset ) ) - 'a';
+		int iRank = strIn.charAt( iOffset + 1 ) - '1';
 
-		return toIndex(iRank, iFile);
+		return toIndex( iRank, iFile );
 		}
 
 	/**
 	 * Tests a square index to determine if the square is light or dark.
 	 *
 	 * @param iSq
-	 *            Square index in 8x8 format.
+	 * 	Square index in 8x8 format.
+	 *
 	 * @return .T. if square is dark; .F. if light or off the board.
 	 */
 	public static boolean isDark( final int iSq )
@@ -245,7 +237,8 @@ public class Square
 	 * Tests a square index for validity.
 	 *
 	 * @param index
-	 *            Square index in 8x8 format.
+	 * 	Square index in 8x8 format.
+	 *
 	 * @return .T. if index is on the board; .F. otherwise.
 	 */
 	public static boolean isValid( final int index )
@@ -257,7 +250,8 @@ public class Square
 	 * Tests a rank or file for validity.
 	 *
 	 * @param index
-	 *            Rank or file value in 8x8 format.
+	 * 	Rank or file value in 8x8 format.
+	 *
 	 * @return .T. if value is in the range [0..7]; .F. otherwise.
 	 */
 	public static boolean isValidRankOrFile( final int index )
@@ -269,11 +263,11 @@ public class Square
 	 * Converts a rank and file into the Square index.
 	 *
 	 * @param iRank
-	 *            Rank [0..7]
+	 * 	Rank [0..7]
 	 * @param iFile
-	 *            File [0..7]
-	 * @return Square index in 8x8 format, or <c>INVALID</c> if rank or file are
-	 *         invalid.
+	 * 	File [0..7]
+	 *
+	 * @return Square index in 8x8 format, or <c>INVALID</c> if rank or file are invalid.
 	 */
 	public static int toIndex( int iRank, int iFile )
 		{
@@ -284,7 +278,8 @@ public class Square
 	 * Converts a square to it's inverse.
 	 *
 	 * @param iSq
-	 *            Square.
+	 * 	Square.
+	 *
 	 * @return Inverse.
 	 */
 	public static int toMirror( int iSq )
@@ -296,31 +291,38 @@ public class Square
 	 * Exports a square in algebraic format.
 	 *
 	 * @param iSq
-	 *            Square index in 8x8 format.
+	 * 	Square index in 8x8 format.
+	 *
 	 * @return String, or <c>null</c> if index isn't valid.
 	 */
 	public static String toString( final int iSq )
 		{
 		if ((iSq & ~0x3F) != 0) return null;
 		//  -----------------------------------------------------------------
-		return String.format("%c%c", (char) ('a' + (iSq & 0x07)), (char) ('1' + (iSq >>> 3)));
+		return String.format( "%c%c",
+							  getFileGlyph( iSq ),
+							  getRankGlyph( iSq ) );
 		}
 
 	/**
 	 * Exports a square in algebraic format.
 	 *
 	 * @param iSqFrom
-	 *            "From" square index in 8x8 format.
+	 * 	"From" square index in 8x8 format.
 	 * @param iSqTo
-	 *            "To" square index in 8x8 format.
+	 * 	"To" square index in 8x8 format.
+	 *
 	 * @return String, or an empty string if either square isn't valid.
 	 */
 	public static String toString( int iSqFrom, int iSqTo )
 		{
 		if (((iSqFrom | iSqTo) & ~0x3F) != 0) return "";
 		//  -----------------------------------------------------------------
-		return String.format("%c%c%c%c", (char) ('a' + (iSqFrom & 0x07)), (char) ('1' + (iSqFrom >>> 3)),
-				(char) ('a' + (iSqTo & 0x07)), (char) ('1' + (iSqTo >>> 3)));
+		return String.format( "%c%c%c%c",
+							  getFileGlyph( iSqFrom ),
+							  getRankGlyph( iSqFrom ),
+							  getFileGlyph( iSqTo ),
+							  getRankGlyph( iSqTo ) );
 		}
 
 	//  -----------------------------------------------------------------------
@@ -331,19 +333,21 @@ public class Square
 	 * Gets the mask for a given square.
 	 *
 	 * @param iSq
-	 *            Square.
+	 * 	Square.
+	 *
 	 * @return Square mask.
 	 */
 	public static long getMask( int iSq )
 		{
-		return ((iSq & ~0x3F) == 0) ? mask[iSq] : 0L;
+		return (1L << (iSq & 0x3F));
 		}
 
 	/**
 	 * Extracts the file from a square index.
 	 *
 	 * @param iSq
-	 *            Square index in 8x8 format.
+	 * 	Square index in 8x8 format.
+	 *
 	 * @return File [0..7] if square is valid, INVALID otherwise.
 	 */
 	public static int getFile( final int iSq )
@@ -352,15 +356,46 @@ public class Square
 		}
 
 	/**
+	 * Extracts the file from a square index.
+	 *
+	 * @param iSq
+	 * 	Square index in 8x8 format.
+	 *
+	 * @return File ['a'..'h'] if square is valid, '\0' otherwise.
+	 */
+	public static char getFileGlyph( final int iSq )
+		{
+		return ((iSq & ~0x3F) == 0)
+			   ? (char) ('a' + (iSq & 0x07))
+			   : '\0';
+		}
+
+	/**
 	 * Extracts the rank from a square index.
 	 *
 	 * @param iSq
-	 *            Square index in 8x8 format.
+	 * 	Square index in 8x8 format.
+	 *
 	 * @return Rank [0..7] if square is valid, INVALID otherwise.
 	 */
 	public static int getRank( final int iSq )
 		{
 		return ((iSq & ~0x3F) == 0) ? (iSq >>> 3) : INVALID;
+		}
+
+	/**
+	 * Extracts the rank from a square index.
+	 *
+	 * @param iSq
+	 * 	Square index in 8x8 format.
+	 *
+	 * @return Rank ['1'..'8'] if square is valid, '\0' otherwise.
+	 */
+	public static int getRankGlyph( final int iSq )
+		{
+		return ((iSq & ~0x3F) == 0)
+			   ? (char) ('1' + (iSq >>> 3))
+			   : '\0';
 		}
 
 	} /* end of class Square */

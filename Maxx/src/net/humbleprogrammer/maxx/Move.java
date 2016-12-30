@@ -256,9 +256,9 @@ public class Move
 		/** Initial pawn advance. */
 		public static final int PAWN_PUSH      = 1;
 		/** Castling move (O-O or O-O-O). */
-		public static final int EN_PASSANT     = 2;
+		public static final int CASTLING       = 2;
 		/** En Passant capture. */
-		public static final int CASTLING       = 3;
+		public static final int EN_PASSANT     = 3;
 		/** Promote to Queen. */
 		public static final int PROMOTION      = 4;
 		/** Under-promote to a Rook. */

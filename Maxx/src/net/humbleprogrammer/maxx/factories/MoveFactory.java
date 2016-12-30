@@ -98,7 +98,7 @@ public class MoveFactory
 		//
 		MoveList moves = new MoveList( bd, bbCandidates, Square.getMask( iSqTo ) );
 
-		if (moves.size() == 1) return moves.getAt( 0 );
+		if (moves.size() == 1) return moves.getFirst();
 		//
 		//	Promotions have to be searched to find the matching piece type.
 		//
@@ -124,6 +124,7 @@ public class MoveFactory
 	 * @return SAN move string on success; empty string if move is illegal, ambiguous, or
 	 * invalid.
 	 */
+	@SuppressWarnings( "SameParameterValue" )
 	public static String toSAN( final Board bd, final Move move, boolean bCheckIndicator )
 		{
 		if (bd == null || !bd.isLegalMove( move )) return "";
@@ -141,7 +142,7 @@ public class MoveFactory
 			{
 			if (move.iType == Move.Type.EN_PASSANT || bd.get( iSqTo ) != EMPTY)
 				{
-				sb.append( (char) ('a' + Square.getFile( iSqFrom )) );
+				sb.append( Square.getFileGlyph( iSqFrom ) );
 				sb.append( 'x' );
 				}
 
@@ -177,13 +178,16 @@ public class MoveFactory
 							if (Square.getRank( mv.iSqFrom ) == iRank) bNeedFile = true;
 							}
 
-					if (bNeedFile || !bNeedRank) sb.append( (char) ('a' + iFile) );
+					if (bNeedFile || !bNeedRank)
+						sb.append( Square.getFileGlyph( iSqFrom ) );
 
-					if (bNeedRank) sb.append( (char) ('1' + iRank) );
+					if (bNeedRank)
+						sb.append( Square.getRankGlyph( iSqFrom ) );
 					}
 				}
 
-			if (bd.get( iSqTo ) != EMPTY) sb.append( 'x' );
+			if (bd.get( iSqTo ) != EMPTY)
+				sb.append( 'x' );
 
 			sb.append( Square.toString( iSqTo ) );
 			}
@@ -350,7 +354,7 @@ public class MoveFactory
 				iFileFrom = iFileTo;
 				iRankFrom = iRankTo;
 				}
-			else if  (iState != STATE_FILE)
+			else if (iState != STATE_FILE)
 				return INVALID;
 
 			iFileTo = iFile;

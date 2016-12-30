@@ -212,16 +212,16 @@ public class BoardFactory extends Parser
 		//	then the MovingPlayer will be PieceColor.None, which is changed
 		//	to White.
 		//
-		sb.append( ' ' );
+		sb.append( SYM_SPACE );
 		sb.append( playerToGlyph( bd.getMovingPlayer() ) );
 		//
 		//	Export the castling flags
 		//
 		int castling = bd.getCastlingFlags();
 
-		sb.append( ' ' );
+		sb.append( SYM_SPACE );
 		if (castling == Board.CastlingFlags.NONE)
-			sb.append( STR_DASH );
+			sb.append( SYM_DASH );
 		else
 			{
 			if ((castling & Board.CastlingFlags.WHITE_SHORT) != 0)
@@ -238,11 +238,11 @@ public class BoardFactory extends Parser
 		//
 		int iSqEP = bd.getEnPassantSquare();
 
-		sb.append( ' ' );
+		sb.append( SYM_SPACE );
 		if (Square.isValid( iSqEP ))
 			sb.append( Square.toString( iSqEP ) );
 		else
-			sb.append( STR_DASH );
+			sb.append( SYM_DASH );
 
 		return sb.toString();
 		}
@@ -260,10 +260,10 @@ public class BoardFactory extends Parser
 		DBC.requireNotNull( bd, "Board" );
 		//	-----------------------------------------------------------------
 		return exportEPD( bd ) +
-			   ' ' +
+			   SYM_SPACE +
 			   //	Export the Half Move clock
 			   bd.getHalfMoveClock() +
-			   ' ' +
+			   SYM_SPACE +
 			   //	Export the Full Move clock
 			   bd.getMoveNumber();
 		}
@@ -281,6 +281,21 @@ public class BoardFactory extends Parser
 		DBC.requireNotNull( bd, "Board" );
 		//	-----------------------------------------------------------------
 		return exportFEN( bd );
+		}
+
+	/**
+	 * Determines if a FEN string is valid.
+	 *
+	 * @param strFEN
+	 * 	FEN string.
+	 *
+	 * @return .T. if valid; .F. otherwise.
+	 */
+	public static boolean isValidFEN( String strFEN )
+		{
+		if (StrUtil.isBlank( strFEN )) return false;
+		//	-----------------------------------------------------------------
+		return (strFEN.equals( FEN_INITIAL ) || fromString( strFEN ) != null);
 		}
 
 	//  -----------------------------------------------------------------------
@@ -434,28 +449,21 @@ public class BoardFactory extends Parser
 		{
 		assert bd != null;
 		//	-----------------------------------------------------------------
-		int iHalf;
-		int iMove;
-
 		try
 			{
-			iHalf = (strHalf != null)
-					? Integer.parseInt( strHalf )
-					: 0;
-			iMove = (strMoves != null)
-					? Integer.parseInt( strMoves )
-					: 1;
+			int iHalf = StrUtil.isBlank( strHalf ) ? 0 : Integer.parseInt( strHalf );
+			int iMove = StrUtil.isBlank( strMoves ) ? 1 : Integer.parseInt( strMoves );
 
 			if (iHalf < 0 || iMove < 1)
 				return false;
+
+			bd.setHalfMoveClock( iHalf );
+			bd.setMoveNumber( iMove );
 			}
 		catch (NumberFormatException ex)
 			{
 			return false;
 			}
-
-		bd.setHalfMoveClock( iHalf );
-		bd.setMoveNumber( iMove );
 
 		return true;
 		}
