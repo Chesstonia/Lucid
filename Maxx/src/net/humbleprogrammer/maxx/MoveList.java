@@ -70,14 +70,19 @@ public class MoveList extends MoveGenerator implements Iterable<Move>
 		generateAll();
 		}
 
-	public MoveList( Board bd, int iSqTo )
-		{
-		super( bd );
-		//	-----------------------------------------------------------------
-		_hashZobrist = bd.getZobristHash();
-
-		generateSome( ~0L, Square.getMask( iSqTo ) );
-		}
+	/**
+	 * Alternate CTOR.
+	 *
+	 * @param bd
+	 * 	Board to generate moves for.
+	 * @param bbFromMask
+	 * 	Bitboard of "From" squares.
+	 * @param bbToMask
+	 * 	Bitboard of "To" squares.
+	 *
+	 * @throws java.lang.IllegalArgumentException
+	 * 	if board is <code>null</code>.
+	 */
 
 	public MoveList( Board bd, long bbFromMask, long bbToMask )
 		{

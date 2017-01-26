@@ -59,11 +59,11 @@ public class Parser
 
 
 	/** Dash, hyphen, minus sign, etc. */
-	protected static final char SYM_DASH    = '-';
+	protected static final char SYM_DASH  = '-';
 	/** Marks a text literal. */
-	protected static final char SYM_SPACE   = ' ';
+	protected static final char SYM_SPACE = ' ';
 	/** Marks a text literal. */
-	protected static final char SYM_QUOTE   = '"';
+	protected static final char SYM_QUOTE = '"';
 
 	/** Characters allowed in a move. */
 	protected static final String STR_MOVE = "abcdefgh12345678BKNQRx:=O-";
@@ -77,7 +77,8 @@ public class Parser
 	/** Regular expression for player color. */
 	protected static final String RX_PLAYER    = "(w|b)";
 	/** Regular expression for a board position. */
-	protected static final String RX_POSITION  = "([BbKkNnQqRr1-8]{1,8}(?:/[BbKkNnPpQqRr1-8]{1,8}){6}/[BbKkNnQqRr1-8]{1,8})";
+	protected static final String RX_POSITION  =
+		"([BbKkNnQqRr1-8]{1,8}(?:/[BbKkNnPpQqRr1-8]{1,8}){6}/[BbKkNnQqRr1-8]{1,8})";
 
 	/** Piece glyphs */
 	private static final String PIECE_GLYPHS  = "PpNnBbRrQqKk";
@@ -164,6 +165,47 @@ public class Parser
 		}
 
 	/**
+	 * Gets the human-readable string for a piece, i.e., "White Queen" or "Black Bishop".
+	 *
+	 * @param piece
+	 * 	Piece.
+	 *
+	 * @return String, or empty string if piece is invalid.
+	 */
+	public static String pieceToString( int piece )
+		{
+		switch (piece)
+			{
+			case Piece.W_PAWN:
+				return "White Pawn";
+			case Piece.B_PAWN:
+				return "Black Pawn";
+			case Piece.W_BISHOP:
+				return "White Bishop";
+			case Piece.B_BISHOP:
+				return "Black Bishop";
+			case Piece.W_KNIGHT:
+				return "White Knight";
+			case Piece.B_KNIGHT:
+				return "Black Knight";
+			case Piece.W_ROOK:
+				return "White Rook";
+			case Piece.B_ROOK:
+				return "Black Rook";
+			case Piece.W_QUEEN:
+				return "White Queen";
+			case Piece.B_QUEEN:
+				return "Black Queen";
+			case Piece.W_KING:
+				return "White King";
+			case Piece.B_KING:
+				return "Black King";
+			}
+
+		return "";
+		}
+
+	/**
 	 * Gets the piece type represented by a single character.
 	 *
 	 * @param ch
@@ -241,7 +283,7 @@ public class Parser
 		if (player == BLACK)
 			return "Black";
 
-		return null;
+		return "";
 		}
 
 	//  -----------------------------------------------------------------------

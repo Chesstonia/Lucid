@@ -179,13 +179,16 @@ public class Evaluator
 		{
 		if (bd == null || !Square.isValid( iSqTarget )) return false;
 		//	-----------------------------------------------------------------
-		MoveList moves = new MoveList( bd, iSqTarget );
+		final long bbFromMask = ~0L;
+		final long bbToMask = Square.getMask(iSqTarget);
+
+		MoveList moves = new MoveList( bd, bbFromMask, bbToMask );
 
 		for ( Move mv : moves )
 			{
 			Board bdNew = new Board( bd, mv );
 
-			if (new MoveList( bdNew, iSqTarget ).isEmpty())
+			if (new MoveList( bdNew, bbFromMask, bbToMask ).isEmpty())
 				return true;
 			}
 
