@@ -423,6 +423,30 @@ public abstract class TestBase
 			new TestPosition( "R6r/8/8/5K2/2k5/8/8/r6R w - -",
 							  new long[]{ 36L, 1027L, 29227L, 771368L, 20521342L, 524966748L, 13566510069L } ),
 			//
+			//	Steve Edwards "perft(7) challenges"
+			//
+			//	http://www.talkchess.com/forum/viewtopic.php?t=49118
+			new TestPosition("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - -",
+							 new long[]{ 46L, 2079L, 89890L, 3894594L, 164075551L, 6923051137L, 287188994746L } ),
+			//	http://www.talkchess.com/forum/viewtopic.php?t=59781
+			new TestPosition("1rb1kbnr/pp1ppppp/n7/q1p5/8/1QP2P2/PP1PP1PP/RNB1KBNR w KQk -",
+							 new long[]{ 28L, 741L, 21395L, 583456L, 17251342L, 490103130L, 14794751816L } ),
+			//	http://www.talkchess.com/forum/viewtopic.php?t=59818
+			new TestPosition("rnb1kbnr/pp2pppp/2pp4/1q6/8/4PN2/PPPPKPPP/RNBQ1B1R w kq -",
+							 new long[]{ 3L, 118L, 3022L, 113355L, 3007414L, 109477393L, 3016055832L } ),
+			//	http://www.talkchess.com/forum/viewtopic.php?t=59915
+			new TestPosition("rnb1kbnr/pp2pppp/2pp4/1q6/4P3/5P2/PPPPK1PP/RNBQ1BNR w kq -",
+							 new long[]{ 5L, 200L, 4866L, 183643L, 4677872L, 170451708L, 4517445538L } ),
+			//	http://www.talkchess.com/forum/viewtopic.php?t=59957
+			new TestPosition("rn2kbnr/pp2pppp/1qpp4/8/2B1P1b1/1P6/P1PP1PPP/RNBQK1NR w KQkq -",
+							 new long[]{ 31L, 1116L, 33828L, 1184142L, 36838554L, 1272676278L, 40552058742L } ),
+			//	http://www.talkchess.com/forum/viewtopic.php?t=59961
+			new TestPosition("rnbqkbnr/2p1ppp1/p2p3Q/1p6/3P4/8/PPP1PPPP/RNB1KBNR w KQkq -",
+							 new long[]{ 40L, 1091L, 41284L, 1149593L, 42490376L, 1226949550L, 44950307154L } ),
+			//	http://www.talkchess.com/forum/viewtopic.php?t=60114
+			new TestPosition("rnb1kbnr/ppp2ppp/5q2/3pp1B1/8/3PP3/PPP2PPP/RN1QKBNR w KQkq -",
+							 new long[]{ 33L, 1402L, 45173L, 1804530L, 58863543L, 2291942363L, 75528515636L } ),
+			//
 			//	https://github.com/ankan-ban/perft_cpu
 			//
 			new TestPosition(
