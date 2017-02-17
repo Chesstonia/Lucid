@@ -103,7 +103,7 @@ class MoveGenerator
 		System.arraycopy( _board.map, 0, _map, 0, MAP_LENGTH );
 
 		_player = _board.getMovingPlayer();
-		_opponent = _player ^ 1;
+		_opponent =_board.getOpposingPlayer();
 
 		_bbOpponent = _map[ _opponent ];
 		_bbPlayer = _map[ _player ];
@@ -111,8 +111,7 @@ class MoveGenerator
 		//
 		//  Find out if the moving player is in check.
 		//
-		_iSqKing = BitUtil.first( _map[ MAP_W_KING + _player ] );
-
+		_iSqKing = _board.getKingSquare();
 		_bbCheckers = Bitboards.getAttackedBy( _map, _iSqKing, _opponent );
 		}
 
@@ -225,7 +224,7 @@ class MoveGenerator
 			_bbCheckers != 0L ||
 			(_bbPinned & bbSqFrom) != 0L)
 			{
-			int piece = _board.sq[ iSqFrom ];
+			int piece = _board.get( iSqFrom );
 			long bbSqBoth = bbSqFrom | (1L << iSqTo);
 
 			_map[ piece ] ^= bbSqBoth;
@@ -241,7 +240,7 @@ class MoveGenerator
 							? ((iSqFrom & 0x38) | (iSqTo & 0x07))
 							: iSqTo;
 
-			if ((piece = _board.sq[ iSqVictim ]) != EMPTY)
+			if ((piece = _board.get(iSqVictim )) != EMPTY)
 				{
 				long bbSqVictim = 1L << iSqVictim;
 
@@ -338,16 +337,26 @@ class MoveGenerator
 	 */
 	private void generate( int iMaxMoves )
 		{
-		long bbPawns = _map[ MAP_W_PAWN + _player ];
+		int iSq;
 
 		_iCount = 0;
 
-		for ( long bb = _bbSqFrom & ~bbPawns; bb != 0L; bb &= (bb - 1L) )
+		for ( long bb = _bbSqFrom; bb != 0L; bb &= ~(1L << iSq) )
 			{
-			int iSq = BitUtil.first( bb );
+			iSq = BitUtil.first( bb );
 
-			switch (_board.sq[ iSq ])
+			switch (_board.get( iSq ))
 				{
+				case MAP_W_PAWN:
+					generatePawnMovesWhite(  bb &  _map[ MAP_W_PAWN] );
+					bb &= ~(_map[MAP_W_PAWN]);
+					break;
+
+				case MAP_B_PAWN:
+					generatePawnMovesBlack(  bb &  _map[ MAP_B_PAWN] );
+					bb &= ~(_map[MAP_B_PAWN]);
+					break;
+
 				case MAP_W_KNIGHT:
 				case MAP_B_KNIGHT:
 					addMovesTo( iSq, Bitboards.knight[ iSq ] );
@@ -383,16 +392,6 @@ class MoveGenerator
 			if (_iCount >= iMaxMoves)
 				return;
 			}
-		//
-		//	Now move all the pawns at once.
-		//
-		if ((bbPawns &= _bbSqFrom) != 0L)
-			{
-			if (_player == WHITE)
-				generatePawnMovesWhite( bbPawns );
-			else
-				generatePawnMovesBlack( bbPawns );
-			}
 		}
 
 	/**
@@ -404,7 +403,7 @@ class MoveGenerator
 	private void generateKingMovesBlack( int iSq )
 		{
 		assert Square.isValid( iSq );
-		assert _board.sq[ iSq ] == MAP_B_KING;
+		assert _board.get( iSq ) == MAP_B_KING;
 		//	-----------------------------------------------------------------
 		long bbKingMoves = _bbSqTo & Bitboards.king[ iSq ];
 
@@ -457,7 +456,7 @@ class MoveGenerator
 	private void generateKingMovesWhite( int iSq )
 		{
 		assert Square.isValid( iSq );
-		assert _board.sq[ iSq ] == MAP_W_KING;
+		assert _board.get( iSq ) == MAP_W_KING;
 		//	-----------------------------------------------------------------
 		long bbKingMoves = _bbSqTo & Bitboards.king[ iSq ];
 

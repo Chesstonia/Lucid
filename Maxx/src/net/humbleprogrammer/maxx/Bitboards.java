@@ -130,13 +130,13 @@ public class Bitboards
 		};
 
 
-	static final long[] all           = new long[ 64 ];
-	static final long[] bishop        = new long[ 64 ];
-	static final long[] knight        = new long[ 64 ];
-	static final long[] king          = new long[ 64 ];
-	static final long[] pawnDownwards = new long[ 64 ];
-	static final long[] pawnUpwards   = new long[ 64 ];
-	static final long[] rook          = new long[ 64 ];
+	static final        long[] all           = new long[ 64 ];
+	static final        long[] bishop        = new long[ 64 ];
+	static final        long[] knight        = new long[ 64 ];
+	public static final long[] king          = new long[ 64 ];
+	static final        long[] pawnDownwards = new long[ 64 ];
+	static final        long[] pawnUpwards   = new long[ 64 ];
+	static final        long[] rook          = new long[ 64 ];
 
 	/** Bitboard masks for individual files. */
 	static final long[] fileMask = new long[]
@@ -365,7 +365,7 @@ public class Bitboards
 	 *
 	 * @return Bitboard of all squares that can reach the origin square.
 	 */
-	static long getDiagonalAttackers( int iSq, long bbAttackers, long bbAll )
+	public static long getDiagonalAttackers( int iSq, long bbAttackers, long bbAll )
 		{
 		if ((iSq & ~0x3F) != 0 || (bbAttackers &= bishop[ iSq ]) == 0L) return 0L;
 		//	-----------------------------------------------------------------
@@ -409,7 +409,7 @@ public class Bitboards
 	 *
 	 * @return Bitboard of all squares that can reach the origin square.
 	 */
-	static long getLateralAttackers( int iSq, long bbAttackers, long bbAll )
+	public static long getLateralAttackers( int iSq, long bbAttackers, long bbAll )
 		{
 		if ((iSq & ~0x3F) != 0 || (bbAttackers &= rook[ iSq ]) == 0L) return 0L;
 		//	-----------------------------------------------------------------
@@ -474,7 +474,7 @@ public class Bitboards
 	 *
 	 * @return Bitboard of intervening squares.
 	 */
-	static long getSquaresBetween( int iSqLHS, int iSqRHS )
+	public static long getSquaresBetween( int iSqLHS, int iSqRHS )
 		{
 		return (((iSqLHS | iSqRHS) & ~0x3F) == 0)
 			   ? between[ iSqLHS ][ iSqRHS ]

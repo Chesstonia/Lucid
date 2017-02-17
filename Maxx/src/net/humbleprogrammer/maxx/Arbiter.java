@@ -102,8 +102,8 @@ public class Arbiter
 		int player = bd.getMovingPlayer();
 
 		return (player == WHITE)
-			   ? !Bitboards.isAttackedByWhite( bd.map, bd.getKingSquare( BLACK ) )
-			   : !Bitboards.isAttackedByBlack( bd.map, bd.getKingSquare( WHITE ) );
+			   ? !Bitboards.isAttackedByWhite( bd.map, bd.getOpposingKingSquare() )
+			   : !Bitboards.isAttackedByBlack( bd.map, bd.getOpposingKingSquare() );
 		}
 
 	/**

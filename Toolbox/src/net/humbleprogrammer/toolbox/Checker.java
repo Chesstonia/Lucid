@@ -43,11 +43,14 @@ import net.humbleprogrammer.maxx.factories.MoveFactory;
 import net.humbleprogrammer.maxx.interfaces.IPgnListener;
 import net.humbleprogrammer.maxx.pgn.*;
 
+import static net.humbleprogrammer.maxx.Constants.*;
+
 public class Checker extends ToolboxApp
 	{
 	//  -----------------------------------------------------------------------
 	//	CONSTANTS
 	//	-----------------------------------------------------------------------
+
 	private static final int STOP_AFTER = 25;
 
 	//  -----------------------------------------------------------------------
@@ -76,7 +79,7 @@ public class Checker extends ToolboxApp
 		//	-----------------------------------------------------------------
 		String strPath = (strArgs.length > 0)
 						 ? strArgs[ 0 ]
-						 : "P:\\Chess\\PGN\\Assorted"; // "P:\\Chess\\PGN\\TWIC";
+						 : "P:\\Chess\\PGN\\TWIC"; // "P:\\Chess\\PGN\\Assorted";
 
 		_listPGN = getPGN( strPath );
 
@@ -84,7 +87,8 @@ public class Checker extends ToolboxApp
 				   _listPGN.size(),
 				   StrUtil.pluralize( _listPGN.size(), "file", null ) );
 
-		if (_listPGN.isEmpty()) throw new RuntimeException( "No *.pgn files found." );
+		if (_listPGN.isEmpty())
+			throw new RuntimeException( "No *.pgn files found." );
 		}
 
 	//  -----------------------------------------------------------------------
@@ -119,7 +123,7 @@ public class Checker extends ToolboxApp
 		//	-----------------------------------------------------------------
 		try
 			{
-			IPgnListener listener = new TestListener();
+			IPgnListener listener = new ForkListener();
 
 			for ( Path path : _listPGN )
 				{
@@ -136,7 +140,7 @@ public class Checker extends ToolboxApp
 								{
 								printLine( "Stopped after %,d %s.",
 										   _iFound,
-										   StrUtil.pluralize( _iFound, "position", null ) );
+										   StrUtil.pluralize( _iFound, "result", null ) );
 								return;
 								}
 							}
@@ -231,8 +235,254 @@ public class Checker extends ToolboxApp
 		}
 
 	//  -----------------------------------------------------------------------
-	//	NESTED CLASS: TestListener
+	//	NESTED CLASS: ForkListener
 	//	-----------------------------------------------------------------------
+
+	@SuppressWarnings( "unused" )
+	private class ForkListener extends PgnValidator
+		{
+		/**
+		 * Display all the moves for a given position.
+		 */
+		private void display( Board bd, Move move, long bbAttacks )
+			{
+			assert bd != null;
+			assert move != null;
+			//	-------------------------------------------------------------
+			Board bdAfter = new Board( bd );
+			String message = "";
+
+			bdAfter.makeMove( move );
+
+			for ( long bb = bbAttacks; bb != 0L; bb &= (bb - 1) )
+				{
+				int sqTo = BitUtil.first( bb );
+
+				if (message.length() > 0) message += ", ";
+
+				message += String.format( "%s (%s)",
+										  Parser.pieceToString( bd.get( sqTo ) ),
+										  Square.toString( sqTo ) );
+				}
+
+			_iFound++;
+
+			printLine( "%s; bm %s; c0 \"%s\"",
+					   BoardFactory.exportEPD( bd ),
+					   MoveFactory.toSAN( bd, move, true ),
+					   message );
+			}
+
+		/**
+		 * A move has been parsed.
+		 *
+		 * @param strSAN
+		 * 	Move string.
+		 * @param strSuffix
+		 * 	Optional suffix string.
+		 *
+		 * @return .T. if parsing is to continue; .F. to abort parsing.
+		 */
+		@Override
+		public boolean onMove( final String strSAN, final String strSuffix )
+			{
+			if (_pv == null)
+				return super.onMove( strSAN, strSuffix );
+
+			final Board bdBefore = _pv.getCurrentPosition();
+			final Move move = MoveFactory.fromSAN( bdBefore, strSAN );
+
+			if (!super.onMove( strSAN, strSuffix ))
+				return false;
+			//	-------------------------------------------------------------
+			final Board bdAfter = _pv.getCurrentPosition();
+
+			if (bdAfter.isInCheck())
+				return true;
+
+			bdAfter.setMovingPlayer( bdBefore.getMovingPlayer() );
+
+			final int piece = bdAfter.get( move.iSqTo );
+			final MoveList moves = new MoveList( bdAfter, Square.getMask( move.iSqTo ), ~0L );
+
+			long bbAttacks = 0L;
+
+			for ( Move mv : moves )
+				{
+				int victim = bdAfter.get( mv.iSqTo );
+
+				if (victim != EMPTY &&
+					!(mv.isPromotion() && mv.getPromotionPiece() != QUEEN) &&
+					Piece.getType( victim ) > Piece.getType( piece ))
+					{
+					bbAttacks |= Square.getMask( mv.iSqTo );
+					}
+				}
+
+			if (BitUtil.count( bbAttacks ) > 1)
+				display( bdBefore, move, bbAttacks );
+
+			return true;
+			}
+		}
+
+	//  -----------------------------------------------------------------------
+	//	NESTED CLASS: PinListener
+	//	-----------------------------------------------------------------------
+
+	@SuppressWarnings( "unused" )
+	private class PinListener extends PgnValidator
+		{
+		/**
+		 * Display all the moves for a given position.
+		 */
+		private void display( Board bd, int sqPinned )
+			{
+			_iFound++;
+
+			printLine( "%s; c0 \"%s on %s is pinned\"",
+					   BoardFactory.exportEPD( bd ),
+					   Parser.pieceToString( bd.get( sqPinned ) ),
+					   Square.toString( sqPinned ) );
+			}
+
+		/**
+		 * A move has been parsed.
+		 *
+		 * @param strSAN
+		 * 	Move string.
+		 * @param strSuffix
+		 * 	Optional suffix string.
+		 *
+		 * @return .T. if parsing is to continue; .F. to abort parsing.
+		 */
+		@Override
+		public boolean onMove( final String strSAN, final String strSuffix )
+			{
+			if (!super.onMove( strSAN, strSuffix )) return false;
+			if (_pv == null) return true;
+			//	-------------------------------------------------------------
+			final Board bd = _pv.getCurrentPosition();
+			final int player = bd.getMovingPlayer();
+			final int opponent = player ^ 1;
+
+			long bbPinned = 0L;
+			long bbOpponent = bd.getPieceMap( opponent );
+			long bbPlayer = bd.getPieceMap( player );
+			long bbAll = bbPlayer | bbOpponent;
+			//
+			//  Find pinned pieces.  This is done by finding all of the player's pieces that
+			//  could attack the King if the opposing player's pieces were removed.
+			//
+			final int iSqKing = bd.getOpposingKingSquare();
+			final long bbQueen = bd.getPieceMap( MAP_W_QUEEN + player );
+			final long bbBishops = bd.getPieceMap( MAP_W_BISHOP + player );
+			final long bbRooks = bd.getPieceMap( MAP_W_ROOK + player );
+
+			long bbPinners =
+				Bitboards.getDiagonalAttackers( iSqKing, (bbQueen | bbBishops), bbPlayer ) |
+				Bitboards.getLateralAttackers( iSqKing, (bbQueen | bbRooks), bbPlayer );
+
+			for ( long bb = bbPinners; bb != 0L; bb &= (bb - 1) )
+				{
+				int sqFrom = BitUtil.first( bb );
+				//
+				//  If there is one (and only one) moving piece that lies on the path between a
+				//	threatening piece (the "pinner") and the King, then it is pinned. Pinned
+				//	pieces may still be able to move (except for Knights) but need to test for
+				//	check when they do so.
+				//
+				long bbBetween = bbOpponent &
+								 Bitboards.getSquaresBetween( iSqKing, sqFrom );
+
+				if (BitUtil.singleton( bbBetween ))
+					{
+					int sqTo = BitUtil.first( bbBetween );
+
+					if (Piece.getType( bd.get( sqTo ) ) > Piece.getType( bd.get( sqFrom ) ))
+						display( bd, sqTo );
+					}
+				}
+
+			return true;
+			}
+		}
+
+//  -----------------------------------------------------------------------
+//	NESTED CLASS: MateListener
+//	-----------------------------------------------------------------------
+
+	@SuppressWarnings( "unused" )
+	private class MateListener extends PgnValidator
+		{
+		private final List<Move> _moves = new ArrayList<>();
+
+		private Board _board;
+
+		/**
+		 * Display all the moves for a given position.
+		 */
+		private void display( Board bd, Move move )
+			{
+			if (_board != null && _board.equals( bd ))
+				_moves.add( move );
+			else
+				{
+				if (_board != null)
+					{
+					String message =
+						String.format( "%s; bm", BoardFactory.exportEPD( _board ) );
+
+					for ( Move mv : _moves )
+						message +=
+							String.format( " %s", MoveFactory.toSAN( _board, mv, true ) );
+
+					_iFound++;
+
+					printLine( message );
+					}
+
+				_board = new Board( bd );
+				_moves.clear();
+				_moves.add( move );
+				}
+			}
+
+		/**
+		 * A move has been parsed.
+		 *
+		 * @param strSAN
+		 * 	Move string.
+		 * @param strSuffix
+		 * 	Optional suffix string.
+		 *
+		 * @return .T. if parsing is to continue; .F. to abort parsing.
+		 */
+		@Override
+		public boolean onMove( final String strSAN, final String strSuffix )
+			{
+			if (!super.onMove( strSAN, strSuffix )) return false;
+			if (_pv == null) return true;
+			//	-------------------------------------------------------------
+			final Board bd = _pv.getCurrentPosition();
+			final MoveList moves = new MoveList( bd );
+
+			for ( Move mv : moves )
+				{
+				Board bdNew = new Board( bd );
+				bdNew.makeMove( mv );
+
+				if (Arbiter.isMated( bdNew ))
+					display( bd, mv );
+				}
+
+			return true;
+			}
+		}
+
+//  -----------------------------------------------------------------------
+//	NESTED CLASS: TestListener
+//	-----------------------------------------------------------------------
 
 	@SuppressWarnings( "unused" )
 	private class TestListener extends PgnValidator
@@ -276,6 +526,58 @@ public class Checker extends ToolboxApp
 					}
 				}
 			return true;
+			}
+		}
+
+//  -----------------------------------------------------------------------
+//	NESTED CLASS: SkewerListener
+//	-----------------------------------------------------------------------
+
+	@SuppressWarnings( "unused" )
+	private class SkewerListener extends PgnValidator
+		{
+		/**
+		 * Display all the moves for a given position.
+		 */
+		private void display( Board bd )
+			{
+			_iFound++;
+
+			printLine( "%s;",
+					   BoardFactory.exportEPD( bd ) );
+			}
+
+		/**
+		 * A move has been parsed.
+		 *
+		 * @param strSAN
+		 * 	Move string.
+		 * @param strSuffix
+		 * 	Optional suffix string.
+		 *
+		 * @return .T. if parsing is to continue; .F. to abort parsing.
+		 */
+		@Override
+		public boolean onMove( final String strSAN, final String strSuffix )
+			{
+			if (!super.onMove( strSAN, strSuffix )) return false;
+			if (_pv == null) return true;
+			//	-------------------------------------------------------------
+			final Board bd = _pv.getCurrentPosition();
+			final long bbCheckers = bd.getCheckers();
+
+			for ( long bb = bbCheckers; bb != 0L; bb &= (bb - 1) )
+				{
+				final int sqFrom = BitUtil.first( bb );
+				final int piece = bd.get( sqFrom );
+
+				if (Piece.getType( piece ) == PAWN || Piece.getType( piece ) == KNIGHT)
+					continue;
+
+				}
+
+			return true;
+
 			}
 		}
 

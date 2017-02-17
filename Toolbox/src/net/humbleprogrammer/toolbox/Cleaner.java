@@ -91,7 +91,7 @@ public class Cleaner extends ToolboxApp
 		{
 		try
 			{
-			new Cleaner(strArgs).run(50);
+			new Cleaner(strArgs).run(0);
 			}
 		catch ( Exception ex )
 			{

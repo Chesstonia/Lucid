@@ -417,7 +417,7 @@ public class Evaluator
 			//	-----------------------------------------------------
 			int score = 0;
 			int player = bd.getMovingPlayer();
-			int iSqKing = bd.getKingSquare( player ^ 1 );
+			int iSqKing = bd.getOpposingKingSquare();
 			//
 			//	Making a move to see if it checks the opponent's King is expensive, so
 			//	spend a few clock cycles to see if there's any chance.  Knights and pawns
@@ -425,7 +425,7 @@ public class Evaluator
 			//	can "see" either the "From" square or the "To" square. If not, there's no
 			//	chance of the move resulting in check.
 			//
-			int piece = Piece.getType( bd.sq[ move.iSqFrom ] );
+			int piece = Piece.getType( bd.get( move.iSqFrom ) );
 
 			if (piece == PAWN)
 				{
@@ -461,7 +461,7 @@ public class Evaluator
 			//	Bonus for capturing stuff, because that means fewer defenders.  This won't work
 			//	for e.p. captures, but they're rare enough to not matter a lot.
 			//
-			int victim = bd.sq[ move.iSqTo ];
+			int victim = bd.get( move.iSqTo );
 
 			if (victim != EMPTY)
 				score += getPieceValue( Piece.getType( victim ) );
