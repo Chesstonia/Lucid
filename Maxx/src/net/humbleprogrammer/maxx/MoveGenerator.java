@@ -58,24 +58,26 @@ class MoveGenerator
 	/** Array of packed moves. */
 	final int[] _moves = new int[ MAX_MOVE_COUNT ];
 
+	/** .T. if an e.p. capture is possible; .F. otherwise */
+	private final boolean _bEP;
 	/** Color of opposing player. */
-	private final int  _opponent;
+	private final int     _opponent;
 	/** Color of moving player. */
-	private final int  _player;
+	private final int     _player;
 	/** Square occupied by the moving player's King. */
-	private final int  _iSqKing;
+	private final int     _iSqKing;
 	/** Bitboard of all pieces. */
-	private final long _bbAll;
-	/** Bitboard of pieces threatening the moving player's King. */
-	private final long _bbCheckers;
+	private final long    _bbAll;
 	/** Bitboard of opposing pieces. */
-	private final long _bbOpponent;
+	private final long    _bbOpponent;
 	/** Bitboard of moving pieces. */
-	private final long _bbPlayer;
+	private final long    _bbPlayer;
 	/** Saved copy of the board maps. */
-	private final long[] _map = new long[ MAP_LENGTH ];
+	private final long[]  _map = new long[ MAP_LENGTH ];
 
-	/** Bitboard of all pieces that are NOT pinned. */
+	/** Bitboard of pieces threatening the moving player's King. */
+	private long _bbCheckers;
+	/** Bitboard of moving player's pieces that are pinned. */
 	private long _bbPinned;
 	/** Bitboard of potential "From" squares. */
 	private long _bbSqFrom;
@@ -103,7 +105,9 @@ class MoveGenerator
 		System.arraycopy( _board.map, 0, _map, 0, MAP_LENGTH );
 
 		_player = _board.getMovingPlayer();
-		_opponent =_board.getOpposingPlayer();
+		_opponent = _board.getOpposingPlayer();
+
+		_bEP = Square.isValid( _board.getEnPassantSquare() );
 
 		_bbOpponent = _map[ _opponent ];
 		_bbPlayer = _map[ _player ];
@@ -112,7 +116,6 @@ class MoveGenerator
 		//  Find out if the moving player is in check.
 		//
 		_iSqKing = _board.getKingSquare();
-		_bbCheckers = Bitboards.getAttackedBy( _map, _iSqKing, _opponent );
 		}
 
 	//  -----------------------------------------------------------------------
@@ -240,7 +243,7 @@ class MoveGenerator
 							? ((iSqFrom & 0x38) | (iSqTo & 0x07))
 							: iSqTo;
 
-			if ((piece = _board.get(iSqVictim )) != EMPTY)
+			if ((piece = _board.get( iSqVictim )) != EMPTY)
 				{
 				long bbSqVictim = 1L << iSqVictim;
 
@@ -338,6 +341,7 @@ class MoveGenerator
 	private void generate( int iMaxMoves )
 		{
 		int iSq;
+		long bbPawns;
 
 		_iCount = 0;
 
@@ -348,13 +352,15 @@ class MoveGenerator
 			switch (_board.get( iSq ))
 				{
 				case MAP_W_PAWN:
-					generatePawnMovesWhite(  bb &  _map[ MAP_W_PAWN] );
-					bb &= ~(_map[MAP_W_PAWN]);
+					bbPawns = bb & _map[ MAP_W_PAWN ];
+					generatePawnMovesWhite( bbPawns );
+					bb &= ~bbPawns;
 					break;
 
 				case MAP_B_PAWN:
-					generatePawnMovesBlack(  bb &  _map[ MAP_B_PAWN] );
-					bb &= ~(_map[MAP_B_PAWN]);
+					bbPawns = bb & _map[ MAP_B_PAWN ];
+					generatePawnMovesBlack( bbPawns );
+					bb &= ~bbPawns;
 					break;
 
 				case MAP_W_KNIGHT:
@@ -405,46 +411,41 @@ class MoveGenerator
 		assert Square.isValid( iSq );
 		assert _board.get( iSq ) == MAP_B_KING;
 		//	-----------------------------------------------------------------
-		long bbKingMoves = _bbSqTo & Bitboards.king[ iSq ];
+		final long bbKing = _map[ MAP_B_KING ];
 
-		if (bbKingMoves != 0L)
+		_map[ MAP_B_ALL ] ^= bbKing;
+
+		for ( long bb = _bbSqTo & Bitboards.king[ iSq ]; bb != 0L; bb &= (bb - 1) )
 			{
-			_map[ MAP_B_ALL ] ^= _map[ MAP_B_KING ];
-
-			for ( long bb = bbKingMoves; bb != 0L; bb &= (bb - 1) )
-				{
-				int iSqTo = BitUtil.first( bb );
-				if (!Bitboards.isAttackedByWhite( _map, iSqTo ))
-					_moves[ _iCount++ ] = Move.pack( iSq, iSqTo, Move.Type.NORMAL );
-				}
-
-			_map[ MAP_B_ALL ] ^= _map[ MAP_B_KING ];
+			int iSqTo = BitUtil.first( bb );
+			if (!Bitboards.isAttackedByWhite( _map, iSqTo ))
+				_moves[ _iCount++ ] = Move.pack( iSq, iSqTo, Move.Type.NORMAL );
 			}
+
+		_map[ MAP_B_ALL ] ^= bbKing;
 		//
 		//	Check for castling moves.
 		//
-		int castling;
+		if (_bbCheckers != 0L || iSq != Square.E8) return;
 
-		if (_bbCheckers == 0L &&
-			iSq == Square.E8 &&
-			(castling = _board.getCastlingFlags()) != 0)
+		if ((_bbAll & Square.BLACK_OO_MASK) == 0 &&
+			(_board.getCastlingFlags() & Board.CastlingFlags.BLACK_SHORT) != 0 &&
+			!Bitboards.isAttackedByWhite( _map, Square.F8 ) &&
+			!Bitboards.isAttackedByWhite( _map, Square.G8 ))
+
 			{
-			if ((_bbAll & Board.CastlingFlags.BLACK_SHORT_MASK) == 0 &&
-				(castling & Board.CastlingFlags.BLACK_SHORT) != 0 &&
-				!Bitboards.isAttackedByWhite( _map, Square.F8 ) &&
-				!Bitboards.isAttackedByWhite( _map, Square.G8 ))
-				{
-				_moves[ _iCount++ ] = Move.BLACK_CASTLE_SHORT; // Black O-O
-				}
-
-			if ((_bbAll & Board.CastlingFlags.BLACK_LONG_MASK) == 0 &&
-				(castling & Board.CastlingFlags.BLACK_LONG) != 0 &&
-				!Bitboards.isAttackedByWhite( _map, Square.D8 ) &&
-				!Bitboards.isAttackedByWhite( _map, Square.C8 ))
-				{
-				_moves[ _iCount++ ] = Move.BLACK_CASTLE_LONG; // Black O-O-O
-				}
+			_moves[ _iCount++ ] = Move.BLACK_CASTLE_SHORT; // Black O-O
 			}
+
+		if ((_bbAll & Square.BLACK_OOO_MASK) == 0 &&
+			(_board.getCastlingFlags() & Board.CastlingFlags.BLACK_LONG) != 0 &&
+			!Bitboards.isAttackedByWhite( _map, Square.D8 ) &&
+			!Bitboards.isAttackedByWhite( _map, Square.C8 ))
+
+			{
+			_moves[ _iCount++ ] = Move.BLACK_CASTLE_LONG; // Black O-O-O
+			}
+
 		}
 
 	/**
@@ -458,45 +459,37 @@ class MoveGenerator
 		assert Square.isValid( iSq );
 		assert _board.get( iSq ) == MAP_W_KING;
 		//	-----------------------------------------------------------------
-		long bbKingMoves = _bbSqTo & Bitboards.king[ iSq ];
+		final long bbKing = _map[ MAP_W_KING ];
 
-		if (bbKingMoves != 0L)
+		_map[ MAP_W_ALL ] ^= bbKing;
+
+		for ( long bb = _bbSqTo & Bitboards.king[ iSq ]; bb != 0L; bb &= (bb - 1) )
 			{
-			_map[ MAP_W_ALL ] ^= _map[ MAP_W_KING ];
-
-			for ( long bb = bbKingMoves; bb != 0L; bb &= (bb - 1) )
-				{
-				int iSqTo = BitUtil.first( bb );
-				if (!Bitboards.isAttackedByBlack( _map, iSqTo ))
-					_moves[ _iCount++ ] = Move.pack( iSq, iSqTo, Move.Type.NORMAL );
-				}
-
-			_map[ MAP_W_ALL ] ^= _map[ MAP_W_KING ];
+			int iSqTo = BitUtil.first( bb );
+			if (!Bitboards.isAttackedByBlack( _map, iSqTo ))
+				_moves[ _iCount++ ] = Move.pack( iSq, iSqTo, Move.Type.NORMAL );
 			}
+
+		_map[ MAP_W_ALL ] ^= bbKing;
 		//
 		//	Check for castling moves.
 		//
-		int castling;
+		if (_bbCheckers != 0L || iSq != Square.E1) return;
 
-		if (_bbCheckers == 0L &&
-			iSq == Square.E1 &&
-			(castling = _board.getCastlingFlags()) != 0)
+		if ((_bbAll & Square.WHITE_OO_MASK) == 0 &&
+			(_board.getCastlingFlags() & Board.CastlingFlags.WHITE_SHORT) != 0 &&
+			!Bitboards.isAttackedByBlack( _map, Square.F1 ) &&
+			!Bitboards.isAttackedByBlack( _map, Square.G1 ))
 			{
-			if ((_bbAll & Board.CastlingFlags.WHITE_SHORT_MASK) == 0 &&
-				(castling & Board.CastlingFlags.WHITE_SHORT) != 0 &&
-				!Bitboards.isAttackedByBlack( _map, Square.F1 ) &&
-				!Bitboards.isAttackedByBlack( _map, Square.G1 ))
-				{
-				_moves[ _iCount++ ] = Move.WHITE_CASTLE_SHORT; // White O-O
-				}
+			_moves[ _iCount++ ] = Move.WHITE_CASTLE_SHORT; // White O-O
+			}
 
-			if ((_bbAll & Board.CastlingFlags.WHITE_LONG_MASK) == 0 &&
-				(castling & Board.CastlingFlags.WHITE_LONG) != 0 &&
-				!Bitboards.isAttackedByBlack( _map, Square.D1 ) &&
-				!Bitboards.isAttackedByBlack( _map, Square.C1 ))
-				{
-				_moves[ _iCount++ ] = Move.WHITE_CASTLE_LONG; // White O-O-O
-				}
+		if ((_bbAll & Square.WHITE_OOO_MASK) == 0 &&
+			(_board.getCastlingFlags() & Board.CastlingFlags.WHITE_LONG) != 0 &&
+			!Bitboards.isAttackedByBlack( _map, Square.D1 ) &&
+			!Bitboards.isAttackedByBlack( _map, Square.C1 ))
+			{
+			_moves[ _iCount++ ] = Move.WHITE_CASTLE_LONG; // White O-O-O
 			}
 		}
 
@@ -522,10 +515,10 @@ class MoveGenerator
 					  Move.Type.NORMAL );
 
 		//	En passant captures
-		int iSqEP = _board.getEnPassantSquare();
-
-		if (Square.isValid( iSqEP ))
+		if (_bEP)
 			{
+			final int iSqEP = _board.getEnPassantSquare();
+
 			addMovesFrom( (bbPawns & Bitboards.pawnUpwards[ iSqEP ]),
 						  iSqEP,
 						  Move.Type.EN_PASSANT );
@@ -565,10 +558,10 @@ class MoveGenerator
 					  Move.Type.NORMAL );
 
 		//	En passant captures
-		int iSqEP = _board.getEnPassantSquare();
-
-		if (Square.isValid( iSqEP ))
+		if (_bEP)
 			{
+			final int iSqEP = _board.getEnPassantSquare();
+
 			addMovesFrom( (bbPawns & Bitboards.pawnDownwards[ iSqEP ]),
 						  iSqEP,
 						  Move.Type.EN_PASSANT );
@@ -594,48 +587,18 @@ class MoveGenerator
 		{
 		if (!Square.isValid( _iSqKing )) return;
 		//	-----------------------------------------------------------------
-		_bbPinned = 0L;
 		_bbSqFrom = _bbPlayer;
 		_bbSqTo = ~_bbPlayer;
+		_bbCheckers = _board.getCheckers();
+		_bbPinned = _board.getPinnedPieces();
 		//
-		//  If the moving player is in check, that affects possible "From" and "To" squares.
-		//	If the player is NOT in check, build a bitboard of pinned pieces.
+		//  If the King is being threatened by a single attacker, the possible
+		//	evasions are (1) capture the attacker, (2) move the King, or
+		//	(3) interpose another piece. If the attacker is a Knight -- or is
+		//	adjacent to the King -- then the bitboard of potential interposition
+		//	squares (bbXRays) will be zero.
 		//
-		if (_bbCheckers == 0L)
-			{
-			final long bbQueen = _map[ MAP_W_QUEEN + _opponent ];
-			final long bbBishops = _map[ MAP_W_BISHOP + _opponent ];
-			final long bbRooks = _map[ MAP_W_ROOK + _opponent ];
-			//
-			//  Find pinned pieces.  This is done by finding all of the opposing pieces that
-			//  could attack the King if the moving player's pieces were removed.
-			//
-			long bbPinners =
-				Bitboards.getDiagonalAttackers( _iSqKing, (bbQueen | bbBishops), _bbOpponent ) |
-				Bitboards.getLateralAttackers( _iSqKing, (bbQueen | bbRooks), _bbOpponent );
-
-			for ( long bb = bbPinners & ~Bitboards.king[ _iSqKing ]; bb != 0L; bb &= (bb - 1) )
-				{
-				//
-				//  If there is one (and only one) moving piece that lies on the path between a
-				//	threatening piece (the "pinner") and the King, then it is pinned. Pinned
-				//	pieces may still be able to move (except for Knights) but need to test for
-				//	check when they do so.
-				//
-				long bbBetween = _bbPlayer &
-								 Bitboards.getSquaresBetween( _iSqKing, BitUtil.first( bb ) );
-
-				if (BitUtil.singleton( bbBetween ))
-					_bbPinned |= bbBetween;
-				}
-			}
-		//
-		//  The King is being threatened by a single attacker.  The possible evasions are
-		//  (1) capture the attacker, (2) move the King, or (3) interpose another piece. If
-		//  the attacker is a Knight -- or is adjacent to the King -- then the bitboard of
-		//  potential interposition squares (bbXRays) will be zero.
-		//
-		else if (BitUtil.singleton( _bbCheckers ))
+		if (BitUtil.singleton( _bbCheckers ))
 			{
 			int iSqChecker = BitUtil.first( _bbCheckers );
 			long bbXRays = Bitboards.getSquaresBetween( _iSqKing, iSqChecker );
@@ -648,33 +611,34 @@ class MoveGenerator
 				_bbSqTo &= (_bbCheckers | bbXRays | Bitboards.king[ _iSqKing ]);
 			else
 				{
-				long bbFrom = (1L << _iSqKing) |
+				long bbFrom = Square.getMask( _iSqKing ) |
 							  Bitboards.getAttackedBy( _map, iSqChecker, _player );
+				long bbTo = _bbCheckers | Bitboards.king[ _iSqKing ];
+
 				//
 				//	See if there are any e.p. captures possible. This is used as
 				//	possible evasion moves if the King is in check to handle the edge
 				//	case where the only legal move is an e.p. capture.
 				//
-				int iSqEP = _board.getEnPassantSquare();
-
-				if (Square.isValid( iSqEP ))
+				if (_bEP)
 					{
+					int iSqEP = _board.getEnPassantSquare();
+
 					bbFrom |= (_player == WHITE)
 							  ? (Bitboards.pawnDownwards[ iSqEP ] & _map[ MAP_W_PAWN ])
 							  : (Bitboards.pawnUpwards[ iSqEP ] & _map[ MAP_B_PAWN ]);
+					bbTo |= Square.getMask( iSqEP );
 					}
 
 				_bbSqFrom &= bbFrom;
-				_bbSqTo &= _bbCheckers |
-						   Square.getMask( iSqEP ) |
-						   Bitboards.king[ _iSqKing ];
+				_bbSqTo &= bbTo;
 				}
 			}
 		//
 		//  The King is being threatened by more than one attacker (double check).  The only
 		//	possible evasion is to move the King.
 		//
-		else
+		else if (BitUtil.multiple( _bbCheckers ))
 			{
 			_bbSqFrom &= Square.getMask( _iSqKing );
 			_bbSqTo &= Bitboards.king[ _iSqKing ];

@@ -153,6 +153,16 @@ public class Square
 	static final long G8_MASK = 1L << G8;
 	static final long H8_MASK = 1L << H8;
 
+
+	/** Squares that block Black castling Queen-side (O-O-O). */
+	static final long BLACK_OOO_MASK  = (Square.B8_MASK | Square.C8_MASK | Square.D8_MASK);
+	/** Squares that block Black castling King-side (O-O). */
+	static final long BLACK_OO_MASK = (Square.F8_MASK | Square.G8_MASK);
+	/** Squares that block Black castling Queen-side (O-O-O). */
+	static final long WHITE_OOO_MASK  = (Square.B1_MASK | Square.C1_MASK | Square.D1_MASK);
+	/** Squares that block Black castling King-side (O-O). */
+	static final long WHITE_OO_MASK = (Square.F1_MASK | Square.G1_MASK);
+
 	/** Bitboard where pawns are not allowed (first & last ranks). */
 	static final long NO_PAWN_ZONE = 0xFF000000000000FFL;
 	/** Bitboard where pawns are allowed (2nd - 7th ranks). */

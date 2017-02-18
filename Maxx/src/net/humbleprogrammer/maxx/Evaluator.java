@@ -425,7 +425,7 @@ public class Evaluator
 			//	can "see" either the "From" square or the "To" square. If not, there's no
 			//	chance of the move resulting in check.
 			//
-			int piece = Piece.getType( bd.get( move.iSqFrom ) );
+			int piece = bd.getPieceType( move.iSqFrom );
 
 			if (piece == PAWN)
 				{
@@ -461,10 +461,10 @@ public class Evaluator
 			//	Bonus for capturing stuff, because that means fewer defenders.  This won't work
 			//	for e.p. captures, but they're rare enough to not matter a lot.
 			//
-			int victim = bd.get( move.iSqTo );
+			int victim = bd.getPieceType( move.iSqTo );
 
 			if (victim != EMPTY)
-				score += getPieceValue( Piece.getType( victim ) );
+				score += getPieceValue( victim );
 
 			return clampScore( score );
 			}

@@ -48,6 +48,8 @@ public class Bitboards
 	//	CONSTANTS
 	//	-----------------------------------------------------------------------
 
+	static final long INVALID = ~0L;
+
 	// Board borders
 	private static final long MASK_DOWN  = 0x00000000000000FFL;
 	private static final long MASK_UP    = 0xFF00000000000000L;
@@ -268,7 +270,7 @@ public class Bitboards
 			for ( int iSqRHS = 0; iSqRHS < 64; ++iSqRHS )
 				{
 				if (iSqRHS < iSq)
-					between[iSq][iSqRHS] = between[iSqRHS][iSq];
+					between[ iSq ][ iSqRHS ] = between[ iSqRHS ][ iSq ];
 				else
 					{
 					long bbBetween = (~0L << iSq) ^ (~0L << iSqRHS);
@@ -341,16 +343,16 @@ public class Bitboards
 		long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
 
 		return (player == WHITE)
-		   ? (map[ MAP_W_PAWN ] & pawnDownwards[ iSq ]) |
-			 (king[ iSq ] & map[ MAP_W_KING ]) |
-			 (knight[ iSq ] & map[ MAP_W_KNIGHT ]) |
-			 getDiagonalAttackers( iSq, (map[ MAP_W_BISHOP ] | map[ MAP_W_QUEEN ]), bbAll ) |
-			 getLateralAttackers( iSq, (map[ MAP_W_ROOK ] | map[ MAP_W_QUEEN ]), bbAll )
-		   : (map[ MAP_B_PAWN ] & pawnUpwards[ iSq ]) |
-			 (king[ iSq ] & map[ MAP_B_KING ]) |
-			 (knight[ iSq ] & map[ MAP_B_KNIGHT ]) |
-			 getDiagonalAttackers( iSq, (map[ MAP_B_BISHOP ] | map[ MAP_B_QUEEN ]), bbAll ) |
-			 getLateralAttackers( iSq, (map[ MAP_B_ROOK ] | map[ MAP_B_QUEEN ]), bbAll );
+			   ? (map[ MAP_W_PAWN ] & pawnDownwards[ iSq ]) |
+				 (king[ iSq ] & map[ MAP_W_KING ]) |
+				 (knight[ iSq ] & map[ MAP_W_KNIGHT ]) |
+				 getDiagonalAttackers( iSq, (map[ MAP_W_BISHOP ] | map[ MAP_W_QUEEN ]), bbAll ) |
+				 getLateralAttackers( iSq, (map[ MAP_W_ROOK ] | map[ MAP_W_QUEEN ]), bbAll )
+			   : (map[ MAP_B_PAWN ] & pawnUpwards[ iSq ]) |
+				 (king[ iSq ] & map[ MAP_B_KING ]) |
+				 (knight[ iSq ] & map[ MAP_B_KNIGHT ]) |
+				 getDiagonalAttackers( iSq, (map[ MAP_B_BISHOP ] | map[ MAP_B_QUEEN ]), bbAll ) |
+				 getLateralAttackers( iSq, (map[ MAP_B_ROOK ] | map[ MAP_B_QUEEN ]), bbAll );
 		}
 
 	/**
@@ -505,8 +507,8 @@ public class Bitboards
 
 		final long bbAll = map[ MAP_W_ALL ] | map[ MAP_B_ALL ];
 
-		return (getDiagonalAttackers( iSq, (map[ MAP_B_QUEEN ] | map[ MAP_B_BISHOP ]), bbAll ) != 0L ||
-				getLateralAttackers( iSq, (map[ MAP_B_QUEEN ] | map[ MAP_B_ROOK ]), bbAll ) != 0L);
+		return ( getDiagonalAttackers( iSq, (map[ MAP_B_QUEEN ] | map[ MAP_B_BISHOP ]), bbAll ) != 0L ||
+				 getLateralAttackers( iSq, (map[ MAP_B_QUEEN ] | map[ MAP_B_ROOK ]), bbAll ) != 0L);
 		}
 
 	/**

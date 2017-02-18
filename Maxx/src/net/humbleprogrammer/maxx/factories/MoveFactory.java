@@ -77,7 +77,7 @@ public class MoveFactory
 		//  legal moves to the target square.
 		//
 		int iSqTo = Square.toIndex( info.iRankTo, info.iFileTo );
-		long bbCandidates = bd.getCandidates( iSqTo, info.iPieceMoving );
+		long bbCandidates = bd.getCandidates( info.iPieceMoving, iSqTo );
 
 		if (Square.isValidRankOrFile( info.iFileFrom ))
 			bbCandidates &= Bitboards.getFileMask( info.iFileFrom );
@@ -129,9 +129,10 @@ public class MoveFactory
 		{
 		if (bd == null || !bd.isLegalMove( move )) return "";
 		//	-----------------------------------------------------------------
-		int iSqFrom = move.iSqFrom;
-		int iSqTo = move.iSqTo;
-		int pt = Piece.getType( bd.get( iSqFrom ) );
+		final int iSqFrom = move.iSqFrom;
+		final int iSqTo = move.iSqTo;
+
+		int pt = bd.getPieceType( iSqFrom );
 		StringBuilder sb = new StringBuilder();
 
 		if (move.iType == Move.Type.CASTLING)
@@ -140,7 +141,7 @@ public class MoveFactory
 			}
 		else if (pt == PAWN)
 			{
-			if (move.iType == Move.Type.EN_PASSANT || bd.get( iSqTo ) != EMPTY)
+			if (move.iType == Move.Type.EN_PASSANT || !bd.isEmpty( iSqTo ))
 				{
 				sb.append( Square.getFileGlyph( iSqFrom ) );
 				sb.append( 'x' );
@@ -153,7 +154,7 @@ public class MoveFactory
 			}
 		else
 			{
-			long bbCandidates = bd.getCandidates( iSqTo, pt );
+			long bbCandidates = bd.getCandidates( pt, iSqTo );
 
 			sb.append( Parser.pieceTypeToGlyph( pt ) );
 			//
@@ -186,7 +187,7 @@ public class MoveFactory
 					}
 				}
 
-			if (bd.get( iSqTo ) != EMPTY)
+			if (!bd.isEmpty( iSqTo ))
 				sb.append( 'x' );
 
 			sb.append( Square.toString( iSqTo ) );

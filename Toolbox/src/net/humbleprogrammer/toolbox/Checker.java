@@ -374,14 +374,13 @@ public class Checker extends ToolboxApp
 			//  Find pinned pieces.  This is done by finding all of the player's pieces that
 			//  could attack the King if the opposing player's pieces were removed.
 			//
-			final int iSqKing = bd.getOpposingKingSquare();
+			final int sqKing = bd.getOpposingKingSquare();
 			final long bbQueen = bd.getPieceMap( MAP_W_QUEEN + player );
 			final long bbBishops = bd.getPieceMap( MAP_W_BISHOP + player );
 			final long bbRooks = bd.getPieceMap( MAP_W_ROOK + player );
 
-			long bbPinners =
-				Bitboards.getDiagonalAttackers( iSqKing, (bbQueen | bbBishops), bbPlayer ) |
-				Bitboards.getLateralAttackers( iSqKing, (bbQueen | bbRooks), bbPlayer );
+			long bbPinners = Bitboards.getDiagonalAttackers( sqKing, (bbQueen | bbBishops), bbPlayer ) |
+							 Bitboards.getLateralAttackers( sqKing, (bbQueen | bbRooks), bbPlayer );
 
 			for ( long bb = bbPinners; bb != 0L; bb &= (bb - 1) )
 				{
@@ -393,13 +392,13 @@ public class Checker extends ToolboxApp
 				//	check when they do so.
 				//
 				long bbBetween = bbOpponent &
-								 Bitboards.getSquaresBetween( iSqKing, sqFrom );
+								 Bitboards.getSquaresBetween( sqKing, sqFrom );
 
 				if (BitUtil.singleton( bbBetween ))
 					{
 					int sqTo = BitUtil.first( bbBetween );
 
-					if (Piece.getType( bd.get( sqTo ) ) > Piece.getType( bd.get( sqFrom ) ))
+					if (bd.getPieceType( sqTo ) > bd.getPieceType( sqFrom ))
 						display( bd, sqTo );
 					}
 				}

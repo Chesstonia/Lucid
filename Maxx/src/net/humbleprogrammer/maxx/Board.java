@@ -97,7 +97,11 @@ public class Board
 	/** Half move clock, which is the number of moves since the last capture or pawn move. */
 	private int _iHalfMoves;
 	/** En passant square in 8x8 format, or <c>INVALID</c> if e.p. not possible. */
-	private int  _iSqEP      = INVALID;
+	private int _iSqEP = INVALID;
+
+	/** Bitboard of opposing pieces that check the moving player's King. */
+	private long _bbCheckers = Bitboards.INVALID;
+
 	/** Zobrist hash of castling privileges, e.p. square, and moving player. */
 	private long _hashExtra  = HASH_BLANK;
 	/** Zobrist hash of pawn position. */
@@ -320,6 +324,8 @@ public class Board
 
 			if (piece != EMPTY)
 				placePiece( iSq, piece );
+
+			_bbCheckers = Bitboards.INVALID;
 			}
 
 		return true;
@@ -328,16 +334,16 @@ public class Board
 	/**
 	 * Gets all pieces for a given type that can move to a target square.
 	 *
-	 * @param iSqTo
-	 * 	Target square, in 8x8 format.
 	 * @param pt
 	 * 	Piece type [PAWN|KNIGHT|BISHOP|ROOK|QUEEN|KING].
+	 * @param iSqTo
+	 * 	Target square, in 8x8 format.
 	 *
 	 * @return Bitboard of pieces.
 	 */
-	public long getCandidates( int iSqTo, int pt )
+	public long getCandidates( int pt, int iSqTo )
 		{
-		if (!Square.isValid( iSqTo )) return 0L;
+		if (pt == EMPTY || !Square.isValid( iSqTo )) return 0L;
 		//	-----------------------------------------------------------------
 		switch (pt)
 			{
@@ -350,8 +356,10 @@ public class Board
 					}
 
 				return (_player == WHITE)
-					   ? (map[ MAP_W_PAWN ] & (Square.getMask( iSqTo - 8 ) | (Square.getMask( iSqTo - 16 ) & Bitboards.rankMask[ 1 ])))
-					   : (map[ MAP_B_PAWN ] & (Square.getMask( iSqTo + 8 ) | (Square.getMask( iSqTo + 16 ) & Bitboards.rankMask[ 6 ])));
+					   ? (map[ MAP_W_PAWN ] & (Square.getMask( iSqTo - 8 ) |
+											   (Square.getMask( iSqTo - 16 ) & Bitboards.rankMask[ 1 ])))
+					   : (map[ MAP_B_PAWN ] & (Square.getMask( iSqTo + 8 ) |
+											   (Square.getMask( iSqTo + 16 ) & Bitboards.rankMask[ 6 ])));
 
 			case KNIGHT:
 				return map[ MAP_W_KNIGHT + _player ] & Bitboards.knight[ iSqTo ];
@@ -437,7 +445,10 @@ public class Board
 	 */
 	public long getCheckers()
 		{
-		return Bitboards.getAttackedBy( map, getKingSquare(), getOpposingPlayer() );
+		if (_bbCheckers == Bitboards.INVALID)
+			_bbCheckers = Bitboards.getAttackedBy( map, getKingSquare(), getOpposingPlayer() );
+
+		return _bbCheckers;
 		}
 
 	/**
@@ -591,6 +602,21 @@ public class Board
 	public long getPieceMap( int index )
 		{ return (index >= 0 && index < map.length) ? map[ index ] : 0L;}
 
+
+	/**
+	 * Gets the type of piece on a square.
+	 *
+	 * @param sq
+	 * 	Square index in 8x8 format.
+	 *
+	 * @return Piece type [PAWN|KNIGHT|BISHOP|etc.] on square, or
+	 * <c>EMPTY</c> if square is empty.
+	 */
+	public int getPieceType( final int sq )
+		{
+		return Square.isValid( sq ) ? Piece.getType( _sq[ sq ] ) : EMPTY;
+		}
+
 	/**
 	 * Gets the Zobrist hash for the current position.
 	 *
@@ -609,9 +635,54 @@ public class Board
 	 */
 	public boolean isInCheck()
 		{
-		return (_player == WHITE)
-			   ? Bitboards.isAttackedByBlack( map, BitUtil.first( map[ MAP_W_KING ] ) )
-			   : Bitboards.isAttackedByWhite( map, BitUtil.first( map[ MAP_B_KING ] ) );
+		return (getCheckers() != 0L);
+		}
+
+	//  -----------------------------------------------------------------------
+	//	GETTERS & SETTERS
+	//	-----------------------------------------------------------------------
+	/**
+	 * Get a bitboard of all pinned pieces.
+	 *
+	 * @return Bitboard of pinned pieces, or zero if moving player is in check.
+	 */
+	long getPinnedPieces()
+		{
+		if (isInCheck()) return 0L;
+		//	-----------------------------------------------------------------
+		final int opponent = getOpposingPlayer();
+		final int sqKing = getKingSquare();
+
+		final long bbQueen = map[ MAP_W_QUEEN + opponent ];
+		final long bbBishops = map[ MAP_W_BISHOP + opponent ];
+		final long bbRooks = map[ MAP_W_ROOK + opponent ];
+		final long bbOpponent = map[ MAP_W_ALL + opponent ];
+		final long bbPlayer = map[ MAP_W_ALL + _player ];
+		//
+		//  Find pinned pieces.  This is done by finding all of the opposing pieces that
+		//  could attack the King if the moving player's pieces were removed.
+		//
+		long bbPinned = 0L;
+		long bbPinners =
+			Bitboards.getDiagonalAttackers( sqKing, (bbQueen | bbBishops), bbOpponent ) |
+			Bitboards.getLateralAttackers( sqKing, (bbQueen | bbRooks), bbOpponent );
+
+		for ( long bb = bbPinners & ~Bitboards.king[ sqKing ]; bb != 0L; bb &= (bb - 1) )
+			{
+			//
+			//  If there is one (and only one) moving piece that lies on the path between a
+			//	threatening piece (the "pinner") and the King, then it is pinned. Pinned
+			//	pieces may still be able to move (except for Knights) but need to test for
+			//	check when they do so.
+			//
+			long bbBetween = bbPlayer &
+							 Bitboards.getSquaresBetween( sqKing, BitUtil.first( bb ) );
+
+			if (BitUtil.singleton( bbBetween ))
+				bbPinned |= bbBetween;
+			}
+
+		return bbPinned;
 		}
 
 	//  -----------------------------------------------------------------------
@@ -640,6 +711,7 @@ public class Board
 		else
 			_iHalfMoves++;
 
+		_bbCheckers = Bitboards.INVALID;
 		_iSqEP = INVALID;
 
 		switch (iType)
@@ -712,6 +784,7 @@ public class Board
 		assert src != null;
 		//	-----------------------------------------------------------------
 		_castling = src._castling;
+		_bbCheckers = src._bbCheckers;
 		_hashExtra = src._hashExtra;
 		_iFullMoves = src._iFullMoves;
 		_iHalfMoves = src._iHalfMoves;
@@ -834,15 +907,6 @@ public class Board
 
 		/** All of the castling flags. */
 		public static final int ALL = WHITE_BOTH | BLACK_BOTH;
-
-		/** Squares that block Black castling Queen-side (O-O-O). */
-		static final long BLACK_LONG_MASK  = (Square.B8_MASK | Square.C8_MASK | Square.D8_MASK);
-		/** Squares that block Black castling King-side (O-O). */
-		static final long BLACK_SHORT_MASK = (Square.F8_MASK | Square.G8_MASK);
-		/** Squares that block Black castling Queen-side (O-O-O). */
-		static final long WHITE_LONG_MASK  = (Square.B1_MASK | Square.C1_MASK | Square.D1_MASK);
-		/** Squares that block Black castling King-side (O-O). */
-		static final long WHITE_SHORT_MASK = (Square.F1_MASK | Square.G1_MASK);
 		}   /* end of class CastlingFlags */
 
 	}   /* end of class Board */
